@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <blank/overrides/override_dom.hpp>
 #include <blank/overrides/override_engine.hpp>
 #include <blank/overrides/override_types.hpp>
@@ -48,6 +49,19 @@ auto compose(const Material& material, const client_settings& settings,
         detail::fail(configuration_error::patch_failed);
     }
     stage = "configuration";
+    if (settings.dns.append_system_dns) {
+        auto& servers = applied.value.at("dns").at("nameserver");
+        if (!servers.is_array()) {
+            detail::fail(configuration_error::invalid_document);
+        }
+        if (std::ranges::none_of(servers, [](const detail::json& server) noexcept -> bool {
+                const auto* const address = server.get_ptr<const std::string*>();
+                return address != nullptr && (*address == "system" || *address == "system://");
+            })) {
+            servers.push_back("system");
+        }
+    }
+    // 覆写可改动基础设置，必须对最终候选重新检查保护字段和引用关系。
     detail::validate_final(applied.value, context, limits, result.effective);
     result.config_json = applied.value.dump();
 }

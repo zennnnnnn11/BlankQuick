@@ -104,7 +104,7 @@ void ConfigSwitcher::start(const QJsonObject& candidate, const QString& previous
     expectedSelections_ = {};
     diagnostics_.clear();
     step_ = Step::Baseline;
-    deadline_.start(timeouts_.forward);
+    deadline_.start(timeouts_.verification);
     request("/configs");
 }
 
@@ -141,6 +141,8 @@ void ConfigSwitcher::request(const QByteArray& path, const QByteArray& method,
 
 void ConfigSwitcher::apply() {
     step_ = Step::Apply;
+    deadline_.start(rollingBack_ ? timeouts_.rollback : timeouts_.forward);
+    // 请求已提交就可能生效；丢失响应不能当作尚未写入。
     submitted_ = true;
     const auto payload =
         rollingBack_ ? previous_
@@ -225,6 +227,7 @@ void ConfigSwitcher::received(QNetworkReply* reply, quint64 generation) {
             .rollback = rollingBack_,
         });
         if (step_ == Step::Apply && (status == 0 || status == 503 || status == 504)) {
+            // 前一请求可能仍在解析或应用配置，不能并行提交回滚。
             complete(
                 TransactionOutcome::Uncertain,
                 tr("配置提交结果未确认（HTTP %1）；请停止并重建会话，未发起并行回滚").arg(status));
@@ -263,6 +266,8 @@ void ConfigSwitcher::received(QNetworkReply* reply, quint64 generation) {
         return;
     }
     case Step::Apply:
+        // 配置解析和资源回读各有预算，Geo 初始化不挤占核验时间。
+        deadline_.start(timeouts_.verification);
         step_ = Step::General;
         request("/configs");
         return;
@@ -368,6 +373,7 @@ void ConfigSwitcher::received(QNetworkReply* reply, quint64 generation) {
 }
 
 void ConfigSwitcher::restoreNext() {
+    // 订阅更新可改变组成员，只恢复仍存在且包含原节点的可选择组。
     const auto selections = rollingBack_ ? previousSelected_ : selected_;
     while (!remaining_.isEmpty()) {
         const auto group = remaining_.takeFirst();

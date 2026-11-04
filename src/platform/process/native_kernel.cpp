@@ -1,4 +1,5 @@
 #include <winsock2.h>
+#include <ws2tcpip.h>
 
 #include <windows.h>
 
@@ -10,23 +11,70 @@
 #include <QFileInfo>
 #include <QHostAddress>
 #include <QJsonDocument>
+#include <QJsonArray>
 #include <QJsonObject>
+#include <QNetworkProxy>
 #include <QProcessEnvironment>
 #include <QTcpServer>
+#include <QTcpSocket>
 #include <QTemporaryDir>
 #include <QUuid>
 #include <blank/process/native_kernel.hpp>
 #include <blank/windows/handle.hpp>
+#include <algorithm>
+#include <array>
 #include <cstddef>
+#include <concepts>
 #include <cstring>
 #include <exception>
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
 namespace {
+template <typename Row, typename Predicate>
+    requires(std::same_as<Row, MIB_TCPROW_OWNER_PID> || std::same_as<Row, MIB_TCP6ROW_OWNER_PID>) &&
+            std::predicate<Predicate, const Row&>
+ListenerCheck queryTcpRows(ULONG family, TCP_TABLE_CLASS kind, const Predicate& matches) {
+    DWORD size = 0;
+    auto status = GetExtendedTcpTable(nullptr, &size, FALSE, family, kind, 0);
+    std::vector<std::byte> storage;
+    for (int attempt = 0; attempt < 3 && status == ERROR_INSUFFICIENT_BUFFER; ++attempt) {
+        storage.resize(size);
+        status = GetExtendedTcpTable(storage.data(), &size, FALSE, family, kind, 0);
+    }
+    using Table = std::conditional_t<std::same_as<Row, MIB_TCPROW_OWNER_PID>,
+                                     MIB_TCPTABLE_OWNER_PID, MIB_TCP6TABLE_OWNER_PID>;
+    constexpr auto offset = offsetof(Table, table);
+    if (status != NO_ERROR || storage.size() < offset) {
+        return {.owned = false, .error = QStringLiteral("TCP owner query failed: %1").arg(status)};
+    }
+    DWORD count = 0;
+    std::memcpy(&count, storage.data(), sizeof(count));
+    if (count > (storage.size() - offset) / sizeof(Row)) {
+        return {.owned = false, .error = QStringLiteral("Invalid TCP owner table size.")};
+    }
+    for (DWORD index = 0; index < count; ++index) {
+        Row row{};
+        std::memcpy(&row,
+                    std::span(storage).subspan(offset + (index * sizeof(row)), sizeof(row)).data(),
+                    sizeof(row));
+        if (matches(row)) {
+            return {.owned = true, .error = {}};
+        }
+    }
+    return {};
+}
+
+constexpr bool mappedLoopback(std::span<const UCHAR, 16> address) noexcept {
+    constexpr auto expected =
+        std::to_array<UCHAR>({0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 127, 0, 0, 1});
+    return std::ranges::equal(address, expected);
+}
+
 void requireWindows(bool success) {
     if (!success) {
         throw std::runtime_error("Windows error " + std::to_string(GetLastError()));
@@ -182,7 +230,15 @@ NativeKernel::NativeKernel(const KernelOptions& options)
         {QStringLiteral("log-level"), QStringLiteral("error")},
         {QStringLiteral("ipv6"), false},
         {QStringLiteral("allow-lan"), false},
-        {QStringLiteral("dns"), QJsonObject{{QStringLiteral("enable"), false}}},
+        {
+            QStringLiteral("dns"),
+            QJsonObject{
+                {QStringLiteral("enable"), true},
+                {QStringLiteral("enhanced-mode"), QStringLiteral("redir-host")},
+                {QStringLiteral("default-nameserver"), QJsonArray{QStringLiteral("system")}},
+                {QStringLiteral("nameserver"), QJsonArray{QStringLiteral("system")}},
+            },
+        },
         {QStringLiteral("tun"), QJsonObject{{QStringLiteral("enable"), false}}},
     };
     const auto data = QJsonDocument(configuration).toJson(QJsonDocument::Compact);
@@ -316,35 +372,43 @@ KernelLaunch launchKernel(const KernelOptions& options) {
 }
 
 ListenerCheck checkKernelListener(quint16 port, quint32 processId) {
-    DWORD size = sizeof(MIB_TCPTABLE);
-    auto status =
-        GetExtendedTcpTable(nullptr, &size, FALSE, AF_INET, TCP_TABLE_OWNER_PID_LISTENER, 0);
-    std::vector<std::byte> storage;
-    for (int attempt = 0; attempt < 3 && status == ERROR_INSUFFICIENT_BUFFER; ++attempt) {
-        storage.resize(size);
-        status = GetExtendedTcpTable(storage.data(), &size, FALSE, AF_INET,
-                                     TCP_TABLE_OWNER_PID_LISTENER, 0);
+    return queryTcpRows<MIB_TCPROW_OWNER_PID>(
+        AF_INET, TCP_TABLE_OWNER_PID_LISTENER, [&](const auto& row) noexcept {
+            return row.dwOwningPid == processId && row.dwLocalAddr == htonl(INADDR_LOOPBACK) &&
+                   ntohs(static_cast<u_short>(row.dwLocalPort)) == port;
+        });
+}
+
+ListenerCheck checkProxyListener(quint16 port, quint32 processId) {
+    if (port == 0 || processId == 0) {
+        return {};
     }
-    if (status != NO_ERROR || storage.size() < sizeof(DWORD)) {
-        return {.owned = false, .error = QStringLiteral("TCP owner query failed: %1").arg(status)};
+    // 按系统代理实际使用的 IPv4 端点核验连接归属，兼容通配和双栈监听。
+    QTcpSocket connection;
+    connection.setProxy(QNetworkProxy::NoProxy);
+    connection.connectToHost(QHostAddress::LocalHost, port);
+    if (!connection.waitForConnected(1500)) {
+        return {.owned = false, .error = connection.errorString()};
     }
-    DWORD count = 0;
-    std::memcpy(&count, storage.data(), sizeof(count));
-    const auto offset = offsetof(MIB_TCPTABLE_OWNER_PID, table);
-    if (count > (storage.size() - offset) / sizeof(MIB_TCPROW_OWNER_PID)) {
-        return {.owned = false, .error = QStringLiteral("Invalid TCP owner table size.")};
+    const auto peerPort = connection.localPort();
+    auto ipv4 = queryTcpRows<MIB_TCPROW_OWNER_PID>(
+        AF_INET, TCP_TABLE_OWNER_PID_CONNECTIONS, [&](const auto& row) noexcept {
+            return row.dwState == MIB_TCP_STATE_ESTAB && row.dwOwningPid == processId &&
+                   row.dwLocalAddr == htonl(INADDR_LOOPBACK) &&
+                   row.dwRemoteAddr == htonl(INADDR_LOOPBACK) &&
+                   ntohs(static_cast<u_short>(row.dwLocalPort)) == port &&
+                   ntohs(static_cast<u_short>(row.dwRemotePort)) == peerPort;
+        });
+    if (ipv4.owned || !ipv4.error.isEmpty()) {
+        return ipv4;
     }
-    for (DWORD index = 0; index < count; ++index) {
-        MIB_TCPROW_OWNER_PID row{};
-        std::memcpy(&row,
-                    std::span(storage).subspan(offset + (index * sizeof(row)), sizeof(row)).data(),
-                    sizeof(row));
-        if (row.dwOwningPid == processId && row.dwLocalAddr == htonl(INADDR_LOOPBACK) &&
-            ntohs(static_cast<u_short>(row.dwLocalPort)) == port) {
-            return {.owned = true, .error = {}};
-        }
-    }
-    return {};
+    return queryTcpRows<MIB_TCP6ROW_OWNER_PID>(
+        AF_INET6, TCP_TABLE_OWNER_PID_CONNECTIONS, [&](const auto& row) noexcept {
+            return row.dwState == MIB_TCP_STATE_ESTAB && row.dwOwningPid == processId &&
+                   mappedLoopback(row.ucLocalAddr) && mappedLoopback(row.ucRemoteAddr) &&
+                   ntohs(static_cast<u_short>(row.dwLocalPort)) == port &&
+                   ntohs(static_cast<u_short>(row.dwRemotePort)) == peerPort;
+        });
 }
 
 QString runOwnedTool(const QString& executable, const QStringList& arguments,

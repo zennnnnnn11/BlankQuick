@@ -196,6 +196,7 @@ void UserProxyTransaction::apply(quint16 port) {
                            .toJson(QJsonDocument::Compact);
     QSaveFile journal(path_);
     journal.setDirectWriteFallback(false);
+    // 先提交恢复记录；后续写代理报错时，现场也可能已经改变。
     if (!journal.open(QIODevice::WriteOnly) || journal.write(bytes) != bytes.size() ||
         !journal.commit()) {
         throw std::runtime_error("Cannot persist the proxy recovery snapshot; nothing changed.");

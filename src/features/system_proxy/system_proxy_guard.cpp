@@ -117,7 +117,7 @@ int main(int argc, char* argv[]) {
         const auto core = watchProcess(arguments.at(5), arguments.at(6));
         bool valid = false;
         const auto port = arguments.at(7).toUShort(&valid);
-        const auto listener = checkKernelListener(port, arguments.at(5).toUInt());
+        const auto listener = checkProxyListener(port, arguments.at(5).toUInt());
         if (!valid || port == 0 || !listener.owned || !listener.error.isEmpty()) {
             throw std::runtime_error("The mixed port does not belong to the current kernel.");
         }

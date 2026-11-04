@@ -486,6 +486,7 @@ auto stage_content(const manager_options& options, const index_entry& entry, std
     const auto binding = binding_for(index, profile_id);
     auto selected = std::unordered_set<std::string>{};
     auto entries = std::vector<std::reference_wrapper<const index_entry>>{};
+    // 全局覆写优先，随后按绑定顺序追加；同一 ID 只执行一次。
     for (const auto& entry : index.items) {
         if (entry.summary.is_global) {
             selected.insert(entry.summary.id);

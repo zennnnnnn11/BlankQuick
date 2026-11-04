@@ -10,11 +10,13 @@
 #include <blank/ipc/service_client.hpp>
 #include <blank/protocol/service_api.hpp>
 #include <blank/runtime/kernel_controller.hpp>
+#include <blank/shared/timeouts.hpp>
 #include <chrono>
 #include <utility>
 
 KernelController::KernelController(KernelOptions options, QObject* parent)
     : QObject(parent), options_(std::move(options)) {
+    published_ = currentStatus();
     network_.setProxy(QNetworkProxy::NoProxy);
     poll_.setInterval(std::chrono::milliseconds{50});
     poll_.setSingleShot(true);
@@ -108,14 +110,43 @@ QString KernelController::controllerAddress() const {
     return kernel_ ? QStringLiteral("127.0.0.1:%1").arg(kernel_->port()) : QString{};
 }
 
-void KernelController::setState(State nextState) {
-    if (nextState != State::Ready) {
-        setMaintenance(false);
+KernelController::PublishedStatus KernelController::currentStatus() const {
+    return {
+        .state = state_,
+        .resources = resources(),
+        .pid = processId(),
+        .version = version_,
+        .error = error_,
+        .maintenance = maintenance_,
+        .serviceManaged = options_.serviceManaged,
+    };
+}
+
+void KernelController::publishStatus() {
+    const auto current = currentStatus();
+    if (published_ == current) {
+        return;
     }
-    if (state_ != nextState) {
-        state_ = nextState;
+    // 先提交完整快照；同一 State 下的资源释放也必须通知观察者。
+    published_ = current;
+    Q_EMIT statusChanged();
+    // 同步观察者可重入并更新元数据，派生通知按最后已通知值去重。
+    if (notifiedState_ != state_) {
+        notifiedState_ = state_;
         Q_EMIT stateChanged();
     }
+    if (notifiedMaintenance_ != maintenance_) {
+        notifiedMaintenance_ = maintenance_;
+        Q_EMIT maintenanceChanged();
+    }
+}
+
+void KernelController::setState(State nextState) {
+    state_ = nextState;
+    if (nextState != State::Ready) {
+        maintenance_ = false;
+    }
+    publishStatus();
 }
 
 void KernelController::start() {
@@ -149,6 +180,7 @@ void KernelController::start() {
             const auto version = object.value(QStringLiteral("version")).toString();
             if (reply->error() != QNetworkReply::NoError || pid <= 0 ||
                 std::cmp_greater(pid, UINT32_MAX) || version.isEmpty() || version.size() > 128) {
+                // 启动响应失败不证明服务未启动内核，资源仍须由停止流程确认释放。
                 deadline_.stop();
                 error_ = tr("服务无法启动内核：%1").arg(reply->errorString());
                 serviceResources_ = Resources::Uncertain;
@@ -158,10 +190,7 @@ void KernelController::start() {
             servicePid_ = static_cast<quint32>(pid);
             serviceResources_ = Resources::Owned;
             version_ = version;
-            setMaintenance(object.value(QStringLiteral("maintenance")).toBool());
-            if (generation != generation_ || state_ != State::Starting) {
-                return;
-            }
+            maintenance_ = object.value(QStringLiteral("maintenance")).toBool();
             deadline_.stop();
             setState(State::Ready);
             if (generation == generation_ && state_ == State::Ready) {
@@ -179,6 +208,7 @@ void KernelController::launchFinished() {
     const auto result = launch_.future().takeResult();
     kernel_ = result.kernel;
     if (state_ == State::Stopping) {
+        publishStatus();
         beginCleanup();
         return;
     }
@@ -357,10 +387,8 @@ KernelController::Resources KernelController::resources() const noexcept {
 }
 
 void KernelController::setMaintenance(bool enabled) {
-    if (maintenance_ != enabled) {
-        maintenance_ = enabled;
-        Q_EMIT maintenanceChanged();
-    }
+    maintenance_ = enabled;
+    publishStatus();
 }
 
 void KernelController::connectService() {
@@ -382,6 +410,8 @@ void KernelController::connectService() {
         if (options_.serviceManaged && state_ != State::Stopping && state_ != State::Stopped) {
             error_ = message.isEmpty() ? tr("服务内核已停止，网络资源已清理") : message;
             setState(State::Failed);
+        } else {
+            publishStatus();
         }
     });
     connect(service_.get(), &ServiceClient::lost, this, [this](const QString& message) {
@@ -399,6 +429,7 @@ void KernelController::useService(bool enabled) {
     if ((state_ == State::Stopped || state_ == State::Failed) &&
         resources() == Resources::Released) {
         options_.serviceManaged = enabled;
+        publishStatus();
     }
 }
 
@@ -422,13 +453,19 @@ QNetworkReply* KernelController::sendRequest(QNetworkAccessManager& network,
         const auto timeout = coreRequestTimeout(target, method, 0);
         if (timeout > 0) {
             if (auto* pipe = qobject_cast<PipeReply*>(reply)) {
-                pipe->setTimeout(timeout + 20000);
+                const auto budget = target == "/configs?force=true" && method == "PUT"
+                                        ? timeout_budget::config_reply
+                                        : std::chrono::milliseconds{timeout} +
+                                              timeout_budget::service_overhead +
+                                              timeout_budget::ipc_overhead;
+                pipe->setTimeout(static_cast<int>(budget.count()));
             }
         }
         return reply;
     }
     auto request = apiRequest(target);
-    request.setTransferTimeout(coreRequestTimeout(target, method, 10000));
+    request.setTransferTimeout(
+        coreRequestTimeout(target, method, static_cast<int>(timeout_budget::request.count())));
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
     return method == "GET" ? network.get(request)
                            : network.sendCustomRequest(request, method, body);

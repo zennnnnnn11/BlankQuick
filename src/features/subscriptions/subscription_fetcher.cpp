@@ -233,6 +233,7 @@ struct request_context {
     request.setSslConfiguration(context.ssl);
     request.setRawHeader(QByteArray{"User-Agent"}, bytes(options.user_agent));
     request.setRawHeader(QByteArray{"Accept"}, QByteArray{"*/*"});
+    // 跨源重定向不携带订阅凭据、自定义请求头或条件缓存标识。
     if (same_origin(context.initial_url, url)) {
         for (const auto& header : options.headers) {
             request.setRawHeader(bytes(header.name), bytes(header.value));

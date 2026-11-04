@@ -3,6 +3,7 @@
 
 #include <blank/overrides/override_engine.hpp>
 #include <blank/profiles/minimal_profile.hpp>
+#include <blank/shared/timeouts.hpp>
 #include <chrono>
 #include <cstdint>
 #include <filesystem>
@@ -20,13 +21,13 @@ inline constexpr std::int64_t default_controller_port{9090};
 inline constexpr std::chrono::hours default_geo_interval{24};
 inline constexpr std::chrono::milliseconds default_lock_timeout{5000};
 inline constexpr std::int64_t default_settings_bytes{131072};
-inline constexpr std::chrono::milliseconds default_kernel_timeout{10000};
+inline constexpr auto default_kernel_timeout = timeout_budget::native_check;
 inline constexpr std::int64_t default_kernel_output_bytes{65536};
 
 enum class capture_mode : std::int8_t { proxy, tun };
 enum class routing_mode : std::int8_t { rule, global, direct };
 enum class log_level : std::int8_t { info, warning, error, debug, silent };
-enum class dns_mode : std::int8_t { fake_ip, redir_host, system };
+enum class dns_mode : std::int8_t { fake_ip, redir_host };
 enum class configuration_error : std::int8_t {
     none,
     invalid_settings,
@@ -65,6 +66,7 @@ struct dns_settings {
         "+.msftconnecttest.com", "+.msftncsi.com", "+.msftnsci.com",
     };
     bool respect_rules{};
+    bool append_system_dns{};
 };
 
 struct client_settings {

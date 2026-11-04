@@ -50,6 +50,7 @@ struct ListenerCheck {
 
 [[nodiscard]] KernelLaunch launchKernel(const KernelOptions& options);
 [[nodiscard]] ListenerCheck checkKernelListener(quint16 port, quint32 processId);
+[[nodiscard]] ListenerCheck checkProxyListener(quint16 port, quint32 processId);
 [[nodiscard]] QString runOwnedTool(const QString& executable, const QStringList& arguments,
                                    const QString& directory, int timeoutMs);
 

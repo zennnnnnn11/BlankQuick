@@ -457,6 +457,7 @@ class store_session {
 
     auto stage(profile_record& record, std::string_view raw, const prepared_assets& prepared) const
         -> void {
+        // 先写不可变代次；profiles.json 提交才是对读者可见的发布点。
         record.generation = new_id();
         record.node_count = prepared.nodes;
         record.raw_bytes = std::ssize(raw);
@@ -523,6 +524,7 @@ struct encoded_snapshot {
 
 [[nodiscard]] auto capture_assets(const storage_options& options, const asset_request& request)
     -> encoded_snapshot {
+    // 原文与缓存在同一锁内读取，随后在锁外解码，避免混合不同代次。
     const auto session = store_session{options};
     auto records = session.index();
     const auto& record = find_record(records, request.id);

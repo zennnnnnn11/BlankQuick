@@ -198,7 +198,7 @@ void SystemProxyController::readOutput() {
                    reportedState == QStringLiteral("foreign") ||
                    reportedState == QStringLiteral("check-error")) {
             environmentPending_ = false;
-            // A health reply is not a terminal restoration result.
+            // foreign 只说明现场变化，不能据此宣告本实例已完成还原。
             Q_EMIT changed();
             continue;
         } else if (reportedState == QStringLiteral("owned")) {

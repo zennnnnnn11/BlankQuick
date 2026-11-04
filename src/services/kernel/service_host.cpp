@@ -10,6 +10,7 @@
 #include <QUuid>
 #include <QtConcurrentRun>
 #include <blank/protocol/service_api.hpp>
+#include <blank/shared/timeouts.hpp>
 #include <chrono>
 #include <exception>
 #include <system_error>
@@ -154,39 +155,15 @@ ServiceHost::ServiceHost(QObject* parent) : QObject(parent) {
             return;
         }
         plan_ = result;
-        const auto compiled =
-            compileServiceConfig(QString::fromUtf8(QJsonDocument(runtimeConfig_).toJson()),
-                                 mixedPort_, plan_.device, true, core_->workingDirectory());
-        if (!compiled.error.isEmpty()) {
-            stop(activeId_, compiled.error);
-            return;
-        }
-        pendingConfig_ = compiled.value;
+        pendingConfig_ = runtimeConfig_;
+        auto tun = pendingConfig_.value(QStringLiteral("tun")).toObject();
+        tun.insert(QStringLiteral("enable"), true);
+        tun.insert(QStringLiteral("device"), plan_.device);
+        pendingConfig_.insert(QStringLiteral("tun"), tun);
         operation_ = Operation::Enable;
-        if (runtimeConfig_.value(QStringLiteral("dns"))
-                .toObject()
-                .value(QStringLiteral("enable"))
-                .toBool()) {
-            sendHttp("/configs", "PATCH",
-                     QJsonDocument(QJsonObject{
-                                       {
-                                           QStringLiteral("tun"),
-                                           pendingConfig_.value(QStringLiteral("tun")),
-                                       },
-                                   })
-                         .toJson());
-        } else {
-            deadline_.start(std::chrono::milliseconds{340000});
-            sendHttp(
-                "/configs?force=true", "PUT",
-                QJsonDocument(QJsonObject{
-                                  {
-                                      QStringLiteral("payload"),
-                                      QString::fromUtf8(QJsonDocument(pendingConfig_).toJson()),
-                                  },
-                              })
-                    .toJson());
-        }
+        // DNS 常驻，TUN 切换只提交 tun 字段，不重载策略组和节点选择。
+        sendHttp("/configs", "PATCH",
+                 QJsonDocument(QJsonObject{{QStringLiteral("tun"), tun}}).toJson());
     });
     connect(&observer_, &QFutureWatcher<TunPlan>::finished, this, [this] {
         const auto token = std::exchange(observerWork_, std::nullopt);
@@ -427,7 +404,7 @@ void ServiceHost::received(const QJsonObject& frame) try {
         startWork(launch_, launchWork_,
                   [this] { return QtConcurrent::run(launchKernel, options_); });
     } else if (command == QStringLiteral("api") && core_) {
-        deadline_.start(std::chrono::milliseconds{20000});
+        deadline_.start(timeout_budget::request + timeout_budget::service_overhead);
         forwardApi(arguments);
     } else if (command == QStringLiteral("tun") && core_ && arguments.size() == 1 &&
                arguments.value(QStringLiteral("enable")).isBool()) {
@@ -436,7 +413,7 @@ void ServiceHost::received(const QJsonObject& frame) try {
             finish(200, information());
             return;
         }
-        deadline_.start(std::chrono::milliseconds{18000});
+        deadline_.start(timeout_budget::tun);
         if (enabled) {
             repair_ = Repair::Available;
             healthFailure_.invalidate();
@@ -494,7 +471,8 @@ void ServiceHost::sendHttp(const QByteArray& path, const QByteArray& method,
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
                          QNetworkRequest::ManualRedirectPolicy);
-    request.setTransferTimeout(coreRequestTimeout(path, method, 8000));
+    request.setTransferTimeout(
+        coreRequestTimeout(path, method, static_cast<int>(timeout_budget::request.count())));
     auto* reply =
         method == "GET" ? network_.get(request) : network_.sendCustomRequest(request, method, body);
     reply_ = reply;
@@ -593,6 +571,7 @@ void ServiceHost::httpFinished(QNetworkReply* reply, quint64 generation) {
     } else if (operation_ == Operation::ConfigApply) {
         runtimeConfig_ = pendingConfig_;
         operation_ = Operation::ConfigGeneral;
+        deadline_.start(timeout_budget::service_verification);
         sendHttp("/configs");
     } else if (operation_ == Operation::Mode) {
         runtimeConfig_ = pendingConfig_;
@@ -673,7 +652,7 @@ void ServiceHost::forwardApi(const QJsonObject& arguments) {
     const auto payload = QJsonDocument::fromJson(body).object();
     operation_ = Operation::Api;
     if (method == "POST" && path == "/configs/geo" && body.isEmpty()) {
-        deadline_.start(std::chrono::milliseconds{160000});
+        deadline_.start(timeout_budget::geo_update + timeout_budget::service_overhead);
         sendHttp(path, method);
         return;
     }
@@ -709,7 +688,9 @@ void ServiceHost::forwardApi(const QJsonObject& arguments) {
         }
     }
     if (method == "PUT" && path == "/configs?force=true" && payload.size() == 1) {
-        deadline_.start(coreRequestTimeout(path, method, 8000) + 10000);
+        deadline_.start(
+            coreRequestTimeout(path, method, static_cast<int>(timeout_budget::request.count())) +
+            static_cast<int>(timeout_budget::service_overhead.count()));
         if (compilerWork_) {
             finish(409, "{}",
                    QStringLiteral("Previous configuration compiler is still finishing."));
@@ -740,7 +721,9 @@ void ServiceHost::forwardApi(const QJsonObject& arguments) {
                 return;
             }
         }
-        deadline_.start(coreRequestTimeout(resource, method, 8000) + 10000);
+        deadline_.start(coreRequestTimeout(resource, method,
+                                           static_cast<int>(timeout_budget::request.count())) +
+                        static_cast<int>(timeout_budget::service_overhead.count()));
         sendHttp(resource, method, body);
         return;
     }
@@ -825,6 +808,7 @@ void ServiceHost::stop(const QString& id, const QString& error) {
 }
 
 void ServiceHost::stopProcess() {
+    // worker 的结果尚未被主线程接收前，仍可能持有目录或写入 TUN 日志。
     if (launchWork_ || compilerWork_ || plannerWork_ || observerWork_ || stopWork_ ||
         cleanupWork_) {
         return;
@@ -882,6 +866,7 @@ void ServiceHost::cleanupFinished() {
         return;
     }
     if (cleanup_ == Cleanup::Stop) {
+        // Job 退出和所属 TUN 清理均确认后，才能向客户端宣告资源已释放。
         stopping_ = false;
         reportEnvironment(stopError_.isEmpty() ? QStringLiteral("网络资源已清理") : stopError_);
         pipe_.send({
@@ -897,7 +882,7 @@ void ServiceHost::cleanupFinished() {
         return;
     }
     if (repair_ == Repair::InProgress) {
-        deadline_.start(std::chrono::milliseconds{18000});
+        deadline_.start(timeout_budget::tun);
         enableTun();
         return;
     }
@@ -1125,7 +1110,7 @@ void ServiceHost::environmentHealthFinished() {
     repair_ = Repair::InProgress;
     ++tunGeneration_;
     operation_ = Operation::Disable;
-    deadline_.start(std::chrono::milliseconds{18000});
+    deadline_.start(timeout_budget::tun);
     reportEnvironment(QStringLiteral("已确认 TUN 设备或默认路由缺失，正在重建所属 TUN"));
     sendHttp("/configs", "PATCH", R"({"tun":{"enable":false}})");
 }

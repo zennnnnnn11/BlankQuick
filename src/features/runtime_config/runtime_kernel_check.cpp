@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <blank/runtime_config/runtime_config.hpp>
+#include <blank/shared/timeouts.hpp>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -24,7 +25,7 @@ namespace runtime_config {
 namespace {
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,fuchsia-default-arguments-calls,altera-unroll-loops)
 constexpr std::size_t maximum_candidate_bytes{33554432};
-constexpr std::int64_t maximum_timeout_ms{300000};
+constexpr auto maximum_timeout_ms = timeout_budget::native_check.count();
 constexpr std::int64_t maximum_output_bytes{1048576};
 constexpr int poll_interval_ms{25};
 constexpr int shutdown_timeout_ms{1000};

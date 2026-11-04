@@ -466,15 +466,20 @@ auto bootstrap_checks(const json& dns) -> void {
     }
 }
 
-auto dns_checks(const json& document, const name_set& providers) -> void {
-    const auto& dns = collection(document, "dns", true);
-    if (!enabled(dns, "enable")) {
-        return;
-    }
-    const auto found = dns.find("nameserver");
-    if (found != dns.end() && found->empty()) {
+auto dns_engine_checks(const json& dns) -> void {
+    const auto mode = string_field(dns, "enhanced-mode");
+    if (!enabled(dns, "enable") || (mode != "fake-ip" && mode != "redir-host")) {
         fail(configuration_error::invalid_document);
     }
+    const auto found = dns.find("nameserver");
+    if (found == dns.end() || found->empty()) {
+        fail(configuration_error::invalid_document);
+    }
+}
+
+auto dns_checks(const json& document, const name_set& providers) -> void {
+    const auto& dns = collection(document, "dns", true);
+    dns_engine_checks(dns);
     const auto proxy = dns.find("proxy-server-nameserver");
     if (enabled(dns, "respect-rules") && (proxy == dns.end() || proxy->empty())) {
         fail(configuration_error::invalid_document);
@@ -583,9 +588,6 @@ auto validate_final(const json& document, const runtime_context& context,
     }
     effective.ipv6 = enabled(document, "ipv6");
     effective.tun_enabled = enabled(collection(document, "tun", true), "enable");
-    if (effective.tun_enabled && !enabled(collection(document, "dns", true), "enable")) {
-        fail(configuration_error::invalid_document);
-    }
     const auto mode = string_field(document, "mode");
     if (mode == "rule") {
         effective.routing = routing_mode::rule;

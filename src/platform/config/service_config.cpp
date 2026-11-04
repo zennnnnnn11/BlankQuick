@@ -88,7 +88,6 @@ QJsonObject defaultDns(bool ipv6) {
         {QStringLiteral("enable"), true},
         {QStringLiteral("listen"), QStringLiteral("127.0.0.1:0")},
         {QStringLiteral("enhanced-mode"), QStringLiteral("fake-ip")},
-        {QStringLiteral("fake-ip-range"), QStringLiteral("198.18.0.1/16")},
         {QStringLiteral("ipv6"), ipv6},
         {
             QStringLiteral("default-nameserver"),
@@ -154,8 +153,8 @@ ServiceConfig compileServiceConfig(const QString& json, quint16 mixedPort, const
                      });
     const auto port = object.value(QStringLiteral("mixed-port")).toInteger(-1);
     require(port >= 1 && port <= 65535, "mixed-port must be between 1 and 65535.");
-    // Only controller transport and the owned TUN lifecycle are reserved. Everything else
-    // passes through to mihomo, including new protocols and options unknown to this client.
+    // Controller transport, the live DNS engine and the owned TUN lifecycle are reserved. Other
+    // fields passes through to mihomo, including new protocols and options unknown to this client.
     for (const auto* key : {
              "external-controller",
              "external-controller-tls",
@@ -188,16 +187,16 @@ ServiceConfig compileServiceConfig(const QString& json, quint16 mixedPort, const
                    QJsonArray{QStringLiteral("fdfe:dcba:9876::1/126")});
     }
     object.insert(QStringLiteral("tun"), tun);
-    if (!object.contains(QStringLiteral("dns"))) {
-        object.insert(QStringLiteral("dns"),
-                      defaultDns(object.value(QStringLiteral("ipv6")).toBool()));
+    auto dns = object.value(QStringLiteral("dns")).toObject();
+    defaults(dns, defaultDns(object.value(QStringLiteral("ipv6")).toBool()));
+    const auto mode = dns.value(QStringLiteral("enhanced-mode")).toString();
+    require(dns.value(QStringLiteral("enable")) == QJsonValue{true} &&
+                (mode == QStringLiteral("fake-ip") || mode == QStringLiteral("redir-host")),
+            "DNS must stay enabled in fake-ip or redir-host mode.");
+    if (mode == QStringLiteral("fake-ip") && !dns.contains(QStringLiteral("fake-ip-range"))) {
+        dns.insert(QStringLiteral("fake-ip-range"), QStringLiteral("198.18.0.1/16"));
     }
-    if (tunEnabled) {
-        auto dns = object.value(QStringLiteral("dns")).toObject();
-        defaults(dns, defaultDns(object.value(QStringLiteral("ipv6")).toBool()));
-        dns.insert(QStringLiteral("enable"), true);
-        object.insert(QStringLiteral("dns"), dns);
-    }
+    object.insert(QStringLiteral("dns"), dns);
     return {.value = object, .error = {}};
 } catch (const std::exception& error) {
     return {.value = {}, .error = QString::fromUtf8(error.what()).left(512)};

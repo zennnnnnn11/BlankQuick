@@ -4,21 +4,23 @@
 #include <QUrl>
 #include <QUrlQuery>
 #include <blank/protocol/service_api.hpp>
+#include <blank/shared/timeouts.hpp>
 
 int coreRequestTimeout(const QByteArray& path, const QByteArray& method,
                        int regularMilliseconds) noexcept {
     // Config parsing may initialize three Geo databases sequentially (90 seconds each).
     if (path == "/configs?force=true" && method == "PUT") {
-        return 330000;
+        return static_cast<int>(timeout_budget::config_apply.count());
     }
     if (path == "/configs/geo" && method == "POST") {
-        return 150000;
+        return static_cast<int>(timeout_budget::geo_update.count());
     }
     if (path.startsWith("/providers/") && method == "PUT") {
-        return 45000;
+        return static_cast<int>(timeout_budget::provider_update.count());
     }
-    if (path.startsWith("/providers/proxies/") && method == "GET") {
-        return 120000;
+    if ((path == "/providers/proxies" || path.startsWith("/providers/proxies/")) &&
+        method == "GET") {
+        return static_cast<int>(timeout_budget::provider_read.count());
     }
     return regularMilliseconds;
 }

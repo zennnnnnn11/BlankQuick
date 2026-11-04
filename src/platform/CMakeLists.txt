@@ -29,7 +29,7 @@ backend_quality(backend_environment)
 
 add_library(backend_protocol STATIC protocol/service_api.cpp protocol/json_frame.cpp protocol/include/blank/protocol/json_frame.hpp protocol/include/blank/protocol/service_api.hpp)
 target_include_directories(backend_protocol PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/protocol/include")
-target_link_libraries(backend_protocol PUBLIC Qt6::Core)
+target_link_libraries(backend_protocol PUBLIC Qt6::Core blank_shared)
 backend_quality(backend_protocol)
 
 add_library(backend_ipc STATIC ipc/service_setup.cpp ipc/service_security.cpp ipc/service_pipe.cpp ipc/service_client.cpp ipc/include/blank/ipc/service_client.hpp ipc/include/blank/ipc/service_pipe.hpp ipc/include/blank/ipc/service_security.hpp ipc/include/blank/ipc/service_setup.hpp)

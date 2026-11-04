@@ -19,8 +19,9 @@ class ServiceClient;
 class KernelController final : public QObject {
     Q_OBJECT
     Q_PROPERTY(State state READ state NOTIFY stateChanged FINAL)
-    Q_PROPERTY(QString statusText READ statusText NOTIFY stateChanged FINAL)
-    Q_PROPERTY(QString version READ version NOTIFY stateChanged FINAL)
+    Q_PROPERTY(QString statusText READ statusText NOTIFY statusChanged FINAL)
+    Q_PROPERTY(QString version READ version NOTIFY statusChanged FINAL)
+    Q_PROPERTY(Resources resources READ resources NOTIFY statusChanged FINAL)
 
   public:
     enum class State : quint8 {
@@ -38,6 +39,7 @@ class KernelController final : public QObject {
         Owned,
         Uncertain,
     };
+    Q_ENUM(Resources)
     explicit KernelController(KernelOptions options, QObject* parent = nullptr);
     ~KernelController() override;
     KernelController(const KernelController&) = delete;
@@ -69,6 +71,7 @@ class KernelController final : public QObject {
 
   Q_SIGNALS:
     void stateChanged();
+    void statusChanged();
     void shutdownFinished();
     void serviceTraffic(const QString& message);
     void serviceLogs(const QString& message);
@@ -77,6 +80,18 @@ class KernelController final : public QObject {
     void maintenanceChanged();
 
   private:
+    struct PublishedStatus {
+        State state = State::Stopped;
+        Resources resources = Resources::Released;
+        quint32 pid = 0;
+        QString version;
+        QString error;
+        bool maintenance = false;
+        bool serviceManaged = false;
+        bool operator==(const PublishedStatus&) const = default;
+    };
+    [[nodiscard]] PublishedStatus currentStatus() const;
+    void publishStatus();
     void setState(State nextState);
     void fail(const QString& error);
     void launchFinished();
@@ -112,6 +127,9 @@ class KernelController final : public QObject {
     quint32 servicePid_ = 0;
     Resources serviceResources_ = Resources::Released;
     bool maintenance_ = false;
+    PublishedStatus published_;
+    State notifiedState_ = State::Stopped;
+    bool notifiedMaintenance_ = false;
 };
 
 #endif

@@ -35,7 +35,7 @@ constexpr auto capture_names = std::to_array<std::string_view>({"proxy", "tun"})
 constexpr auto routing_names = std::to_array<std::string_view>({"rule", "global", "direct"});
 constexpr auto log_names =
     std::to_array<std::string_view>({"info", "warning", "error", "debug", "silent"});
-constexpr auto dns_names = std::to_array<std::string_view>({"fake-ip", "redir-host", "system"});
+constexpr auto dns_names = std::to_array<std::string_view>({"fake-ip", "redir-host"});
 
 template <typename Value, std::size_t Count>
     requires std::is_enum_v<Value>
@@ -130,6 +130,7 @@ auto require_fields(const json& value, std::span<const std::string_view> fields)
         {"direct_nameservers", dns.direct_nameservers},
         {"fake_ip_filter", dns.fake_ip_filter},
         {"respect_rules", dns.respect_rules},
+        {"append_system_dns", dns.append_system_dns},
     };
 }
 } // namespace
@@ -141,8 +142,7 @@ auto validate_settings(const client_settings& settings) -> void {
     static_cast<void>(enum_name(settings.dns.mode, dns_names));
     if (settings.mixed_port < 1 || settings.mixed_port > maximum_port ||
         settings.geo_update_interval.count() < 1 ||
-        settings.geo_update_interval.count() > maximum_geo_hours ||
-        (settings.capture == capture_mode::tun && settings.dns.mode == dns_mode::system)) {
+        settings.geo_update_interval.count() > maximum_geo_hours) {
         fail(configuration_error::invalid_settings);
     }
     if (settings.authentication.size() > maximum_auth_entries ||
@@ -163,12 +163,10 @@ auto validate_settings(const client_settings& settings) -> void {
             fail(configuration_error::invalid_settings);
         }
     }
-    if (settings.dns.mode != dns_mode::system) {
-        check_servers(settings.dns.bootstrap, true);
-        check_servers(settings.dns.nameservers, true);
-        check_servers(settings.dns.proxy_nameservers, settings.dns.respect_rules);
-        check_servers(settings.dns.direct_nameservers, false);
-    }
+    check_servers(settings.dns.bootstrap, true);
+    check_servers(settings.dns.nameservers, !settings.dns.append_system_dns);
+    check_servers(settings.dns.proxy_nameservers, settings.dns.respect_rules);
+    check_servers(settings.dns.direct_nameservers, false);
     if (settings.dns.fake_ip_filter.size() > maximum_text_bytes) {
         fail(configuration_error::invalid_settings);
     }
@@ -244,15 +242,29 @@ auto settings_from_document(const json& document) -> client_settings {
         "fake_ip_filter",
         "respect_rules",
     });
-    const auto& dns = document.at("dns");
+    auto dns = document.at("dns");
+    result.dns.append_system_dns = dns.value("append_system_dns", false);
+    dns.erase("append_system_dns");
     require_fields(dns, dns_keys);
-    result.dns.mode = read_enum<dns_mode>(dns.at("mode"), dns_names);
+    const bool legacy_system = dns.at("mode") == "system";
+    result.dns.mode =
+        legacy_system ? dns_mode::redir_host : read_enum<dns_mode>(dns.at("mode"), dns_names);
     result.dns.bootstrap = dns.at("bootstrap").get<std::vector<std::string>>();
     result.dns.nameservers = dns.at("nameservers").get<std::vector<std::string>>();
     result.dns.proxy_nameservers = dns.at("proxy_nameservers").get<std::vector<std::string>>();
     result.dns.direct_nameservers = dns.at("direct_nameservers").get<std::vector<std::string>>();
     result.dns.fake_ip_filter = dns.at("fake_ip_filter").get<std::vector<std::string>>();
     result.dns.respect_rules = dns.at("respect_rules").get<bool>();
+    if (legacy_system) {
+        // 旧 system 模式迁移为系统上游，不再关闭内核 DNS。
+        result.dns.append_system_dns = true;
+        if (result.dns.bootstrap.empty()) {
+            result.dns.bootstrap = {"system"};
+        }
+        if (result.dns.respect_rules && result.dns.proxy_nameservers.empty()) {
+            result.dns.proxy_nameservers = {"system"};
+        }
+    }
     validate_settings(result);
     return result;
 }
@@ -309,33 +321,29 @@ auto base_document(const client_settings& settings, const runtime_context& conte
         {"dns-mode", "hijack"},
         {"dns-hijack", json::array({"any:53", "tcp://any:53"})},
     };
-    if (settings.dns.mode == dns_mode::system) {
-        result["dns"] = {{"enable", false}};
-    } else {
-        result["dns"] = {
-            {"enable", true},
-            {"listen", "127.0.0.1:1053"},
-            {"ipv6", settings.ipv6},
-            {"use-hosts", true},
-            {"use-system-hosts", true},
-            {"prefer-h3", false},
-            {"cache-algorithm", "lru"},
-            {"cache-max-size", 4096},
-            {"respect-rules", settings.dns.respect_rules},
-            {"enhanced-mode", enum_name(settings.dns.mode, dns_names)},
-            {"default-nameserver", settings.dns.bootstrap},
-            {"nameserver", settings.dns.nameservers},
-            {"proxy-server-nameserver", settings.dns.proxy_nameservers},
-            {"direct-nameserver", settings.dns.direct_nameservers},
-            {"direct-nameserver-follow-policy", false},
-        };
-        if (settings.dns.mode == dns_mode::fake_ip) {
-            result["dns"]["fake-ip-range"] = "198.18.0.1/16";
-            result["dns"]["fake-ip-filter-mode"] = "blacklist";
-            result["dns"]["fake-ip-filter"] = settings.dns.fake_ip_filter;
-            if (settings.ipv6) {
-                result["dns"]["fake-ip-range6"] = "fdfe:dcba:9876::1/64";
-            }
+    result["dns"] = {
+        {"enable", true},
+        {"listen", "127.0.0.1:1053"},
+        {"ipv6", settings.ipv6},
+        {"use-hosts", true},
+        {"use-system-hosts", true},
+        {"prefer-h3", false},
+        {"cache-algorithm", "lru"},
+        {"cache-max-size", 4096},
+        {"respect-rules", settings.dns.respect_rules},
+        {"enhanced-mode", enum_name(settings.dns.mode, dns_names)},
+        {"default-nameserver", settings.dns.bootstrap},
+        {"nameserver", settings.dns.nameservers},
+        {"proxy-server-nameserver", settings.dns.proxy_nameservers},
+        {"direct-nameserver", settings.dns.direct_nameservers},
+        {"direct-nameserver-follow-policy", false},
+    };
+    if (settings.dns.mode == dns_mode::fake_ip) {
+        result["dns"]["fake-ip-range"] = "198.18.0.1/16";
+        result["dns"]["fake-ip-filter-mode"] = "blacklist";
+        result["dns"]["fake-ip-filter"] = settings.dns.fake_ip_filter;
+        if (settings.ipv6) {
+            result["dns"]["fake-ip-range6"] = "fdfe:dcba:9876::1/64";
         }
     }
     result["sniffer"] = {

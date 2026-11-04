@@ -7,11 +7,13 @@
 #include <QPointer>
 #include <QTimer>
 #include <blank/runtime/kernel_controller.hpp>
+#include <blank/shared/timeouts.hpp>
 #include <chrono>
 
 struct SwitchTimeouts {
-    std::chrono::milliseconds forward{420000};
-    std::chrono::milliseconds rollback{420000};
+    std::chrono::milliseconds forward{timeout_budget::config_submission};
+    std::chrono::milliseconds rollback{timeout_budget::config_submission};
+    std::chrono::milliseconds verification{timeout_budget::verification};
 };
 
 struct SwitchResult {
