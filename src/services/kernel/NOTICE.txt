@@ -1,0 +1,15 @@
+BlankQuick runtime package
+
+Mihomo is distributed separately under its upstream license. Include the
+matching MIHOMO-LICENSE.txt supplied to tools/package_backend.ps1.
+Upstream source: https://github.com/MetaCubeX/mihomo
+
+Wintun is distributed separately under its upstream license. Include the
+matching WINTUN-LICENSE.txt supplied to tools/package_backend.ps1.
+Upstream source: https://www.wintun.net/
+
+Qt libraries retain their upstream licenses and distribution requirements.
+Upstream source: https://www.qt.io/
+
+dependencies.lock.json pins packaged binary hashes. tools/mihomo/upstream.lock.json
+independently pins the source revision used to generate configuration contracts.

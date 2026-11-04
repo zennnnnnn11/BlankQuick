@@ -1,0 +1,13 @@
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+add_executable(profile_activation_test cpp/profile_activation_test.cpp
+    "${PROJECT_SOURCE_DIR}/generated/mihomo/model_contract.cpp")
+target_link_libraries(profile_activation_test PRIVATE profile_runtime runtime_config blank_shared Qt6::Core)
+backend_quality(profile_activation_test)
+add_test(NAME profile_activation COMMAND profile_activation_test)
+get_target_property(qt_core_location Qt6::Core IMPORTED_LOCATION_RELEASE)
+get_filename_component(qt_binary_directory "${qt_core_location}" DIRECTORY)
+set_tests_properties(profile_activation PROPERTIES ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:${qt_binary_directory}")
+add_test(NAME python_tooling COMMAND "${Python3_EXECUTABLE}" -m unittest discover -s tests/python -v)
+add_test(NAME mihomo_generated COMMAND "${Python3_EXECUTABLE}" tools/sync_mihomo.py check --offline)
+add_test(NAME architecture COMMAND "${Python3_EXECUTABLE}" tools/check_architecture.py --build "${PROJECT_BINARY_DIR}")
+set_tests_properties(python_tooling mihomo_generated architecture PROPERTIES WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")

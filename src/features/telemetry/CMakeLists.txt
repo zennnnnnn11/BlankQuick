@@ -1,0 +1,10 @@
+add_library(backend_streams STATIC adapters/streams/core_log_socket.cpp
+    adapters/streams/include/blank/streams/core_log_socket.hpp)
+target_include_directories(backend_streams PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/adapters/streams/include")
+target_link_libraries(backend_streams PUBLIC Qt6::Network Qt6::WebSockets PRIVATE backend_qt)
+backend_quality(backend_streams)
+add_library(telemetry STATIC traffic_controller.cpp include/blank/telemetry/traffic_controller.hpp)
+target_include_directories(telemetry PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(telemetry PUBLIC backend_runtime backend_streams PRIVATE backend_qt)
+backend_quality(telemetry)
+add_library(BlankQuick::Telemetry ALIAS telemetry)

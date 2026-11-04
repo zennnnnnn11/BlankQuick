@@ -18,6 +18,10 @@ DerivePointerAlignment: false
 SortIncludes: CaseSensitive
 IncludeBlocks: Regroup
 IncludeCategories:
+  - Regex: '^<[Ww]insock2\.h>'
+    Priority: -2
+  - Regex: '^<[Ww]indows\.h>'
+    Priority: -1
   - Regex: '^<Qt'
     Priority: 1
   - Regex: '^<'

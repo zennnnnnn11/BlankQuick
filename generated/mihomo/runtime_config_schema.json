@@ -1,0 +1,1868 @@
+{
+  "kernel_revision": "3f27ef39f8c96bbfbc8b0b9bb10f5c9ef60149d8",
+  "fields": [
+    {
+      "path": "port",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 405
+      }
+    },
+    {
+      "path": "socks-port",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 406
+      }
+    },
+    {
+      "path": "redir-port",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 407
+      }
+    },
+    {
+      "path": "tproxy-port",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 408
+      }
+    },
+    {
+      "path": "mixed-port",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 409
+      }
+    },
+    {
+      "path": "ss-config",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 410
+      }
+    },
+    {
+      "path": "vmess-config",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 411
+      }
+    },
+    {
+      "path": "inbound-tfo",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 412
+      }
+    },
+    {
+      "path": "inbound-mptcp",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 413
+      }
+    },
+    {
+      "path": "authentication",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 414
+      }
+    },
+    {
+      "path": "skip-auth-prefixes",
+      "go_type": "[]netip.Prefix",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 415
+      }
+    },
+    {
+      "path": "lan-allowed-ips",
+      "go_type": "[]netip.Prefix",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 416
+      }
+    },
+    {
+      "path": "lan-disallowed-ips",
+      "go_type": "[]netip.Prefix",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 417
+      }
+    },
+    {
+      "path": "allow-lan",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 418
+      }
+    },
+    {
+      "path": "bind-address",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 419
+      }
+    },
+    {
+      "path": "mode",
+      "go_type": "T.TunnelMode",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 420
+      }
+    },
+    {
+      "path": "unified-delay",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 421
+      }
+    },
+    {
+      "path": "log-level",
+      "go_type": "log.LogLevel",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 422
+      }
+    },
+    {
+      "path": "ipv6",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 423
+      }
+    },
+    {
+      "path": "external-controller",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 424
+      }
+    },
+    {
+      "path": "external-controller-routing-mark",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 425
+      }
+    },
+    {
+      "path": "external-controller-pipe",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 426
+      }
+    },
+    {
+      "path": "external-controller-unix",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 427
+      }
+    },
+    {
+      "path": "external-controller-tls",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 428
+      }
+    },
+    {
+      "path": "external-controller-cors",
+      "go_type": "RawCors",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 429
+      }
+    },
+    {
+      "path": "external-controller-cors.allow-origins",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 217
+      }
+    },
+    {
+      "path": "external-controller-cors.allow-private-network",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 218
+      }
+    },
+    {
+      "path": "external-ui",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 430
+      }
+    },
+    {
+      "path": "external-ui-url",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 431
+      }
+    },
+    {
+      "path": "external-ui-name",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 432
+      }
+    },
+    {
+      "path": "external-doh-server",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 433
+      }
+    },
+    {
+      "path": "secret",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 434
+      }
+    },
+    {
+      "path": "interface-name",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 435
+      }
+    },
+    {
+      "path": "routing-mark",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 436
+      }
+    },
+    {
+      "path": "tunnels",
+      "go_type": "[]LC.Tunnel",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 437
+      }
+    },
+    {
+      "path": "tunnels[].network",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "listener/config/tunnel.go",
+        "line": 12
+      }
+    },
+    {
+      "path": "tunnels[].address",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "listener/config/tunnel.go",
+        "line": 13
+      }
+    },
+    {
+      "path": "tunnels[].target",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "listener/config/tunnel.go",
+        "line": 14
+      }
+    },
+    {
+      "path": "tunnels[].proxy",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "listener/config/tunnel.go",
+        "line": 15
+      }
+    },
+    {
+      "path": "geo-auto-update",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 438
+      }
+    },
+    {
+      "path": "geo-update-interval",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 439
+      }
+    },
+    {
+      "path": "geodata-mode",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 440
+      }
+    },
+    {
+      "path": "geodata-loader",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 441
+      }
+    },
+    {
+      "path": "geosite-matcher",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 442
+      }
+    },
+    {
+      "path": "tcp-concurrent",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 443
+      }
+    },
+    {
+      "path": "find-process-mode",
+      "go_type": "process.FindProcessMode",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 444
+      }
+    },
+    {
+      "path": "global-client-fingerprint",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 445
+      }
+    },
+    {
+      "path": "global-ua",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 446
+      }
+    },
+    {
+      "path": "etag-support",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 447
+      }
+    },
+    {
+      "path": "keep-alive-idle",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 448
+      }
+    },
+    {
+      "path": "keep-alive-interval",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 449
+      }
+    },
+    {
+      "path": "disable-keep-alive",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 450
+      }
+    },
+    {
+      "path": "proxy-providers",
+      "go_type": "map[string]map[string]any",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 452
+      }
+    },
+    {
+      "path": "rule-providers",
+      "go_type": "map[string]map[string]any",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 453
+      }
+    },
+    {
+      "path": "proxies",
+      "go_type": "[]map[string]any",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 454
+      }
+    },
+    {
+      "path": "proxy-groups",
+      "go_type": "[]map[string]any",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 455
+      }
+    },
+    {
+      "path": "rules",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 456
+      }
+    },
+    {
+      "path": "sub-rules",
+      "go_type": "map[string][]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 457
+      }
+    },
+    {
+      "path": "listeners",
+      "go_type": "[]map[string]any",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 458
+      }
+    },
+    {
+      "path": "hosts",
+      "go_type": "map[string]any",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 459
+      }
+    },
+    {
+      "path": "dns",
+      "go_type": "RawDNS",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 460
+      }
+    },
+    {
+      "path": "dns.enable",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 222
+      }
+    },
+    {
+      "path": "dns.prefer-h3",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 223
+      }
+    },
+    {
+      "path": "dns.ipv6",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 224
+      }
+    },
+    {
+      "path": "dns.ipv6-timeout",
+      "go_type": "uint",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 225
+      }
+    },
+    {
+      "path": "dns.use-hosts",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 226
+      }
+    },
+    {
+      "path": "dns.use-system-hosts",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 227
+      }
+    },
+    {
+      "path": "dns.respect-rules",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 228
+      }
+    },
+    {
+      "path": "dns.nameserver",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 229
+      }
+    },
+    {
+      "path": "dns.fallback",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 230
+      }
+    },
+    {
+      "path": "dns.fallback-filter",
+      "go_type": "RawFallbackFilter",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 231
+      }
+    },
+    {
+      "path": "dns.fallback-filter.geoip",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 252
+      }
+    },
+    {
+      "path": "dns.fallback-filter.geoip-code",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 253
+      }
+    },
+    {
+      "path": "dns.fallback-filter.ipcidr",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 254
+      }
+    },
+    {
+      "path": "dns.fallback-filter.domain",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 255
+      }
+    },
+    {
+      "path": "dns.fallback-filter.geosite",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 256
+      }
+    },
+    {
+      "path": "dns.fallback-lazy-query",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 232
+      }
+    },
+    {
+      "path": "dns.listen",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 233
+      }
+    },
+    {
+      "path": "dns.listen-routing-mark",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 234
+      }
+    },
+    {
+      "path": "dns.enhanced-mode",
+      "go_type": "C.DNSMode",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 235
+      }
+    },
+    {
+      "path": "dns.fake-ip-range",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 236
+      }
+    },
+    {
+      "path": "dns.fake-ip-range6",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 237
+      }
+    },
+    {
+      "path": "dns.fake-ip-filter",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 238
+      }
+    },
+    {
+      "path": "dns.fake-ip-filter-mode",
+      "go_type": "C.FilterMode",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 239
+      }
+    },
+    {
+      "path": "dns.fake-ip-ttl",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 240
+      }
+    },
+    {
+      "path": "dns.default-nameserver",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 241
+      }
+    },
+    {
+      "path": "dns.cache-algorithm",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 242
+      }
+    },
+    {
+      "path": "dns.cache-max-size",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 243
+      }
+    },
+    {
+      "path": "dns.nameserver-policy",
+      "go_type": "*orderedmap.OrderedMap[string, any]",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 244
+      }
+    },
+    {
+      "path": "dns.proxy-server-nameserver",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 245
+      }
+    },
+    {
+      "path": "dns.proxy-server-nameserver-policy",
+      "go_type": "*orderedmap.OrderedMap[string, any]",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 246
+      }
+    },
+    {
+      "path": "dns.direct-nameserver",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 247
+      }
+    },
+    {
+      "path": "dns.direct-nameserver-follow-policy",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 248
+      }
+    },
+    {
+      "path": "ntp",
+      "go_type": "RawNTP",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 461
+      }
+    },
+    {
+      "path": "ntp.enable",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 265
+      }
+    },
+    {
+      "path": "ntp.server",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 266
+      }
+    },
+    {
+      "path": "ntp.port",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 267
+      }
+    },
+    {
+      "path": "ntp.interval",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 268
+      }
+    },
+    {
+      "path": "ntp.dialer-proxy",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 269
+      }
+    },
+    {
+      "path": "ntp.write-to-system",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 270
+      }
+    },
+    {
+      "path": "tun",
+      "go_type": "RawTun",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 462
+      }
+    },
+    {
+      "path": "tun.enable",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 274
+      }
+    },
+    {
+      "path": "tun.device",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 275
+      }
+    },
+    {
+      "path": "tun.stack",
+      "go_type": "C.TUNStack",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 276
+      }
+    },
+    {
+      "path": "tun.dns-mode",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 277
+      }
+    },
+    {
+      "path": "tun.dns-hijack",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 278
+      }
+    },
+    {
+      "path": "tun.auto-route",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 279
+      }
+    },
+    {
+      "path": "tun.auto-detect-interface",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 280
+      }
+    },
+    {
+      "path": "tun.mtu",
+      "go_type": "uint32",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 282
+      }
+    },
+    {
+      "path": "tun.gso",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 283
+      }
+    },
+    {
+      "path": "tun.gso-max-size",
+      "go_type": "uint32",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 284
+      }
+    },
+    {
+      "path": "tun.inet6-address",
+      "go_type": "[]netip.Prefix",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 286
+      }
+    },
+    {
+      "path": "tun.iproute2-table-index",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 287
+      }
+    },
+    {
+      "path": "tun.iproute2-rule-index",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 288
+      }
+    },
+    {
+      "path": "tun.auto-redirect",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 289
+      }
+    },
+    {
+      "path": "tun.auto-redirect-input-mark",
+      "go_type": "uint32",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 290
+      }
+    },
+    {
+      "path": "tun.auto-redirect-output-mark",
+      "go_type": "uint32",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 291
+      }
+    },
+    {
+      "path": "tun.auto-redirect-iproute2-fallback-rule-index",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 292
+      }
+    },
+    {
+      "path": "tun.loopback-address",
+      "go_type": "[]netip.Addr",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 293
+      }
+    },
+    {
+      "path": "tun.strict-route",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 294
+      }
+    },
+    {
+      "path": "tun.route-address",
+      "go_type": "[]netip.Prefix",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 295
+      }
+    },
+    {
+      "path": "tun.route-address-set",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 296
+      }
+    },
+    {
+      "path": "tun.route-exclude-address",
+      "go_type": "[]netip.Prefix",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 297
+      }
+    },
+    {
+      "path": "tun.route-exclude-address-set",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 298
+      }
+    },
+    {
+      "path": "tun.include-interface",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 299
+      }
+    },
+    {
+      "path": "tun.exclude-interface",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 300
+      }
+    },
+    {
+      "path": "tun.include-uid",
+      "go_type": "[]uint32",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 301
+      }
+    },
+    {
+      "path": "tun.include-uid-range",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 302
+      }
+    },
+    {
+      "path": "tun.exclude-uid",
+      "go_type": "[]uint32",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 303
+      }
+    },
+    {
+      "path": "tun.exclude-uid-range",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 304
+      }
+    },
+    {
+      "path": "tun.exclude-src-port",
+      "go_type": "[]uint16",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 305
+      }
+    },
+    {
+      "path": "tun.exclude-src-port-range",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 306
+      }
+    },
+    {
+      "path": "tun.exclude-dst-port",
+      "go_type": "[]uint16",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 307
+      }
+    },
+    {
+      "path": "tun.exclude-dst-port-range",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 308
+      }
+    },
+    {
+      "path": "tun.include-android-user",
+      "go_type": "[]int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 309
+      }
+    },
+    {
+      "path": "tun.include-package",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 310
+      }
+    },
+    {
+      "path": "tun.exclude-package",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 311
+      }
+    },
+    {
+      "path": "tun.include-mac-address",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 312
+      }
+    },
+    {
+      "path": "tun.exclude-mac-address",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 313
+      }
+    },
+    {
+      "path": "tun.endpoint-independent-nat",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 314
+      }
+    },
+    {
+      "path": "tun.udp-timeout",
+      "go_type": "int64",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 315
+      }
+    },
+    {
+      "path": "tun.icmp-timeout",
+      "go_type": "int64",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 316
+      }
+    },
+    {
+      "path": "tun.disable-icmp-forwarding",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 317
+      }
+    },
+    {
+      "path": "tun.congestion-controller",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 318
+      }
+    },
+    {
+      "path": "tun.file-descriptor",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 319
+      }
+    },
+    {
+      "path": "tun.inet4-route-address",
+      "go_type": "[]netip.Prefix",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 321
+      }
+    },
+    {
+      "path": "tun.inet6-route-address",
+      "go_type": "[]netip.Prefix",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 322
+      }
+    },
+    {
+      "path": "tun.inet4-route-exclude-address",
+      "go_type": "[]netip.Prefix",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 323
+      }
+    },
+    {
+      "path": "tun.inet6-route-exclude-address",
+      "go_type": "[]netip.Prefix",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 324
+      }
+    },
+    {
+      "path": "tun.recvmsgx",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 327
+      }
+    },
+    {
+      "path": "tun.sendmsgx",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 328
+      }
+    },
+    {
+      "path": "tun.processors-per-channel",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 331
+      }
+    },
+    {
+      "path": "tuic-server",
+      "go_type": "RawTuicServer",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 463
+      }
+    },
+    {
+      "path": "tuic-server.enable",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 335
+      }
+    },
+    {
+      "path": "tuic-server.listen",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 336
+      }
+    },
+    {
+      "path": "tuic-server.token",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 337
+      }
+    },
+    {
+      "path": "tuic-server.users",
+      "go_type": "map[string]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 338
+      }
+    },
+    {
+      "path": "tuic-server.certificate",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 339
+      }
+    },
+    {
+      "path": "tuic-server.private-key",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 340
+      }
+    },
+    {
+      "path": "tuic-server.congestion-controller",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 341
+      }
+    },
+    {
+      "path": "tuic-server.max-idle-time",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 342
+      }
+    },
+    {
+      "path": "tuic-server.authentication-timeout",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 343
+      }
+    },
+    {
+      "path": "tuic-server.alpn",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 344
+      }
+    },
+    {
+      "path": "tuic-server.max-udp-relay-packet-size",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 345
+      }
+    },
+    {
+      "path": "tuic-server.cwnd",
+      "go_type": "int",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 346
+      }
+    },
+    {
+      "path": "iptables",
+      "go_type": "RawIPTables",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 464
+      }
+    },
+    {
+      "path": "iptables.enable",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 350
+      }
+    },
+    {
+      "path": "iptables.inbound-interface",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 351
+      }
+    },
+    {
+      "path": "iptables.bypass",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 352
+      }
+    },
+    {
+      "path": "iptables.dns-redirect",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 353
+      }
+    },
+    {
+      "path": "experimental",
+      "go_type": "RawExperimental",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 465
+      }
+    },
+    {
+      "path": "experimental.fingerprints",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 357
+      }
+    },
+    {
+      "path": "experimental.quic-go-disable-gso",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 358
+      }
+    },
+    {
+      "path": "experimental.quic-go-disable-ecn",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 359
+      }
+    },
+    {
+      "path": "experimental.dialer-ip4p-convert",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 360
+      }
+    },
+    {
+      "path": "profile",
+      "go_type": "RawProfile",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 466
+      }
+    },
+    {
+      "path": "profile.store-selected",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 364
+      }
+    },
+    {
+      "path": "profile.store-fake-ip",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 365
+      }
+    },
+    {
+      "path": "geox-url",
+      "go_type": "RawGeoXUrl",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 467
+      }
+    },
+    {
+      "path": "geox-url.geoip",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 369
+      }
+    },
+    {
+      "path": "geox-url.mmdb",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 370
+      }
+    },
+    {
+      "path": "geox-url.asn",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 371
+      }
+    },
+    {
+      "path": "geox-url.geosite",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 372
+      }
+    },
+    {
+      "path": "sniffer",
+      "go_type": "RawSniffer",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 468
+      }
+    },
+    {
+      "path": "sniffer.enable",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 376
+      }
+    },
+    {
+      "path": "sniffer.override-destination",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 377
+      }
+    },
+    {
+      "path": "sniffer.sniffing",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 378
+      }
+    },
+    {
+      "path": "sniffer.force-domain",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 379
+      }
+    },
+    {
+      "path": "sniffer.skip-src-address",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 380
+      }
+    },
+    {
+      "path": "sniffer.skip-dst-address",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 381
+      }
+    },
+    {
+      "path": "sniffer.skip-domain",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 382
+      }
+    },
+    {
+      "path": "sniffer.port-whitelist",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 383
+      }
+    },
+    {
+      "path": "sniffer.force-dns-mapping",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 384
+      }
+    },
+    {
+      "path": "sniffer.parse-pure-ip",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 385
+      }
+    },
+    {
+      "path": "sniffer.sniff",
+      "go_type": "map[string]RawSniffingConfig",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 387
+      }
+    },
+    {
+      "path": "sniffer.sniff{*}.ports",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 391
+      }
+    },
+    {
+      "path": "sniffer.sniff{*}.override-destination",
+      "go_type": "*bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 392
+      }
+    },
+    {
+      "path": "tls",
+      "go_type": "RawTLS",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 469
+      }
+    },
+    {
+      "path": "tls.certificate",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 396
+      }
+    },
+    {
+      "path": "tls.private-key",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 397
+      }
+    },
+    {
+      "path": "tls.client-auth-type",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 398
+      }
+    },
+    {
+      "path": "tls.client-auth-cert",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 399
+      }
+    },
+    {
+      "path": "tls.ech-key",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 400
+      }
+    },
+    {
+      "path": "tls.custom-certifactes",
+      "go_type": "[]string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 401
+      }
+    },
+    {
+      "path": "clash-for-android",
+      "go_type": "RawClashForAndroid",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 471
+      }
+    },
+    {
+      "path": "clash-for-android.append-system-dns",
+      "go_type": "bool",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 260
+      }
+    },
+    {
+      "path": "clash-for-android.ui-subtitle-pattern",
+      "go_type": "string",
+      "required_by_decoder": true,
+      "source": {
+        "file": "config/config.go",
+        "line": 261
+      }
+    }
+  ]
+}

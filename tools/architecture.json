@@ -1,0 +1,31 @@
+{
+  "features": {
+    "nodes": [],
+    "subscriptions": ["nodes"],
+    "profiles": ["nodes", "subscriptions"],
+    "overrides": [],
+    "runtime_config": ["nodes", "profiles", "overrides"],
+    "system_proxy": [],
+    "telemetry": [],
+    "runtime": ["profiles", "overrides", "runtime_config", "system_proxy", "telemetry"]
+  },
+  "platform_targets": ["backend_windows", "backend_storage", "backend_config", "backend_process", "backend_environment", "backend_protocol", "backend_ipc", "backend_tun", "backend_runtime", "backend_qt", "kernel_signal"],
+  "targets": {
+    "node_model": "nodes",
+    "node_input": "nodes",
+    "subscription_contracts": "subscriptions",
+    "subscription_fetcher": "subscriptions",
+    "node_filter": "profiles",
+    "profile_payload": "profiles",
+    "profile_storage": "profiles",
+    "profile_runtime": "profiles",
+    "overrides": "overrides",
+    "runtime_config": "runtime_config",
+    "backend_user_proxy": "system_proxy",
+    "system_proxy": "system_proxy",
+    "system_proxy_guard": "system_proxy",
+    "backend_streams": "telemetry",
+    "telemetry": "telemetry",
+    "runtime_backend": "runtime"
+  }
+}

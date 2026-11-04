@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Position = 0)]
-    [ValidateSet('configure', 'build', 'check', 'clang-tidy', 'clazy', 'cppcheck', 'qmllint', 'format', 'format-check', 'run', 'deploy')]
+    [ValidateSet('configure', 'build', 'check', 'clang-tidy', 'clazy', 'cppcheck', 'qmllint', 'format', 'format-check', 'run', 'deploy', 'sync-kernel', 'generate', 'check-generated', 'test')]
     [string] $Action = 'build',
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Debug',
@@ -24,6 +24,16 @@ function Invoke-Tool {
     if ($LASTEXITCODE -ne 0) {
         throw "$Executable failed with exit code $LASTEXITCODE."
     }
+}
+
+if ($Action -in 'sync-kernel', 'generate', 'check-generated') {
+    $arguments = switch ($Action) {
+        'sync-kernel' { @('sync', '--latest') }
+        'generate' { @('generate') }
+        'check-generated' { @('check', '--offline') }
+    }
+    Invoke-Tool 'python' (@((Join-Path $PSScriptRoot 'sync_mihomo.py')) + $arguments)
+    return
 }
 
 function Initialize-Environment {
@@ -85,8 +95,8 @@ function Initialize-Environment {
 }
 
 function Get-SourceFiles {
-    @(Get-ChildItem -LiteralPath @((Join-Path $projectRoot 'src'), (Join-Path $projectRoot 'backend')) -Recurse -File |
-        Where-Object Extension -in '.cpp', '.h', '.hpp' | Sort-Object FullName)
+    @(Get-ChildItem -LiteralPath @((Join-Path $projectRoot 'src'), (Join-Path $projectRoot 'tests/cpp')) -Recurse -File |
+        Where-Object Extension -in '.cpp', '.h', '.hpp', '.inc' | Sort-Object FullName)
 }
 
 function Invoke-Configure {
@@ -135,7 +145,6 @@ function Write-AnalysisDatabases {
     if (-not (Test-Path -LiteralPath $databasePath)) { throw 'Run tools/project.ps1 build first.' }
     $commands = @(Get-Content -LiteralPath $databasePath -Raw | ConvertFrom-Json)
     $sourceRoot = (Join-Path $projectRoot 'src').Replace('\', '/') + '/'
-    $backendRoot = (Join-Path $projectRoot 'backend').Replace('\', '/') + '/'
     $testRoot = (Join-Path $projectRoot 'tests').Replace('\', '/') + '/'
     $metaHeader = Get-Content -LiteralPath (Join-Path $QtRoot 'include/QtCore/qtmetamacros.h') -Raw
     $mocRevision = [regex]::Match($metaHeader, '(?m)^#define Q_MOC_OUTPUT_REVISION\s+(\d+)').Groups[1].Value
@@ -146,7 +155,7 @@ function Write-AnalysisDatabases {
     $compatibilityVersion = '{0}.{1}' -f ($toolsetVersion.Major + 5), $toolsetVersion.Minor
     foreach ($entry in $commands) {
         $source = $entry.file.Replace('\', '/')
-        $isNativeSource = $source.StartsWith($sourceRoot, [StringComparison]::OrdinalIgnoreCase) -or $source.StartsWith($backendRoot, [StringComparison]::OrdinalIgnoreCase)
+        $isNativeSource = $source.StartsWith($sourceRoot, [StringComparison]::OrdinalIgnoreCase)
         $isTestSource = $source.StartsWith($testRoot, [StringComparison]::OrdinalIgnoreCase)
         if (-not $isNativeSource -and -not $isTestSource) { continue }
         $flags = [Collections.Generic.List[string]]::new()
@@ -231,9 +240,10 @@ function Invoke-Analysis {
     $sourceFiles = @($entries | ForEach-Object file)
     switch ($Tool) {
         'clang-tidy' {
+            $nativePattern = '/src/(platform|services|features/(runtime|system_proxy|telemetry))/'
             foreach ($group in @(
-                @{ Config = "$projectRoot/.clang-tidy"; Files = @($sourceFiles | Where-Object { $_ -notmatch '/backend/' }) },
-                @{ Config = "$projectRoot/backend/.clang-tidy"; Files = @($sourceFiles | Where-Object { $_ -match '/backend/' }) }
+                @{ Config = "$projectRoot/.clang-tidy"; Files = @($sourceFiles | Where-Object { $_ -notmatch $nativePattern }) },
+                @{ Config = "$projectRoot/cmake/Native.clang-tidy"; Files = @($sourceFiles | Where-Object { $_ -match $nativePattern }) }
             )) {
                 if ($group.Files.Count -eq 0) { continue }
                 Invoke-Tool 'clang-tidy' (@('--verify-config', "--config-file=$($group.Config)") + $group.Files + @("-p=$nativeDatabase"))
@@ -260,7 +270,7 @@ function Invoke-Analysis {
             $excludedChecks = @($exclusions | Where-Object { $version -match ('clazy version ' + [regex]::Escape($_.version) + '(\s|$)') } | ForEach-Object check)
             foreach ($excluded in $excludedChecks) { Write-Host "Clazy tool compatibility exception: $excluded (see tools/clazy-exclusions.json)." }
             $checks = (($metadata -join "`n" | ConvertFrom-Json).checks.name | Where-Object { $_ -notin $excludedChecks } | Sort-Object -Unique) -join ','
-            $headerFilter = '^' + [regex]::Escape($projectRoot.Replace('\', '/')) + '/(src|backend|include)/'
+            $headerFilter = '^' + [regex]::Escape($projectRoot.Replace('\', '/')) + '/(src|tests|include)/'
             $externalRoots = @($QtRoot, (Join-Path $projectRoot 'third_party')) + @($env:INCLUDE -split ';' | Where-Object { $_ })
             $ignoreDirs = '^(' + (($externalRoots | ForEach-Object { [regex]::Escape($_.Replace('\', '/').TrimEnd('/')) }) -join '|') + ')(/|$)'
             Write-Host "Windows native Clazy: $executable"
@@ -313,6 +323,9 @@ try {
             Invoke-Tool 'cmake' @('--build', '--preset', $preset)
         }
         'check' {
+            Invoke-Tool 'python' @((Join-Path $PSScriptRoot 'sync_mihomo.py'), 'check', '--offline')
+            Invoke-Tool 'python' @((Join-Path $PSScriptRoot 'check_architecture.py'), '--build', $buildRoot)
+            Invoke-Tool 'ctest' @('--test-dir', $buildRoot, '--output-on-failure')
             Invoke-Format $true
             foreach ($tool in @('clang-tidy', 'clazy', 'cppcheck')) { Invoke-Analysis $tool }
             Invoke-QmlLint
@@ -321,6 +334,7 @@ try {
         'format' { Invoke-Format $false }
         'format-check' { Invoke-Format $true }
         'qmllint' { Invoke-QmlLint }
+        'test' { Invoke-Tool 'ctest' @('--test-dir', $buildRoot, '--output-on-failure') }
         'run' { Invoke-Tool (Join-Path $buildRoot 'blank_quick.exe') @() }
         'deploy' { Invoke-Tool 'cmake' @('--install', $buildRoot, '--config', $Configuration) }
         default { Invoke-Analysis $Action }

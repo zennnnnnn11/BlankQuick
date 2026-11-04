@@ -1,0 +1,2936 @@
+{
+  "kernel_revision": "3f27ef39f8c96bbfbc8b0b9bb10f5c9ef60149d8",
+  "bound_leaf_rows": [
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].tfo",
+      "model_path": "configuration.link.tcp_fast_open"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].mptcp",
+      "model_path": "configuration.link.multipath_tcp"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].interface-name",
+      "model_path": "configuration.link.interface_name"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].routing-mark",
+      "model_path": "configuration.link.routing_mark"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].ip-version",
+      "model_path": "configuration.link.ip_policy"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].dialer-proxy",
+      "model_path": "configuration.link.dialer_proxy"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].password",
+      "model_path": "configuration.detail<shadowsocks_param>.password"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].cipher",
+      "model_path": "configuration.detail<shadowsocks_param>.cipher"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].udp",
+      "model_path": "configuration.link.udp"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].udp-over-tcp",
+      "model_path": "configuration.link.packet.udp_over_tcp"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].udp-over-tcp-version",
+      "model_path": "configuration.link.packet.udp_over_tcp_version"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].client-fingerprint",
+      "model_path": "configuration.link.security.tls.client_fingerprint"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].smux.enabled",
+      "model_path": "configuration.link.smux.enabled"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].smux.protocol",
+      "model_path": "configuration.link.smux.protocol"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].smux.max-connections",
+      "model_path": "configuration.link.smux.max_connections"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].smux.min-streams",
+      "model_path": "configuration.link.smux.min_streams"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].smux.max-streams",
+      "model_path": "configuration.link.smux.max_streams"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].smux.padding",
+      "model_path": "configuration.link.smux.padding"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].smux.statistic",
+      "model_path": "configuration.link.smux.statistic"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].smux.only-tcp",
+      "model_path": "configuration.link.smux.only_tcp"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].smux.brutal-opts.enabled",
+      "model_path": "configuration.link.smux.brutal_opts.enabled"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].smux.brutal-opts.up",
+      "model_path": "configuration.link.smux.brutal_opts.uplink"
+    },
+    {
+      "context": "proxy-ss",
+      "kernel_path": "proxies[].smux.brutal-opts.down",
+      "model_path": "configuration.link.smux.brutal_opts.downlink"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].tfo",
+      "model_path": "configuration.link.tcp_fast_open"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mptcp",
+      "model_path": "configuration.link.multipath_tcp"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].interface-name",
+      "model_path": "configuration.link.interface_name"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].routing-mark",
+      "model_path": "configuration.link.routing_mark"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].ip-version",
+      "model_path": "configuration.link.ip_policy"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].dialer-proxy",
+      "model_path": "configuration.link.dialer_proxy"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].uuid",
+      "model_path": "configuration.detail<vmess_param>.uuid"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].alterId",
+      "model_path": "configuration.detail<vmess_param>.alter_id"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].cipher",
+      "model_path": "configuration.detail<vmess_param>.cipher"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].udp",
+      "model_path": "configuration.link.udp"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].tls",
+      "model_path": "configuration.link.security.tls.enabled"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].alpn",
+      "model_path": "configuration.link.security.tls.alpn"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].skip-cert-verify",
+      "model_path": "configuration.link.security.tls.skip_cert_verify"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].name-cert-verify",
+      "model_path": "configuration.link.security.tls.name_cert_verify"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].fingerprint",
+      "model_path": "configuration.link.security.tls.certificate_fingerprint"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].certificate",
+      "model_path": "configuration.link.security.tls.certificate"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].private-key",
+      "model_path": "configuration.link.security.tls.private_key"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].servername",
+      "model_path": "configuration.link.security.tls.server_name"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].ech-opts.enable",
+      "model_path": "configuration.link.security.ech.enable"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].ech-opts.config",
+      "model_path": "configuration.link.security.ech.config"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].ech-opts.query-server-name",
+      "model_path": "configuration.link.security.ech.query_server_name"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].shadow-tls-opts.password",
+      "model_path": "configuration.link.security.shadow_tls.password"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].shadow-tls-opts.version",
+      "model_path": "configuration.link.security.shadow_tls.version"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].restls-opts.password",
+      "model_path": "configuration.link.security.restls.password"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].restls-opts.version-hint",
+      "model_path": "configuration.link.security.restls.version_hint"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].restls-opts.restls-script",
+      "model_path": "configuration.link.security.restls.restls_script"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].jls-opts.username",
+      "model_path": "configuration.link.security.jls.username"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].jls-opts.password",
+      "model_path": "configuration.link.security.jls.password"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].reality-opts.public-key",
+      "model_path": "configuration.link.security.reality.public_key"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].reality-opts.short-id",
+      "model_path": "configuration.link.security.reality.short_id"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].reality-opts.support-x25519mlkem768",
+      "model_path": "configuration.link.security.reality.support_x25519mlkem768"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].tlsmirror-opts.primary-key",
+      "model_path": "configuration.link.security.tlsmirror.primary_key"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].tlsmirror-opts.explicit-nonce-ciphersuites",
+      "model_path": "configuration.link.security.tlsmirror.explicit_nonce_ciphersuites"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].tlsmirror-opts.defer-instance-derived-write-time.base-nanoseconds",
+      "model_path": "configuration.link.security.tlsmirror.defer_instance_derived_write_time.base_nanoseconds"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].tlsmirror-opts.defer-instance-derived-write-time.uniform-random-multiplier-nanoseconds",
+      "model_path": "configuration.link.security.tlsmirror.defer_instance_derived_write_time.uniform_random_multiplier_nanoseconds"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].tlsmirror-opts.transport-layer-padding.enabled",
+      "model_path": "configuration.link.security.tlsmirror.transport_layer_padding.enabled"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].tlsmirror-opts.connection-enrolment.primary-ingress-outbound",
+      "model_path": "configuration.link.security.tlsmirror.connection_enrolment.primary_ingress_outbound"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].tlsmirror-opts.connection-enrolment.primary-egress-outbound",
+      "model_path": "configuration.link.security.tlsmirror.connection_enrolment.primary_egress_outbound"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].tlsmirror-opts.embedded-traffic-generator.steps",
+      "model_path": "configuration.link.security.tlsmirror.embedded_traffic_generator.steps"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].tlsmirror-opts.sequence-watermarking-enabled",
+      "model_path": "configuration.link.security.tlsmirror.sequence_watermarking_enabled"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.url",
+      "model_path": "configuration.link.transport<mekya_transport>.url"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.h2-pool-size",
+      "model_path": "configuration.link.transport<mekya_transport>.h2_pool_size"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.max-write-delay",
+      "model_path": "configuration.link.transport<mekya_transport>.max_write_delay"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.max-request-size",
+      "model_path": "configuration.link.transport<mekya_transport>.max_request_size"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.polling-interval-initial",
+      "model_path": "configuration.link.transport<mekya_transport>.polling_interval_initial"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.max-write-size",
+      "model_path": "configuration.link.transport<mekya_transport>.max_write_size"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.max-write-duration-ms",
+      "model_path": "configuration.link.transport<mekya_transport>.max_write_duration_ms"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.max-simultaneous-write-connection",
+      "model_path": "configuration.link.transport<mekya_transport>.max_simultaneous_write_connection"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.packet-writing-buffer",
+      "model_path": "configuration.link.transport<mekya_transport>.packet_writing_buffer"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.kcp.mtu",
+      "model_path": "configuration.link.transport<mekya_transport>.kcp.mtu"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.kcp.tti",
+      "model_path": "configuration.link.transport<mekya_transport>.kcp.tti"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.kcp.uplink-capacity",
+      "model_path": "configuration.link.transport<mekya_transport>.kcp.uplink_capacity"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.kcp.downlink-capacity",
+      "model_path": "configuration.link.transport<mekya_transport>.kcp.downlink_capacity"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.kcp.congestion",
+      "model_path": "configuration.link.transport<mekya_transport>.kcp.congestion"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.kcp.write-buffer",
+      "model_path": "configuration.link.transport<mekya_transport>.kcp.write_buffer"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.kcp.read-buffer",
+      "model_path": "configuration.link.transport<mekya_transport>.kcp.read_buffer"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.kcp.seed",
+      "model_path": "configuration.link.transport<mekya_transport>.kcp.seed"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mekya-opts.kcp.header",
+      "model_path": "configuration.link.transport<mekya_transport>.kcp.header"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mkcp-opts.mtu",
+      "model_path": "configuration.link.transport<mkcp_transport>.mtu"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mkcp-opts.tti",
+      "model_path": "configuration.link.transport<mkcp_transport>.tti"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mkcp-opts.uplink-capacity",
+      "model_path": "configuration.link.transport<mkcp_transport>.uplink_capacity"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mkcp-opts.downlink-capacity",
+      "model_path": "configuration.link.transport<mkcp_transport>.downlink_capacity"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mkcp-opts.congestion",
+      "model_path": "configuration.link.transport<mkcp_transport>.congestion"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mkcp-opts.write-buffer",
+      "model_path": "configuration.link.transport<mkcp_transport>.write_buffer"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mkcp-opts.read-buffer",
+      "model_path": "configuration.link.transport<mkcp_transport>.read_buffer"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mkcp-opts.seed",
+      "model_path": "configuration.link.transport<mkcp_transport>.seed"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].mkcp-opts.header",
+      "model_path": "configuration.link.transport<mkcp_transport>.header"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].http-opts.method",
+      "model_path": "configuration.link.transport<http_transport>.method"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].http-opts.path",
+      "model_path": "configuration.link.transport<http_transport>.path"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].http-opts.headers",
+      "model_path": "configuration.link.transport<http_transport>.headers"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].h2-opts.host",
+      "model_path": "configuration.link.transport<http2_transport>.host"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].h2-opts.path",
+      "model_path": "configuration.link.transport<http2_transport>.path"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].grpc-opts.grpc-service-name",
+      "model_path": "configuration.link.transport<grpc_transport>.grpc_service_name"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].grpc-opts.grpc-user-agent",
+      "model_path": "configuration.link.transport<grpc_transport>.grpc_user_agent"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].grpc-opts.ping-interval",
+      "model_path": "configuration.link.transport<grpc_transport>.ping_interval"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].grpc-opts.max-connections",
+      "model_path": "configuration.link.transport<grpc_transport>.max_connections"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].grpc-opts.min-streams",
+      "model_path": "configuration.link.transport<grpc_transport>.min_streams"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].grpc-opts.max-streams",
+      "model_path": "configuration.link.transport<grpc_transport>.max_streams"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].ws-opts.path",
+      "model_path": "configuration.link.transport<websocket_transport>.path"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].ws-opts.headers",
+      "model_path": "configuration.link.transport<websocket_transport>.headers"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].ws-opts.max-early-data",
+      "model_path": "configuration.link.transport<websocket_transport>.max_early_data"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].ws-opts.early-data-header-name",
+      "model_path": "configuration.link.transport<websocket_transport>.early_data_header_name"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].ws-opts.v2ray-http-upgrade",
+      "model_path": "configuration.link.transport<websocket_transport>.v2ray_http_upgrade"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].ws-opts.v2ray-http-upgrade-fast-open",
+      "model_path": "configuration.link.transport<websocket_transport>.v2ray_http_upgrade_fast_open"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].packet-addr",
+      "model_path": "configuration.link.packet.packet_addr"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].xudp",
+      "model_path": "configuration.link.packet.xudp"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].packet-encoding",
+      "model_path": "configuration.link.packet.packet_encoding"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].global-padding",
+      "model_path": "configuration.detail<vmess_param>.global_padding"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].authenticated-length",
+      "model_path": "configuration.detail<vmess_param>.authenticated_length"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].client-fingerprint",
+      "model_path": "configuration.link.security.tls.client_fingerprint"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].smux.enabled",
+      "model_path": "configuration.link.smux.enabled"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].smux.protocol",
+      "model_path": "configuration.link.smux.protocol"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].smux.max-connections",
+      "model_path": "configuration.link.smux.max_connections"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].smux.min-streams",
+      "model_path": "configuration.link.smux.min_streams"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].smux.max-streams",
+      "model_path": "configuration.link.smux.max_streams"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].smux.padding",
+      "model_path": "configuration.link.smux.padding"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].smux.statistic",
+      "model_path": "configuration.link.smux.statistic"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].smux.only-tcp",
+      "model_path": "configuration.link.smux.only_tcp"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].smux.brutal-opts.enabled",
+      "model_path": "configuration.link.smux.brutal_opts.enabled"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].smux.brutal-opts.up",
+      "model_path": "configuration.link.smux.brutal_opts.uplink"
+    },
+    {
+      "context": "proxy-vmess",
+      "kernel_path": "proxies[].smux.brutal-opts.down",
+      "model_path": "configuration.link.smux.brutal_opts.downlink"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].tfo",
+      "model_path": "configuration.link.tcp_fast_open"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].mptcp",
+      "model_path": "configuration.link.multipath_tcp"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].interface-name",
+      "model_path": "configuration.link.interface_name"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].routing-mark",
+      "model_path": "configuration.link.routing_mark"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].ip-version",
+      "model_path": "configuration.link.ip_policy"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].dialer-proxy",
+      "model_path": "configuration.link.dialer_proxy"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].uuid",
+      "model_path": "configuration.detail<vless_param>.uuid"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].flow",
+      "model_path": "configuration.detail<vless_param>.flow"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].tls",
+      "model_path": "configuration.link.security.tls.enabled"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].alpn",
+      "model_path": "configuration.link.security.tls.alpn"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].udp",
+      "model_path": "configuration.link.udp"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].packet-addr",
+      "model_path": "configuration.link.packet.packet_addr"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xudp",
+      "model_path": "configuration.link.packet.xudp"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].packet-encoding",
+      "model_path": "configuration.link.packet.packet_encoding"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].encryption",
+      "model_path": "configuration.detail<vless_param>.encryption"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].ech-opts.enable",
+      "model_path": "configuration.link.security.ech.enable"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].ech-opts.config",
+      "model_path": "configuration.link.security.ech.config"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].ech-opts.query-server-name",
+      "model_path": "configuration.link.security.ech.query_server_name"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].shadow-tls-opts.password",
+      "model_path": "configuration.link.security.shadow_tls.password"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].shadow-tls-opts.version",
+      "model_path": "configuration.link.security.shadow_tls.version"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].restls-opts.password",
+      "model_path": "configuration.link.security.restls.password"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].restls-opts.version-hint",
+      "model_path": "configuration.link.security.restls.version_hint"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].restls-opts.restls-script",
+      "model_path": "configuration.link.security.restls.restls_script"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].jls-opts.username",
+      "model_path": "configuration.link.security.jls.username"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].jls-opts.password",
+      "model_path": "configuration.link.security.jls.password"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].reality-opts.public-key",
+      "model_path": "configuration.link.security.reality.public_key"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].reality-opts.short-id",
+      "model_path": "configuration.link.security.reality.short_id"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].reality-opts.support-x25519mlkem768",
+      "model_path": "configuration.link.security.reality.support_x25519mlkem768"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].http-opts.method",
+      "model_path": "configuration.link.transport<http_transport>.method"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].http-opts.path",
+      "model_path": "configuration.link.transport<http_transport>.path"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].http-opts.headers",
+      "model_path": "configuration.link.transport<http_transport>.headers"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].h2-opts.host",
+      "model_path": "configuration.link.transport<http2_transport>.host"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].h2-opts.path",
+      "model_path": "configuration.link.transport<http2_transport>.path"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].grpc-opts.grpc-service-name",
+      "model_path": "configuration.link.transport<grpc_transport>.grpc_service_name"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].grpc-opts.grpc-user-agent",
+      "model_path": "configuration.link.transport<grpc_transport>.grpc_user_agent"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].grpc-opts.ping-interval",
+      "model_path": "configuration.link.transport<grpc_transport>.ping_interval"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].grpc-opts.max-connections",
+      "model_path": "configuration.link.transport<grpc_transport>.max_connections"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].grpc-opts.min-streams",
+      "model_path": "configuration.link.transport<grpc_transport>.min_streams"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].grpc-opts.max-streams",
+      "model_path": "configuration.link.transport<grpc_transport>.max_streams"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].ws-opts.path",
+      "model_path": "configuration.link.transport<websocket_transport>.path"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].ws-opts.headers",
+      "model_path": "configuration.link.transport<websocket_transport>.headers"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].ws-opts.max-early-data",
+      "model_path": "configuration.link.transport<websocket_transport>.max_early_data"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].ws-opts.early-data-header-name",
+      "model_path": "configuration.link.transport<websocket_transport>.early_data_header_name"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].ws-opts.v2ray-http-upgrade",
+      "model_path": "configuration.link.transport<websocket_transport>.v2ray_http_upgrade"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].ws-opts.v2ray-http-upgrade-fast-open",
+      "model_path": "configuration.link.transport<websocket_transport>.v2ray_http_upgrade_fast_open"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.path",
+      "model_path": "configuration.link.transport<xhttp_transport>.path"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.host",
+      "model_path": "configuration.link.transport<xhttp_transport>.host"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.mode",
+      "model_path": "configuration.link.transport<xhttp_transport>.mode"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.headers",
+      "model_path": "configuration.link.transport<xhttp_transport>.headers"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.no-grpc-header",
+      "model_path": "configuration.link.transport<xhttp_transport>.no_grpc_header"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.x-padding-bytes",
+      "model_path": "configuration.link.transport<xhttp_transport>.x_padding_bytes"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.x-padding-obfs-mode",
+      "model_path": "configuration.link.transport<xhttp_transport>.x_padding_obfs_mode"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.x-padding-key",
+      "model_path": "configuration.link.transport<xhttp_transport>.x_padding_key"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.x-padding-header",
+      "model_path": "configuration.link.transport<xhttp_transport>.x_padding_header"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.x-padding-placement",
+      "model_path": "configuration.link.transport<xhttp_transport>.x_padding_placement"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.x-padding-method",
+      "model_path": "configuration.link.transport<xhttp_transport>.x_padding_method"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.uplink-http-method",
+      "model_path": "configuration.link.transport<xhttp_transport>.uplink_http_method"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.session-placement",
+      "model_path": "configuration.link.transport<xhttp_transport>.session_placement"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.session-key",
+      "model_path": "configuration.link.transport<xhttp_transport>.session_key"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.session-table",
+      "model_path": "configuration.link.transport<xhttp_transport>.session_table"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.session-length",
+      "model_path": "configuration.link.transport<xhttp_transport>.session_length"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.seq-placement",
+      "model_path": "configuration.link.transport<xhttp_transport>.seq_placement"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.seq-key",
+      "model_path": "configuration.link.transport<xhttp_transport>.seq_key"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.uplink-data-placement",
+      "model_path": "configuration.link.transport<xhttp_transport>.uplink_data_placement"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.uplink-data-key",
+      "model_path": "configuration.link.transport<xhttp_transport>.uplink_data_key"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.uplink-chunk-size",
+      "model_path": "configuration.link.transport<xhttp_transport>.uplink_chunk_size"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.sc-max-each-post-bytes",
+      "model_path": "configuration.link.transport<xhttp_transport>.sc_max_each_post_bytes"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.sc-min-posts-interval-ms",
+      "model_path": "configuration.link.transport<xhttp_transport>.sc_min_posts_interval_ms"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.reuse-settings.max-concurrency",
+      "model_path": "configuration.link.transport<xhttp_transport>.reuse_settings.max_concurrency"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.reuse-settings.max-connections",
+      "model_path": "configuration.link.transport<xhttp_transport>.reuse_settings.max_connections"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.reuse-settings.c-max-reuse-times",
+      "model_path": "configuration.link.transport<xhttp_transport>.reuse_settings.c_max_reuse_times"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.reuse-settings.h-max-request-times",
+      "model_path": "configuration.link.transport<xhttp_transport>.reuse_settings.h_max_request_times"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.reuse-settings.h-max-reusable-secs",
+      "model_path": "configuration.link.transport<xhttp_transport>.reuse_settings.h_max_reusable_secs"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.reuse-settings.h-keep-alive-period",
+      "model_path": "configuration.link.transport<xhttp_transport>.reuse_settings.h_keep_alive_period"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.path",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.path"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.host",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.host"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.headers",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.headers"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.reuse-settings.max-concurrency",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.reuse_settings.max_concurrency"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.reuse-settings.max-connections",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.reuse_settings.max_connections"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.reuse-settings.c-max-reuse-times",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.reuse_settings.c_max_reuse_times"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.reuse-settings.h-max-request-times",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.reuse_settings.h_max_request_times"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.reuse-settings.h-max-reusable-secs",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.reuse_settings.h_max_reusable_secs"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.reuse-settings.h-keep-alive-period",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.reuse_settings.h_keep_alive_period"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.server",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.server"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.port",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.port"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.tls",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.tls"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.alpn",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.alpn"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.ech-opts.enable",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.ech_opts.enable"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.ech-opts.config",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.ech_opts.config"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.ech-opts.query-server-name",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.ech_opts.query_server_name"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.shadow-tls-opts.password",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.shadow_tls_opts.password"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.shadow-tls-opts.version",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.shadow_tls_opts.version"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.restls-opts.password",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.restls_opts.password"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.restls-opts.version-hint",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.restls_opts.version_hint"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.restls-opts.restls-script",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.restls_opts.restls_script"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.jls-opts.username",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.jls_opts.username"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.jls-opts.password",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.jls_opts.password"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.reality-opts.public-key",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.reality_opts.public_key"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.reality-opts.short-id",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.reality_opts.short_id"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.reality-opts.support-x25519mlkem768",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.reality_opts.support_x25519mlkem768"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.skip-cert-verify",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.skip_cert_verify"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.name-cert-verify",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.name_cert_verify"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.fingerprint",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.fingerprint"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.certificate",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.certificate"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.private-key",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.private_key"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.servername",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.servername"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].xhttp-opts.download-settings.client-fingerprint",
+      "model_path": "configuration.link.transport<xhttp_transport>.download_settings.client_fingerprint"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].skip-cert-verify",
+      "model_path": "configuration.link.security.tls.skip_cert_verify"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].name-cert-verify",
+      "model_path": "configuration.link.security.tls.name_cert_verify"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].fingerprint",
+      "model_path": "configuration.link.security.tls.certificate_fingerprint"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].certificate",
+      "model_path": "configuration.link.security.tls.certificate"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].private-key",
+      "model_path": "configuration.link.security.tls.private_key"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].servername",
+      "model_path": "configuration.link.security.tls.server_name"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].client-fingerprint",
+      "model_path": "configuration.link.security.tls.client_fingerprint"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].smux.enabled",
+      "model_path": "configuration.link.smux.enabled"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].smux.protocol",
+      "model_path": "configuration.link.smux.protocol"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].smux.max-connections",
+      "model_path": "configuration.link.smux.max_connections"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].smux.min-streams",
+      "model_path": "configuration.link.smux.min_streams"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].smux.max-streams",
+      "model_path": "configuration.link.smux.max_streams"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].smux.padding",
+      "model_path": "configuration.link.smux.padding"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].smux.statistic",
+      "model_path": "configuration.link.smux.statistic"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].smux.only-tcp",
+      "model_path": "configuration.link.smux.only_tcp"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].smux.brutal-opts.enabled",
+      "model_path": "configuration.link.smux.brutal_opts.enabled"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].smux.brutal-opts.up",
+      "model_path": "configuration.link.smux.brutal_opts.uplink"
+    },
+    {
+      "context": "proxy-vless",
+      "kernel_path": "proxies[].smux.brutal-opts.down",
+      "model_path": "configuration.link.smux.brutal_opts.downlink"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].tfo",
+      "model_path": "configuration.link.tcp_fast_open"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].mptcp",
+      "model_path": "configuration.link.multipath_tcp"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].interface-name",
+      "model_path": "configuration.link.interface_name"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].routing-mark",
+      "model_path": "configuration.link.routing_mark"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].ip-version",
+      "model_path": "configuration.link.ip_policy"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].dialer-proxy",
+      "model_path": "configuration.link.dialer_proxy"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].password",
+      "model_path": "configuration.detail<trojan_param>.password"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].alpn",
+      "model_path": "configuration.link.security.tls.alpn"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].sni",
+      "model_path": "configuration.link.security.tls.server_name"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].skip-cert-verify",
+      "model_path": "configuration.link.security.tls.skip_cert_verify"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].name-cert-verify",
+      "model_path": "configuration.link.security.tls.name_cert_verify"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].fingerprint",
+      "model_path": "configuration.link.security.tls.certificate_fingerprint"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].certificate",
+      "model_path": "configuration.link.security.tls.certificate"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].private-key",
+      "model_path": "configuration.link.security.tls.private_key"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].udp",
+      "model_path": "configuration.link.udp"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].ech-opts.enable",
+      "model_path": "configuration.link.security.ech.enable"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].ech-opts.config",
+      "model_path": "configuration.link.security.ech.config"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].ech-opts.query-server-name",
+      "model_path": "configuration.link.security.ech.query_server_name"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].shadow-tls-opts.password",
+      "model_path": "configuration.link.security.shadow_tls.password"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].shadow-tls-opts.version",
+      "model_path": "configuration.link.security.shadow_tls.version"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].restls-opts.password",
+      "model_path": "configuration.link.security.restls.password"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].restls-opts.version-hint",
+      "model_path": "configuration.link.security.restls.version_hint"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].restls-opts.restls-script",
+      "model_path": "configuration.link.security.restls.restls_script"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].jls-opts.username",
+      "model_path": "configuration.link.security.jls.username"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].jls-opts.password",
+      "model_path": "configuration.link.security.jls.password"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].reality-opts.public-key",
+      "model_path": "configuration.link.security.reality.public_key"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].reality-opts.short-id",
+      "model_path": "configuration.link.security.reality.short_id"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].reality-opts.support-x25519mlkem768",
+      "model_path": "configuration.link.security.reality.support_x25519mlkem768"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].grpc-opts.grpc-service-name",
+      "model_path": "configuration.link.transport<grpc_transport>.grpc_service_name"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].grpc-opts.grpc-user-agent",
+      "model_path": "configuration.link.transport<grpc_transport>.grpc_user_agent"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].grpc-opts.ping-interval",
+      "model_path": "configuration.link.transport<grpc_transport>.ping_interval"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].grpc-opts.max-connections",
+      "model_path": "configuration.link.transport<grpc_transport>.max_connections"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].grpc-opts.min-streams",
+      "model_path": "configuration.link.transport<grpc_transport>.min_streams"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].grpc-opts.max-streams",
+      "model_path": "configuration.link.transport<grpc_transport>.max_streams"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].ws-opts.path",
+      "model_path": "configuration.link.transport<websocket_transport>.path"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].ws-opts.headers",
+      "model_path": "configuration.link.transport<websocket_transport>.headers"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].ws-opts.max-early-data",
+      "model_path": "configuration.link.transport<websocket_transport>.max_early_data"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].ws-opts.early-data-header-name",
+      "model_path": "configuration.link.transport<websocket_transport>.early_data_header_name"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].ws-opts.v2ray-http-upgrade",
+      "model_path": "configuration.link.transport<websocket_transport>.v2ray_http_upgrade"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].ws-opts.v2ray-http-upgrade-fast-open",
+      "model_path": "configuration.link.transport<websocket_transport>.v2ray_http_upgrade_fast_open"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].ss-opts.enabled",
+      "model_path": "configuration.detail<trojan_param>.ss_opts.enabled"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].ss-opts.method",
+      "model_path": "configuration.detail<trojan_param>.ss_opts.method"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].ss-opts.password",
+      "model_path": "configuration.detail<trojan_param>.ss_opts.password"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].client-fingerprint",
+      "model_path": "configuration.link.security.tls.client_fingerprint"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].smux.enabled",
+      "model_path": "configuration.link.smux.enabled"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].smux.protocol",
+      "model_path": "configuration.link.smux.protocol"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].smux.max-connections",
+      "model_path": "configuration.link.smux.max_connections"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].smux.min-streams",
+      "model_path": "configuration.link.smux.min_streams"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].smux.max-streams",
+      "model_path": "configuration.link.smux.max_streams"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].smux.padding",
+      "model_path": "configuration.link.smux.padding"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].smux.statistic",
+      "model_path": "configuration.link.smux.statistic"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].smux.only-tcp",
+      "model_path": "configuration.link.smux.only_tcp"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].smux.brutal-opts.enabled",
+      "model_path": "configuration.link.smux.brutal_opts.enabled"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].smux.brutal-opts.up",
+      "model_path": "configuration.link.smux.brutal_opts.uplink"
+    },
+    {
+      "context": "proxy-trojan",
+      "kernel_path": "proxies[].smux.brutal-opts.down",
+      "model_path": "configuration.link.smux.brutal_opts.downlink"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].interface-name",
+      "model_path": "configuration.link.interface_name"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].routing-mark",
+      "model_path": "configuration.link.routing_mark"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].ip-version",
+      "model_path": "configuration.link.ip_policy"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].dialer-proxy",
+      "model_path": "configuration.link.dialer_proxy"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].ports",
+      "model_path": "configuration.link.port_hopping.ports"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].hop-interval",
+      "model_path": "configuration.link.port_hopping.interval"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].up",
+      "model_path": "configuration.link.bandwidth.uplink"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].down",
+      "model_path": "configuration.link.bandwidth.downlink"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].password",
+      "model_path": "configuration.detail<hysteria2_param>.password"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].obfs",
+      "model_path": "configuration.detail<hysteria2_param>.obfs"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].obfs-password",
+      "model_path": "configuration.detail<hysteria2_param>.obfs_password"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].obfs-min-packet-size",
+      "model_path": "configuration.detail<hysteria2_param>.obfs_min_packet_size"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].obfs-max-packet-size",
+      "model_path": "configuration.detail<hysteria2_param>.obfs_max_packet_size"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].sni",
+      "model_path": "configuration.link.security.tls.server_name"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].ech-opts.enable",
+      "model_path": "configuration.link.security.ech.enable"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].ech-opts.config",
+      "model_path": "configuration.link.security.ech.config"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].ech-opts.query-server-name",
+      "model_path": "configuration.link.security.ech.query_server_name"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].skip-cert-verify",
+      "model_path": "configuration.link.security.tls.skip_cert_verify"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].name-cert-verify",
+      "model_path": "configuration.link.security.tls.name_cert_verify"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].fingerprint",
+      "model_path": "configuration.link.security.tls.certificate_fingerprint"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].certificate",
+      "model_path": "configuration.link.security.tls.certificate"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].private-key",
+      "model_path": "configuration.link.security.tls.private_key"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].alpn",
+      "model_path": "configuration.link.security.tls.alpn"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].cwnd",
+      "model_path": "configuration.link.quic.cwnd"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].bbr-profile",
+      "model_path": "configuration.link.quic.bbr_profile"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].udp-mtu",
+      "model_path": "configuration.link.quic.udp_mtu"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].handshake-timeout",
+      "model_path": "configuration.link.handshake_timeout"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].realm-opts.enable",
+      "model_path": "configuration.detail<hysteria2_param>.realm_opts.enable"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].realm-opts.server-url",
+      "model_path": "configuration.detail<hysteria2_param>.realm_opts.server_url"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].realm-opts.token",
+      "model_path": "configuration.detail<hysteria2_param>.realm_opts.token"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].realm-opts.realm-id",
+      "model_path": "configuration.detail<hysteria2_param>.realm_opts.realm_id"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].realm-opts.stun-servers",
+      "model_path": "configuration.detail<hysteria2_param>.realm_opts.stun_servers"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].realm-opts.sni",
+      "model_path": "configuration.detail<hysteria2_param>.realm_opts.sni"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].realm-opts.skip-cert-verify",
+      "model_path": "configuration.detail<hysteria2_param>.realm_opts.skip_cert_verify"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].realm-opts.name-cert-verify",
+      "model_path": "configuration.detail<hysteria2_param>.realm_opts.name_cert_verify"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].realm-opts.fingerprint",
+      "model_path": "configuration.detail<hysteria2_param>.realm_opts.fingerprint"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].realm-opts.certificate",
+      "model_path": "configuration.detail<hysteria2_param>.realm_opts.certificate"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].realm-opts.private-key",
+      "model_path": "configuration.detail<hysteria2_param>.realm_opts.private_key"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].realm-opts.alpn",
+      "model_path": "configuration.detail<hysteria2_param>.realm_opts.alpn"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].initial-stream-receive-window",
+      "model_path": "configuration.link.quic.initial_stream_receive_window"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].max-stream-receive-window",
+      "model_path": "configuration.link.quic.max_stream_receive_window"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].initial-connection-receive-window",
+      "model_path": "configuration.link.quic.initial_connection_receive_window"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].max-connection-receive-window",
+      "model_path": "configuration.link.quic.max_connection_receive_window"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].smux.enabled",
+      "model_path": "configuration.link.smux.enabled"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].smux.protocol",
+      "model_path": "configuration.link.smux.protocol"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].smux.max-connections",
+      "model_path": "configuration.link.smux.max_connections"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].smux.min-streams",
+      "model_path": "configuration.link.smux.min_streams"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].smux.max-streams",
+      "model_path": "configuration.link.smux.max_streams"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].smux.padding",
+      "model_path": "configuration.link.smux.padding"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].smux.statistic",
+      "model_path": "configuration.link.smux.statistic"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].smux.only-tcp",
+      "model_path": "configuration.link.smux.only_tcp"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].smux.brutal-opts.enabled",
+      "model_path": "configuration.link.smux.brutal_opts.enabled"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].smux.brutal-opts.up",
+      "model_path": "configuration.link.smux.brutal_opts.uplink"
+    },
+    {
+      "context": "proxy-hysteria2",
+      "kernel_path": "proxies[].smux.brutal-opts.down",
+      "model_path": "configuration.link.smux.brutal_opts.downlink"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].interface-name",
+      "model_path": "configuration.link.interface_name"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].routing-mark",
+      "model_path": "configuration.link.routing_mark"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].ip-version",
+      "model_path": "configuration.link.ip_policy"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].dialer-proxy",
+      "model_path": "configuration.link.dialer_proxy"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].public-key",
+      "model_path": "configuration.detail<wireguard_param>.public_key"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].pre-shared-key",
+      "model_path": "configuration.detail<wireguard_param>.pre_shared_key"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].reserved",
+      "model_path": "configuration.detail<wireguard_param>.reserved"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].allowed-ips",
+      "model_path": "configuration.detail<wireguard_param>.allowed_ips"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].ip",
+      "model_path": "configuration.detail<wireguard_param>.ipv4_address"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].ipv6",
+      "model_path": "configuration.detail<wireguard_param>.ipv6_address"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].private-key",
+      "model_path": "configuration.detail<wireguard_param>.private_key"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].workers",
+      "model_path": "configuration.detail<wireguard_param>.workers"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].mtu",
+      "model_path": "configuration.detail<wireguard_param>.mtu"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].udp",
+      "model_path": "configuration.link.udp"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].persistent-keepalive",
+      "model_path": "configuration.detail<wireguard_param>.persistent_keepalive"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].ip-stack.mode",
+      "model_path": "configuration.detail<wireguard_param>.ip_stack.mode"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].ip-stack.congestion-controller",
+      "model_path": "configuration.detail<wireguard_param>.ip_stack.congestion_controller"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.version",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.version"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.jc",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.junk_count"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.jmin",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.jmin"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.jmax",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.jmax"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.s1",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.awg_s1"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.s2",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.awg_s2"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.s3",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.awg_s3"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.s4",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.awg_s4"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.h1",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.awg_h1"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.h2",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.awg_h2"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.h3",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.awg_h3"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.h4",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.awg_h4"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.i1",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.awg_i1"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.i2",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.awg_i2"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.i3",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.awg_i3"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.i4",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.awg_i4"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.i5",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.awg_i5"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.j1",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.awg_j1"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.j2",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.awg_j2"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.j3",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.awg_j3"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.itime",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.itime"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.header-protection-key",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.header_protection_key"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.content-padding-addition",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.content_padding_addition"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.rekey-after-time",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.rekey_after_time"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.rekey-timeout",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.rekey_timeout"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.reject-after-time",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.reject_after_time"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.keepalive-timeout",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.keepalive_timeout"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.max-handshake-attempts",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.max_handshake_attempts"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.random-trailers",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.random_trailers"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].amnezia-wg-option.disable-cookies",
+      "model_path": "configuration.detail<wireguard_param>.amnezia_wg_option.disable_cookies"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].peers",
+      "model_path": "configuration.detail<wireguard_param>.peers"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].remote-dns-resolve",
+      "model_path": "configuration.detail<wireguard_param>.remote_dns_resolve"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].dns",
+      "model_path": "configuration.detail<wireguard_param>.dns"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].refresh-server-ip-interval",
+      "model_path": "configuration.detail<wireguard_param>.refresh_server_ip_interval"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].smux.enabled",
+      "model_path": "configuration.link.smux.enabled"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].smux.protocol",
+      "model_path": "configuration.link.smux.protocol"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].smux.max-connections",
+      "model_path": "configuration.link.smux.max_connections"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].smux.min-streams",
+      "model_path": "configuration.link.smux.min_streams"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].smux.max-streams",
+      "model_path": "configuration.link.smux.max_streams"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].smux.padding",
+      "model_path": "configuration.link.smux.padding"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].smux.statistic",
+      "model_path": "configuration.link.smux.statistic"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].smux.only-tcp",
+      "model_path": "configuration.link.smux.only_tcp"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].smux.brutal-opts.enabled",
+      "model_path": "configuration.link.smux.brutal_opts.enabled"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].smux.brutal-opts.up",
+      "model_path": "configuration.link.smux.brutal_opts.uplink"
+    },
+    {
+      "context": "proxy-wireguard",
+      "kernel_path": "proxies[].smux.brutal-opts.down",
+      "model_path": "configuration.link.smux.brutal_opts.downlink"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].interface-name",
+      "model_path": "configuration.link.interface_name"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].routing-mark",
+      "model_path": "configuration.link.routing_mark"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].ip-version",
+      "model_path": "configuration.link.ip_policy"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].dialer-proxy",
+      "model_path": "configuration.link.dialer_proxy"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].token",
+      "model_path": "configuration.detail<tuic_param>.token"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].uuid",
+      "model_path": "configuration.detail<tuic_param>.uuid"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].password",
+      "model_path": "configuration.detail<tuic_param>.password"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].ip",
+      "model_path": "configuration.detail<tuic_param>.ipv4_address"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].heartbeat-interval",
+      "model_path": "configuration.link.quic.heartbeat_interval"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].alpn",
+      "model_path": "configuration.link.security.tls.alpn"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].reduce-rtt",
+      "model_path": "configuration.link.quic.reduce_rtt"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].request-timeout",
+      "model_path": "configuration.link.quic.request_timeout"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].udp-relay-mode",
+      "model_path": "configuration.link.quic.udp_relay_mode"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].congestion-controller",
+      "model_path": "configuration.link.quic.congestion_controller"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].disable-sni",
+      "model_path": "configuration.link.security.tls.disable_sni"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].max-udp-relay-packet-size",
+      "model_path": "configuration.link.quic.max_udp_relay_packet_size"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].fast-open",
+      "model_path": "configuration.link.quic.fast_open"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].max-open-streams",
+      "model_path": "configuration.link.quic.max_open_streams"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].cwnd",
+      "model_path": "configuration.link.quic.cwnd"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].bbr-profile",
+      "model_path": "configuration.link.quic.bbr_profile"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].skip-cert-verify",
+      "model_path": "configuration.link.security.tls.skip_cert_verify"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].name-cert-verify",
+      "model_path": "configuration.link.security.tls.name_cert_verify"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].fingerprint",
+      "model_path": "configuration.link.security.tls.certificate_fingerprint"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].certificate",
+      "model_path": "configuration.link.security.tls.certificate"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].private-key",
+      "model_path": "configuration.link.security.tls.private_key"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].recv-window-conn",
+      "model_path": "configuration.link.quic.recv_window_conn"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].recv-window",
+      "model_path": "configuration.link.quic.recv_window"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].disable-mtu-discovery",
+      "model_path": "configuration.link.quic.disable_mtu_discovery"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].max-datagram-frame-size",
+      "model_path": "configuration.link.quic.max_datagram_frame_size"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].sni",
+      "model_path": "configuration.link.security.tls.server_name"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].ech-opts.enable",
+      "model_path": "configuration.link.security.ech.enable"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].ech-opts.config",
+      "model_path": "configuration.link.security.ech.config"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].ech-opts.query-server-name",
+      "model_path": "configuration.link.security.ech.query_server_name"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].udp-over-stream",
+      "model_path": "configuration.link.packet.udp_over_stream"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].udp-over-stream-version",
+      "model_path": "configuration.link.packet.udp_over_stream_version"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].smux.enabled",
+      "model_path": "configuration.link.smux.enabled"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].smux.protocol",
+      "model_path": "configuration.link.smux.protocol"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].smux.max-connections",
+      "model_path": "configuration.link.smux.max_connections"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].smux.min-streams",
+      "model_path": "configuration.link.smux.min_streams"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].smux.max-streams",
+      "model_path": "configuration.link.smux.max_streams"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].smux.padding",
+      "model_path": "configuration.link.smux.padding"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].smux.statistic",
+      "model_path": "configuration.link.smux.statistic"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].smux.only-tcp",
+      "model_path": "configuration.link.smux.only_tcp"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].smux.brutal-opts.enabled",
+      "model_path": "configuration.link.smux.brutal_opts.enabled"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].smux.brutal-opts.up",
+      "model_path": "configuration.link.smux.brutal_opts.uplink"
+    },
+    {
+      "context": "proxy-tuic",
+      "kernel_path": "proxies[].smux.brutal-opts.down",
+      "model_path": "configuration.link.smux.brutal_opts.downlink"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].tfo",
+      "model_path": "configuration.link.tcp_fast_open"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].mptcp",
+      "model_path": "configuration.link.multipath_tcp"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].interface-name",
+      "model_path": "configuration.link.interface_name"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].routing-mark",
+      "model_path": "configuration.link.routing_mark"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].ip-version",
+      "model_path": "configuration.link.ip_policy"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].dialer-proxy",
+      "model_path": "configuration.link.dialer_proxy"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].password",
+      "model_path": "configuration.detail<anytls_param>.password"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].alpn",
+      "model_path": "configuration.link.security.tls.alpn"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].sni",
+      "model_path": "configuration.link.security.tls.server_name"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].ech-opts.enable",
+      "model_path": "configuration.link.security.ech.enable"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].ech-opts.config",
+      "model_path": "configuration.link.security.ech.config"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].ech-opts.query-server-name",
+      "model_path": "configuration.link.security.ech.query_server_name"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].shadow-tls-opts.password",
+      "model_path": "configuration.link.security.shadow_tls.password"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].shadow-tls-opts.version",
+      "model_path": "configuration.link.security.shadow_tls.version"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].restls-opts.password",
+      "model_path": "configuration.link.security.restls.password"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].restls-opts.version-hint",
+      "model_path": "configuration.link.security.restls.version_hint"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].restls-opts.restls-script",
+      "model_path": "configuration.link.security.restls.restls_script"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].jls-opts.username",
+      "model_path": "configuration.link.security.jls.username"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].jls-opts.password",
+      "model_path": "configuration.link.security.jls.password"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].client-fingerprint",
+      "model_path": "configuration.link.security.tls.client_fingerprint"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].skip-cert-verify",
+      "model_path": "configuration.link.security.tls.skip_cert_verify"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].name-cert-verify",
+      "model_path": "configuration.link.security.tls.name_cert_verify"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].fingerprint",
+      "model_path": "configuration.link.security.tls.certificate_fingerprint"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].certificate",
+      "model_path": "configuration.link.security.tls.certificate"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].private-key",
+      "model_path": "configuration.link.security.tls.private_key"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].udp",
+      "model_path": "configuration.link.udp"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].client-metadata",
+      "model_path": "configuration.detail<anytls_param>.client_metadata"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].idle-session-check-interval",
+      "model_path": "configuration.detail<anytls_param>.idle_session_check_interval"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].idle-session-timeout",
+      "model_path": "configuration.detail<anytls_param>.idle_session_timeout"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].min-idle-session",
+      "model_path": "configuration.detail<anytls_param>.min_idle_session"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].disable-reuse",
+      "model_path": "configuration.detail<anytls_param>.disable_reuse"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].smux.enabled",
+      "model_path": "configuration.link.smux.enabled"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].smux.protocol",
+      "model_path": "configuration.link.smux.protocol"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].smux.max-connections",
+      "model_path": "configuration.link.smux.max_connections"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].smux.min-streams",
+      "model_path": "configuration.link.smux.min_streams"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].smux.max-streams",
+      "model_path": "configuration.link.smux.max_streams"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].smux.padding",
+      "model_path": "configuration.link.smux.padding"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].smux.statistic",
+      "model_path": "configuration.link.smux.statistic"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].smux.only-tcp",
+      "model_path": "configuration.link.smux.only_tcp"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].smux.brutal-opts.enabled",
+      "model_path": "configuration.link.smux.brutal_opts.enabled"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].smux.brutal-opts.up",
+      "model_path": "configuration.link.smux.brutal_opts.uplink"
+    },
+    {
+      "context": "proxy-anytls",
+      "kernel_path": "proxies[].smux.brutal-opts.down",
+      "model_path": "configuration.link.smux.brutal_opts.downlink"
+    },
+    {
+      "context": "plugin-obfs",
+      "kernel_path": "proxies[].plugin-opts.mode",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<simple_obfs_param>.mode"
+    },
+    {
+      "context": "plugin-obfs",
+      "kernel_path": "proxies[].plugin-opts.host",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<simple_obfs_param>.host"
+    },
+    {
+      "context": "plugin-v2ray-plugin",
+      "kernel_path": "proxies[].plugin-opts.mode",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<v2ray_plugin_param>.mode"
+    },
+    {
+      "context": "plugin-v2ray-plugin",
+      "kernel_path": "proxies[].plugin-opts.host",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<v2ray_plugin_param>.host"
+    },
+    {
+      "context": "plugin-v2ray-plugin",
+      "kernel_path": "proxies[].plugin-opts.path",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<v2ray_plugin_param>.path"
+    },
+    {
+      "context": "plugin-v2ray-plugin",
+      "kernel_path": "proxies[].plugin-opts.tls",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<v2ray_plugin_param>.tls"
+    },
+    {
+      "context": "plugin-v2ray-plugin",
+      "kernel_path": "proxies[].plugin-opts.ech-opts.enable",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<v2ray_plugin_param>.ech_opts.enable"
+    },
+    {
+      "context": "plugin-v2ray-plugin",
+      "kernel_path": "proxies[].plugin-opts.ech-opts.config",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<v2ray_plugin_param>.ech_opts.config"
+    },
+    {
+      "context": "plugin-v2ray-plugin",
+      "kernel_path": "proxies[].plugin-opts.ech-opts.query-server-name",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<v2ray_plugin_param>.ech_opts.query_server_name"
+    },
+    {
+      "context": "plugin-v2ray-plugin",
+      "kernel_path": "proxies[].plugin-opts.fingerprint",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<v2ray_plugin_param>.fingerprint"
+    },
+    {
+      "context": "plugin-v2ray-plugin",
+      "kernel_path": "proxies[].plugin-opts.certificate",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<v2ray_plugin_param>.certificate"
+    },
+    {
+      "context": "plugin-v2ray-plugin",
+      "kernel_path": "proxies[].plugin-opts.private-key",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<v2ray_plugin_param>.private_key"
+    },
+    {
+      "context": "plugin-v2ray-plugin",
+      "kernel_path": "proxies[].plugin-opts.headers",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<v2ray_plugin_param>.headers"
+    },
+    {
+      "context": "plugin-v2ray-plugin",
+      "kernel_path": "proxies[].plugin-opts.skip-cert-verify",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<v2ray_plugin_param>.skip_cert_verify"
+    },
+    {
+      "context": "plugin-v2ray-plugin",
+      "kernel_path": "proxies[].plugin-opts.name-cert-verify",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<v2ray_plugin_param>.name_cert_verify"
+    },
+    {
+      "context": "plugin-v2ray-plugin",
+      "kernel_path": "proxies[].plugin-opts.mux",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<v2ray_plugin_param>.mux"
+    },
+    {
+      "context": "plugin-v2ray-plugin",
+      "kernel_path": "proxies[].plugin-opts.v2ray-http-upgrade",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<v2ray_plugin_param>.v2ray_http_upgrade"
+    },
+    {
+      "context": "plugin-v2ray-plugin",
+      "kernel_path": "proxies[].plugin-opts.v2ray-http-upgrade-fast-open",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<v2ray_plugin_param>.v2ray_http_upgrade_fast_open"
+    },
+    {
+      "context": "plugin-gost-plugin",
+      "kernel_path": "proxies[].plugin-opts.mode",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<gost_plugin_param>.mode"
+    },
+    {
+      "context": "plugin-gost-plugin",
+      "kernel_path": "proxies[].plugin-opts.host",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<gost_plugin_param>.host"
+    },
+    {
+      "context": "plugin-gost-plugin",
+      "kernel_path": "proxies[].plugin-opts.path",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<gost_plugin_param>.path"
+    },
+    {
+      "context": "plugin-gost-plugin",
+      "kernel_path": "proxies[].plugin-opts.tls",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<gost_plugin_param>.tls"
+    },
+    {
+      "context": "plugin-gost-plugin",
+      "kernel_path": "proxies[].plugin-opts.ech-opts.enable",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<gost_plugin_param>.ech_opts.enable"
+    },
+    {
+      "context": "plugin-gost-plugin",
+      "kernel_path": "proxies[].plugin-opts.ech-opts.config",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<gost_plugin_param>.ech_opts.config"
+    },
+    {
+      "context": "plugin-gost-plugin",
+      "kernel_path": "proxies[].plugin-opts.ech-opts.query-server-name",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<gost_plugin_param>.ech_opts.query_server_name"
+    },
+    {
+      "context": "plugin-gost-plugin",
+      "kernel_path": "proxies[].plugin-opts.fingerprint",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<gost_plugin_param>.fingerprint"
+    },
+    {
+      "context": "plugin-gost-plugin",
+      "kernel_path": "proxies[].plugin-opts.certificate",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<gost_plugin_param>.certificate"
+    },
+    {
+      "context": "plugin-gost-plugin",
+      "kernel_path": "proxies[].plugin-opts.private-key",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<gost_plugin_param>.private_key"
+    },
+    {
+      "context": "plugin-gost-plugin",
+      "kernel_path": "proxies[].plugin-opts.headers",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<gost_plugin_param>.headers"
+    },
+    {
+      "context": "plugin-gost-plugin",
+      "kernel_path": "proxies[].plugin-opts.skip-cert-verify",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<gost_plugin_param>.skip_cert_verify"
+    },
+    {
+      "context": "plugin-gost-plugin",
+      "kernel_path": "proxies[].plugin-opts.name-cert-verify",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<gost_plugin_param>.name_cert_verify"
+    },
+    {
+      "context": "plugin-gost-plugin",
+      "kernel_path": "proxies[].plugin-opts.mux",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<gost_plugin_param>.mux"
+    },
+    {
+      "context": "plugin-shadow-tls",
+      "kernel_path": "proxies[].plugin-opts.password",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<shadow_tls_plugin_param>.password"
+    },
+    {
+      "context": "plugin-shadow-tls",
+      "kernel_path": "proxies[].plugin-opts.host",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<shadow_tls_plugin_param>.host"
+    },
+    {
+      "context": "plugin-shadow-tls",
+      "kernel_path": "proxies[].plugin-opts.fingerprint",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<shadow_tls_plugin_param>.fingerprint"
+    },
+    {
+      "context": "plugin-shadow-tls",
+      "kernel_path": "proxies[].plugin-opts.certificate",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<shadow_tls_plugin_param>.certificate"
+    },
+    {
+      "context": "plugin-shadow-tls",
+      "kernel_path": "proxies[].plugin-opts.private-key",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<shadow_tls_plugin_param>.private_key"
+    },
+    {
+      "context": "plugin-shadow-tls",
+      "kernel_path": "proxies[].plugin-opts.skip-cert-verify",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<shadow_tls_plugin_param>.skip_cert_verify"
+    },
+    {
+      "context": "plugin-shadow-tls",
+      "kernel_path": "proxies[].plugin-opts.name-cert-verify",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<shadow_tls_plugin_param>.name_cert_verify"
+    },
+    {
+      "context": "plugin-shadow-tls",
+      "kernel_path": "proxies[].plugin-opts.version",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<shadow_tls_plugin_param>.version"
+    },
+    {
+      "context": "plugin-shadow-tls",
+      "kernel_path": "proxies[].plugin-opts.alpn",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<shadow_tls_plugin_param>.alpn"
+    },
+    {
+      "context": "plugin-restls",
+      "kernel_path": "proxies[].plugin-opts.password",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<restls_plugin_param>.password"
+    },
+    {
+      "context": "plugin-restls",
+      "kernel_path": "proxies[].plugin-opts.host",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<restls_plugin_param>.host"
+    },
+    {
+      "context": "plugin-restls",
+      "kernel_path": "proxies[].plugin-opts.version-hint",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<restls_plugin_param>.version_hint"
+    },
+    {
+      "context": "plugin-restls",
+      "kernel_path": "proxies[].plugin-opts.restls-script",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<restls_plugin_param>.restls_script"
+    },
+    {
+      "context": "plugin-restls",
+      "kernel_path": "proxies[].plugin-opts.fingerprint",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<restls_plugin_param>.fingerprint"
+    },
+    {
+      "context": "plugin-restls",
+      "kernel_path": "proxies[].plugin-opts.skip-cert-verify",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<restls_plugin_param>.skip_cert_verify"
+    },
+    {
+      "context": "plugin-restls",
+      "kernel_path": "proxies[].plugin-opts.name-cert-verify",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<restls_plugin_param>.name_cert_verify"
+    },
+    {
+      "context": "plugin-restls",
+      "kernel_path": "proxies[].plugin-opts.force-tls12",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<restls_plugin_param>.force_tls12"
+    },
+    {
+      "context": "plugin-jls",
+      "kernel_path": "proxies[].plugin-opts.host",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<jls_plugin_param>.host"
+    },
+    {
+      "context": "plugin-jls",
+      "kernel_path": "proxies[].plugin-opts.username",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<jls_plugin_param>.username"
+    },
+    {
+      "context": "plugin-jls",
+      "kernel_path": "proxies[].plugin-opts.password",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<jls_plugin_param>.password"
+    },
+    {
+      "context": "plugin-jls",
+      "kernel_path": "proxies[].plugin-opts.alpn",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<jls_plugin_param>.alpn"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.key",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.key_material"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.crypt",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.crypt"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.mode",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.mode"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.conn",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.conn"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.autoexpire",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.autoexpire"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.scavengettl",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.scavengettl"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.mtu",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.mtu"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.ratelimit",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.ratelimit"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.sndwnd",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.sndwnd"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.rcvwnd",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.rcvwnd"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.datashard",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.datashard"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.parityshard",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.parityshard"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.dscp",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.dscp"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.nocomp",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.nocomp"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.acknodelay",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.acknodelay"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.nodelay",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.nodelay"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.interval",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.interval"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.resend",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.resend"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.nc",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.network_congestion"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.sockbuf",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.sockbuf"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.smuxver",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.smuxver"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.smuxbuf",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.smuxbuf"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.framesize",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.framesize"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.streambuf",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.streambuf"
+    },
+    {
+      "context": "plugin-kcptun",
+      "kernel_path": "proxies[].plugin-opts.keepalive",
+      "model_path": "configuration.detail<shadowsocks_param>.plugin<kcptun_plugin_param>.keepalive"
+    }
+  ],
+  "note": "URI aliases and specialized credential/transport validation live in node_input.cpp. Container and discriminant rows are handled by URI assembly; this lists generated leaf bindings."
+}

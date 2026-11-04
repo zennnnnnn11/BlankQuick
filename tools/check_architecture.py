@@ -23,50 +23,6 @@ def load_links(path):
     return graph
 
 
-def check_links(links, foundation, local_targets):
-    reject_cycles(links, "Evaluated link")
-    for name in foundation:
-        forbidden = reachable(links, name) & (local_targets - foundation - {"rapidyaml"})
-        if forbidden:
-            raise SystemExit(f"Foundation links upper/local orchestration: {name}: {sorted(forbidden)}")
-    for name in links:
-        if name.startswith("backend_") or name == "runtime_backend":
-            if reachable(links, name) & {"Qt6::Gui", "Qt6::Quick", "Qt6::QuickControls2", "blank_quick"}:
-                raise SystemExit(f"Backend links the frontend: {name}")
-    if reachable(links, "profile_storage") & {"subscription_fetcher", "Qt6::Network"}:
-        raise SystemExit("Storage links the download/network backend")
-
-
-def check_graph_coverage(links, required_targets):
-    missing = required_targets - links.keys()
-    if missing:
-        raise SystemExit(f"Evaluated graph omits build targets: {sorted(missing)}")
-
-
-def implementation_graph(includes):
-    # These pairs are private implementations of one existing library contract.
-    cohesive = ({"src/node_input", "src/clash_material"},
-                {"src/override_engine", "src/override_dom", "src/override_detail"},
-                {"src/profile_storage", "src/profile_codec"},
-                {"src/runtime_config", "src/runtime_config_detail"})
-
-    def unit(name):
-        result = name.rsplit(".", 1)[0]
-        result = re.sub(r"(/foundation/[^/]+)/include/blank/[^/]+/", r"\1/", result)
-        for group in cohesive:
-            if result in group:
-                return min(group)
-        return result
-
-    graph = {unit(name): set() for name in includes if not name.startswith("backend/tests/")}
-    for name, dependencies in includes.items():
-        if unit(name) not in graph:
-            continue
-        graph[unit(name)].update(unit(target) for target in dependencies
-                                 if unit(target) in graph and unit(name) != unit(target))
-    return graph
-
-
 def build_state(build):
     reply = build / ".cmake/api/v1/reply"
     indices = list(reply.glob("index-*.json"))
@@ -125,8 +81,118 @@ def reject_cycles(graph, label):
         visit(item)
 
 
+def feature_owner(path):
+    parts = Path(path).parts
+    return parts[2] if len(parts) > 2 and parts[:2] == ("src", "features") else None
+
+
+def check_sources():
+    policy = json.loads((ROOT / "tools/architecture.json").read_text(encoding="utf-8"))
+    features = {name: set(dependencies) for name, dependencies in policy["features"].items()}
+    reject_cycles(features, "Declared feature")
+    files = {path.relative_to(ROOT).as_posix(): path for directory in ("src", "tests/cpp", "generated/mihomo")
+             for path in (ROOT / directory).rglob("*")
+             if path.suffix in (".cpp", ".hpp", ".h", ".inc")}
+    public = {}
+    for name in files:
+        if "/include/" in name:
+            header = name.split("/include/", 1)[1]
+            if header in public:
+                raise ValueError(f"Duplicate public header: {header}")
+            public[header] = name
+    includes = {name: set() for name in files}
+    feature_graph = {name: set() for name in features}
+    for name, path in files.items():
+        owner = feature_owner(name)
+        if owner is not None and owner not in features:
+            raise ValueError(f"Undeclared feature: {owner}")
+        content = path.read_text(encoding="utf-8")
+        if name.startswith("src/features/system_proxy/") and re.search(r'\b(?:RuntimeSession|KernelController)\b', content):
+            raise ValueError(f"System proxy depends on runtime orchestration: {name}")
+        if not name.startswith("src/app/") and re.search(r'#include\s*[<"](?:QtGui|QtQuick|QQuick|QGui|QWindow)', content):
+            raise ValueError(f"Non-UI code includes GUI headers: {name}")
+        for header in re.findall(r'^\s*#include\s+[<"]([^>"\n]+)[>"]', content, re.M):
+            target = public.get(header)
+            local = (path.parent / header).resolve()
+            if target is None and local.is_relative_to(ROOT):
+                candidate = local.relative_to(ROOT).as_posix()
+                if candidate in files:
+                    target = candidate
+            if target is None:
+                if header.startswith("blank/") or header.endswith(".inc"):
+                    raise ValueError(f"Unresolved local include: {name}: {header}")
+                continue
+            includes[name].add(target)
+            other = feature_owner(target)
+            if "/include/" in name and "/include/" not in target:
+                raise ValueError(f"Public header exposes a private implementation: {name}: {target}")
+            if other and other != owner:
+                if not header.startswith("blank/") or "/include/" not in target:
+                    raise ValueError(f"Cross-feature private include: {name}: {target}")
+                if owner:
+                    if other not in features[owner]:
+                        raise ValueError(f"Undeclared feature dependency: {owner} -> {other}: {name}")
+                    feature_graph[owner].add(other)
+                elif name.startswith(("src/platform/", "src/shared/")):
+                    raise ValueError(f"Platform/shared code depends on a feature: {name}: {target}")
+            if name.startswith("src/shared/") and not target.startswith("src/shared/"):
+                raise ValueError(f"Shared code depends on higher-level code: {name}: {target}")
+    reject_cycles(includes, "Include")
+    reject_cycles(feature_graph, "Actual feature")
+    return files, includes, policy
+
+
+def check_build(build, files, policy):
+    state, model = build_state(build)
+    snapshot = build / "architecture-configuration.json"
+    if not snapshot.exists() or state != json.loads(snapshot.read_text(encoding="utf-8")):
+        raise ValueError("Evaluated graph is stale; reconfigure with tools/project.ps1.")
+    database = json.loads((build / "compile_commands.json").read_text(encoding="utf-8"))
+    compiled = Counter(Path(entry["file"]).resolve() for entry in database)
+    testing_disabled = re.search(r'^BUILD_TESTING:BOOL=OFF$',
+                                 (build / "CMakeCache.txt").read_text(encoding="utf-8"), re.M) is not None
+    for name, path in files.items():
+        if testing_disabled and name.startswith(("tests/", "generated/")):
+            continue
+        if path.suffix == ".cpp" and compiled[path.resolve()] != 1:
+            raise ValueError(f"Source must compile exactly once: {name}: {compiled[path.resolve()]}")
+    links = load_links(build / "architecture-targets.dot")
+    reject_cycles(links, "Evaluated link")
+    owners = policy["targets"]
+    for name, dependencies in links.items():
+        owner = owners.get(name)
+        for dependency in dependencies:
+            other = owners.get(dependency)
+            if owner and other and other != owner and other not in policy["features"][owner]:
+                raise ValueError(f"Undeclared feature link: {name} -> {dependency}")
+            if name in policy["platform_targets"] and other:
+                raise ValueError(f"Platform links feature code: {name} -> {dependency}")
+        if owner and reachable(links, name) & {"Qt6::Gui", "Qt6::Quick", "blank_quick"}:
+            raise ValueError(f"Feature links UI code: {name}")
+    if reachable(links, "profile_storage") & {"subscription_fetcher", "Qt6::Network"}:
+        raise ValueError("Profile storage links HTTP transport")
+    required = set()
+    reply = build / ".cmake/api/v1/reply"
+    for config in model["configurations"]:
+        for target in config["targets"]:
+            details = json.loads((reply / target["jsonFile"]).read_text(encoding="utf-8"))
+            if details["type"] != "UTILITY":
+                required.add(target["name"])
+                for source in details.get("sources", []):
+                    path = Path(source["path"])
+                    if not path.is_absolute():
+                        path = ROOT / path
+                    if path.resolve().is_relative_to(ROOT / "src"):
+                        actual = feature_owner(path.resolve().relative_to(ROOT).as_posix())
+                        if actual and owners.get(target["name"]) != actual:
+                            raise ValueError(f"Feature source belongs to another build target: {path}: {target['name']}")
+    if required - links.keys():
+        raise ValueError(f"Evaluated graph omits build targets: {sorted(required - links.keys())}")
+    return len(links)
+
+
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--build", type=Path)
     parser.add_argument("--record-build", type=Path)
     parser.add_argument("--includes-only", action="store_true")
@@ -137,93 +203,13 @@ def main():
             json.dumps(state, sort_keys=True), encoding="utf-8")
         return
     if not options.build and not options.includes_only:
-        parser.error("Use --build for the full check, or --includes-only for a scoped source check.")
-    files = {path.relative_to(ROOT).as_posix(): path for directory in ("src", "backend")
-             for path in (ROOT / directory).rglob("*")
-             if path.suffix in (".cpp", ".hpp", ".h", ".inc")}
-    includes = {name: set() for name in files}
-    public_headers = {}
-    for name in files:
-        if "/include/" in name:
-            public_headers[name.split("/include/", 1)[1]] = name
-    for name, path in files.items():
-        content = path.read_text(encoding="utf-8")
-        if name.startswith("backend/session/system_proxy_controller.") and re.search(
-                r"\b(?:RuntimeSession|KernelController)\b", content):
-            raise SystemExit(f"Proxy transaction depends on session/kernel orchestration: {name}")
-        for header in re.findall(r'^\s*#include\s+[<"]([^>"\n]+)[>"]', content, re.M):
-            if header in public_headers:
-                includes[name].add(public_headers[header])
-                continue
-            candidates = [path.parent / header, ROOT / "src" / header,
-                          ROOT / "backend/session" / header]
-            for target in candidates:
-                if not target.is_relative_to(ROOT):
-                    continue
-                key = target.resolve().relative_to(ROOT).as_posix()
-                if key in files:
-                    includes[name].add(key)
-                    break
-        if name.startswith("backend/") and re.search(r'#include\s*[<"](?:QtGui|QtQuick|QQml|QQuick|QGui|QWindow)', content):
-            raise SystemExit(f"Backend contains frontend dependency: {name}")
-    for name in files:
-        if name.startswith("backend/foundation/"):
-            forbidden = reachable(includes, name) & {key for key in files
-                         if key.startswith(("backend/session/", "backend/service/", "src/runtime_"))}
-            if forbidden:
-                raise SystemExit(f"Foundation depends on application orchestration: {name}: {forbidden}")
+        parser.error("Use --build for evaluated link/source checks, or --includes-only.")
+    files, _, policy = check_sources()
     if options.build:
-        database = json.loads((options.build / "compile_commands.json").read_text(encoding="utf-8"))
-        compiled = Counter(Path(entry["file"]).resolve() for entry in database)
-        for name, path in files.items():
-            if path.suffix == ".cpp" and compiled[path.resolve()] != 1:
-                raise SystemExit(f"Source must compile exactly once: {name}: {compiled[path.resolve()]}")
-    reject_cycles(includes, "Include")
-    reject_cycles(implementation_graph(includes), "Implementation unit")
-    storage = ("profile_storage.cpp", "profile_storage.hpp", "profile_codec.cpp", "profile_codec.hpp")
-    for name in storage:
-        forbidden = reachable(includes, "src/" + name) & {
-            "src/subscription_fetcher.hpp", "src/subscription_metadata.hpp"}
-        if forbidden:
-            raise SystemExit(f"Storage depends on download implementation: {name}: {forbidden}")
-    for name in files:
-        if name.startswith("src/runtime_") or name == "src/override_dom.hpp":
-            if "src/override_detail.hpp" in reachable(includes, name):
-                raise SystemExit(f"DOM integration depends on override internals: {name}")
-    for name in ("src/json_document.hpp", "src/subscription_data.hpp", "src/subscription_account.hpp"):
-        forbidden = reachable(includes, name) & {
-            "src/runtime_config.hpp", "src/override_detail.hpp", "src/profile_storage.hpp",
-            "src/subscription_fetcher.hpp", "src/subscription_metadata.hpp"}
-        if forbidden:
-            raise SystemExit(f"Shared data depends on upper layers: {name}: {forbidden}")
-
-    for name in ("src/subscription_account.hpp", "src/subscription_metadata.hpp", "src/subscription_metadata.cpp"):
-        forbidden = reachable(includes, name) & {"src/node_input.hpp", "src/unified_node.hpp", "src/subscription_data.hpp"}
-        if forbidden:
-            raise SystemExit(f"Account metadata depends on node/transport results: {name}: {forbidden}")
-
-    if options.build:
-        state, model = build_state(options.build)
-        snapshot = options.build / "architecture-configuration.json"
-        if not snapshot.exists() or state != json.loads(snapshot.read_text(encoding="utf-8")):
-            raise SystemExit("Evaluated graph is stale; reconfigure with tools/project.ps1.")
-        links = load_links(options.build / "architecture-targets.dot")
-        foundation = {"backend_" + path.name for path in (ROOT / "backend/foundation").iterdir()
-                      if path.is_dir()}
-        targets = {target["name"] for config in model["configurations"] for target in config["targets"]}
-        required = set()
-        reply = options.build / ".cmake/api/v1/reply"
-        for config in model["configurations"]:
-            for target in config["targets"]:
-                details = json.loads((reply / target["jsonFile"]).read_text(encoding="utf-8"))
-                if details["type"] != "UTILITY":
-                    required.add(target["name"])
-        check_graph_coverage(links, required)
-        check_links(links, foundation, targets)
-        print(f"Architecture passed: {len(files)} local files, {len(links)} evaluated link nodes; "
-              "include/implementation/link cycles and declared boundaries checked.")
+        count = check_build(options.build, files, policy)
+        print(f"Architecture passed: {len(files)} files, {len(policy['features'])} features, {count} evaluated targets.")
     else:
-        print(f"Source architecture passed: {len(files)} local files; link dependencies NOT checked.")
+        print(f"Source architecture passed: {len(files)} files, {len(policy['features'])} features; links not checked.")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 ---
 Checks: '*, -llvmlibc-*, -fuchsia-trailing-return'
 WarningsAsErrors: '*'
-HeaderFilterRegex: '[/\\](src|include)[/\\]'
+HeaderFilterRegex: '[/\\](src|tests|include)[/\\]'
 SystemHeaders: false
 FormatStyle: file
 CheckOptions:
