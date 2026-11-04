@@ -195,6 +195,7 @@ class RuntimeSession final : public QObject {
     [[nodiscard]] runtime_config::runtime_context context() const;
     [[nodiscard]] bool change(RuntimeChange requested);
     [[nodiscard]] bool canMutate() const noexcept;
+    [[nodiscard]] bool canSetTun() const noexcept;
     [[nodiscard]] RuntimeOperation operation() const noexcept;
     [[nodiscard]] ActivationRejection activationRejection() const noexcept;
     [[nodiscard]] bool preparing() const noexcept;

@@ -19,6 +19,26 @@
 namespace {
 constexpr qint64 responseLimit = qint64{8} * 1024 * 1024;
 
+[[nodiscard]] constexpr bool
+proxyAllowsTunChange(SystemProxyController::LeaseState lease) noexcept {
+    switch (lease) {
+    case SystemProxyController::LeaseState::Released:
+    case SystemProxyController::LeaseState::ForeignOwner:
+    case SystemProxyController::LeaseState::Owned:
+        return true;
+    case SystemProxyController::LeaseState::Pending:
+    case SystemProxyController::LeaseState::Uncertain:
+        return false;
+    }
+    return false;
+}
+
+static_assert(proxyAllowsTunChange(SystemProxyController::LeaseState::Released));
+static_assert(proxyAllowsTunChange(SystemProxyController::LeaseState::ForeignOwner));
+static_assert(proxyAllowsTunChange(SystemProxyController::LeaseState::Owned));
+static_assert(!proxyAllowsTunChange(SystemProxyController::LeaseState::Pending));
+static_assert(!proxyAllowsTunChange(SystemProxyController::LeaseState::Uncertain));
+
 struct NativeCheckInput {
     QByteArray bytes;
     NativeCheckPolicy policy = NativeCheckPolicy::RuntimeCandidate;
@@ -314,7 +334,7 @@ RuntimeStatus RuntimeSession::status() const noexcept {
         .activate = activationRejection() == ActivationRejection::None,
         .changeMode = mutableNow && !active_.isEmpty(),
         .selectProxy = mutableNow && !active_.isEmpty(),
-        .setTun = mutableNow && kernel_.serviceManaged() && !configLocked() && !active_.isEmpty(),
+        .setTun = canSetTun(),
         .request = mutableNow,
         .enableSystemProxy = proxy_ && mutableNow && !closing() && proxy_->available(),
         .disableSystemProxy = static_cast<bool>(proxy_),
@@ -591,6 +611,11 @@ void RuntimeSession::finishStop() {
 bool RuntimeSession::canMutate() const noexcept {
     return kernel_.state() == KernelController::State::Ready && !busy() && !stopping() &&
            !uncertain_ && !kernel_.maintenance();
+}
+
+bool RuntimeSession::canSetTun() const noexcept {
+    return canMutate() && kernel_.serviceManaged() && !active_.isEmpty() &&
+           (!proxy_ || proxyAllowsTunChange(proxy_->leaseState()));
 }
 
 bool RuntimeSession::activate(ActivationInput input) {
@@ -873,7 +898,7 @@ bool RuntimeSession::change(RuntimeChange requested) {
 }
 
 bool RuntimeSession::setTunEnabled(bool enabled) {
-    if (!canMutate() || !kernel_.serviceManaged() || configLocked() || active_.isEmpty()) {
+    if (!canSetTun()) {
         return false;
     }
     static_cast<void>(beginTransaction(TransactionKind::Tun));
@@ -923,10 +948,11 @@ void RuntimeSession::issueTun(bool enabled) {
             tunOutcome(success, partial), TransactionStage::Tun,
             success ? TransactionError::None : TransactionError::Tun,
             success ? QStringLiteral("Configuration and service TUN verified.")
-                    : QStringLiteral("TUN activation failed; session cleanup requested."));
+                    : QStringLiteral("TUN change failed; restoring system proxy before session "
+                                     "cleanup."));
         Q_EMIT requestFinished(success ? 200 : 0, {});
         if (!success) {
-            kernel_.stop();
+            stop();
         }
     });
     Q_EMIT operationChanged();
