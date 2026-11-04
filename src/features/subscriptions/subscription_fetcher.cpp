@@ -403,8 +403,7 @@ auto consume_body(QNetworkReply& reply, wire_response& response, const fetch_req
     response.status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toLongLong();
     if (reply->error() != QNetworkReply::NoError &&
         (response.status == 0 || response.status == 200)) {
-        response.error =
-            response.status >= 400 ? fetch_error::http_status : network_error(reply->error());
+        response.error = network_error(reply->error());
     }
     for (const auto& pair : reply->rawHeaderPairs()) {
         response.headers.push_back({pair.first.toStdString(), pair.second.toStdString()});
