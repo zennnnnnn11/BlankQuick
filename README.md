@@ -27,3 +27,8 @@ ctest --test-dir out/build/debug --output-on-failure
 ```
 
 不要修改生成的 `.inc`、`generated/mihomo/`，也不要把完整上游仓库提交进项目。源码同步和离线重建见 [提取文档](docs/mihomo-sync.md)。
+
+## SAST Tools
+
+[PVS-Studio](https://pvs-studio.com/en/pvs-studio/?utm_source=website&utm_medium=github&utm_campaign=open_source) - static code analyzer for Enterprise (C, C++, C#, Go, and Java) and Web (JS and TS) development.
+

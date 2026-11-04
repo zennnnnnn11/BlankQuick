@@ -6,3 +6,9 @@
 *.user.*
 
 __pycache__/
+
+/build-pvs/
+/build-coverity/
+/cov-int/
+*.tgz
+
