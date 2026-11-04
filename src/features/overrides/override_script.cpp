@@ -24,8 +24,7 @@
 
 namespace overrides::detail {
 namespace {
-// QJSEngine is deliberately local to its calling thread. Only its documented
-// thread-safe setInterrupted() is called by the automatically joined watchdog.
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,altera-struct-pack-align,readability-redundant-member-init,altera-unroll-loops,fuchsia-default-arguments-calls)
 
 constexpr std::string_view bootstrap{R"JS((function(maxLines, maxChars, maxDepth, maxValues) {
@@ -123,7 +122,7 @@ constexpr std::string_view bootstrap{R"JS((function(maxLines, maxChars, maxDepth
 }
 
 [[nodiscard]] auto js_failed(QJSEngine& engine, const QJSValue& value) -> bool {
-    // evaluate() catches syntax exceptions itself; hasError() alone is insufficient.
+
     const auto pending = engine.hasError();
     if (pending) {
         static_cast<void>(engine.catchError());
@@ -172,8 +171,7 @@ struct script_handles {
         report.message = factory.toString().toStdString();
         fail(override_error::unexpected_failure);
     }
-    // UTF-16 units are capped at a quarter of the byte limit. This conservatively
-    // bounds UTF-8 output including non-ASCII logs conservatively.
+
     constexpr auto maximum_utf8_width = 4;
     const auto host = factory.call({
         QJSValue{static_cast<int>(options.max_log_lines)},
@@ -249,7 +247,6 @@ auto run_script(const document& configuration, const override_item& patch,
         std::jthread{[engine_ref = std::ref(engine), status,
                       deadline = std::chrono::steady_clock::now() +
                                  options.script_timeout](const std::stop_token& stop) -> void {
-            // Allocation/system errors must not escape the watcher thread entry.
             const auto waited = guarded<bool>(budget_expired, stop, deadline);
             auto reason = waited.error;
             if (reason == override_error::none && waited.value) {
@@ -264,7 +261,7 @@ auto run_script(const document& configuration, const override_item& patch,
     static_cast<void>(watchdog.request_stop());
     watchdog.join();
     const auto interrupted = status->load();
-    // Only the engine owner resumes execution, after the watchdog has joined.
+
     engine.setInterrupted(false);
     if (engine.hasError()) {
         static_cast<void>(engine.catchError());

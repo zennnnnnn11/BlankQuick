@@ -22,7 +22,7 @@ constexpr qint64 responseLimit = qint64{8} * 1024 * 1024;
 
 [[nodiscard]] constexpr bool
 proxyAllowsTunChange(SystemProxyController::LeaseState lease) noexcept {
-    // TUN 不改 mixed-port；稳定租约允许双开，整份配置切换仍受 configLocked() 约束。
+
     switch (lease) {
     case SystemProxyController::LeaseState::Released:
     case SystemProxyController::LeaseState::ForeignOwner:
@@ -54,7 +54,7 @@ NativeCheckInput nativeCheckInput(const QJsonObject& candidate, const QByteArray
         !persistence.isBool() || !persistence.toBool()) {
         return {.bytes = bytes};
     }
-    // 仅校验副本禁用 fake-ip 持久化，避免 -t 进程争用运行内核的缓存。
+
     profile.insert(QStringLiteral("store-fake-ip"), false);
     auto transient = candidate;
     transient.insert(QStringLiteral("profile"), profile);
@@ -121,7 +121,7 @@ ActivationCheck prepare(ActivationInput input, const runtime_config::runtime_con
     const auto checkInput = nativeCheckInput(admitted.value, bytes);
     result.diagnostics.nativeCheckPolicy = checkInput.policy;
     result.stage = TransactionStage::NativeCheck;
-    // 原生校验独立计时；取消仍可中断等待中的子进程。
+
     result.diagnostics.nativeCheck = runtime_config::check_with_kernel(
         std::string_view(checkInput.bytes.constData(),
                          static_cast<std::size_t>(checkInput.bytes.size())),
@@ -414,7 +414,7 @@ RuntimeSession::TransactionToken RuntimeSession::transactionToken() const noexce
 }
 
 bool RuntimeSession::currentTransaction(TransactionToken token) const noexcept {
-    // epoch 隔离旧内核，requestId 隔离同一内核中的后续事务。
+
     return transaction_ && token.epoch == generation_ &&
            token.requestId == transaction_->result.requestId;
 }
@@ -432,7 +432,7 @@ ActivationRejection RuntimeSession::activationRejection() const noexcept {
     if (busy()) {
         return ActivationRejection::Busy;
     }
-    // 整份切换可能改变代理端口；须先释放本实例的代理租约并关闭 TUN。
+
     if (configLocked()) {
         return ActivationRejection::ProxyLease;
     }
@@ -592,8 +592,7 @@ void RuntimeSession::shutdown() {
 }
 
 void RuntimeSession::finishStop() {
-    // The native checker can still hold provider/GEO files in the core home.
-    // Finish its cancellation before the owned core removes that directory.
+
     if (!stopping() || preparing() || configLocked()) {
         return;
     }
@@ -699,7 +698,7 @@ void RuntimeSession::switched(const SwitchResult& result) {
         selected_ = selections(result.proxies);
     }
     if (result.outcome == TransactionOutcome::Applied && transaction_->enableTun) {
-        // 配置已经确认；后续 TUN 失败应报告部分应用，而非配置未生效。
+
         transaction_->execution = Execution::ActivationTun;
         issueTun(true);
         return;
@@ -735,8 +734,7 @@ void RuntimeSession::kernelChanged() {
 
 bool RuntimeSession::request(const QByteArray& path, const QByteArray& method,
                              const QByteArray& body) {
-    // Admission is identical in user and service mode. Config, selection and TUN
-    // mutations have dedicated transactions and cannot bypass the session cache.
+
     const bool read = method == "GET" && body.isEmpty() &&
                       (path == "/version" || path == "/proxies" || path == "/rules" ||
                        path == "/connections" || path == "/configs");

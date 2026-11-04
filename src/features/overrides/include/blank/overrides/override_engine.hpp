@@ -38,22 +38,19 @@ struct engine_options {
 struct patch_report {
     std::string id{};
     override_error error{override_error::none};
-    std::string message{}; // Local debugging only; user code may reveal secrets.
+    std::string message{};
     std::vector<std::string> logs{};
     bool logs_truncated{};
 };
 
 struct apply_result {
-    // Success: compact JSON object. Failure: empty; retain the caller's original input.
+
     std::string config_json{};
-    std::vector<patch_report> reports{}; // Includes the failing patch; later patches do not run.
+    std::vector<patch_report> reports{};
     override_error error{override_error::none};
 };
 // NOLINTEND(altera-struct-pack-align,readability-redundant-member-init)
 
-// Transactional, synchronous worker API; never mutates input or writes files.
-// Patches run in the supplied order. Each JS patch gets a fresh QJSEngine and
-// requires a live QCoreApplication. Any failure discards the entire candidate.
 // NOLINTBEGIN(fuchsia-default-arguments-declarations)
 [[nodiscard]] auto apply_overrides(std::string_view configuration,
                                    std::span<const override_item> patches,

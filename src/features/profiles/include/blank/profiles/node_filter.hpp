@@ -14,7 +14,6 @@ enum class informational_reason : std::int8_t {
     placeholder_endpoint,
 };
 
-// UTF-8 名称；ASCII 英文不区分大小写。仅提供启发式证据，不修改或删除节点。
 [[nodiscard]] auto classify_informational_node(const node_model::unified_node& node) noexcept
     -> informational_reason;
 
@@ -25,4 +24,4 @@ enum class informational_reason : std::int8_t {
 
 } // namespace node_filter
 
-#endif // BLANK_QUICK_NODE_FILTER_HPP
+#endif

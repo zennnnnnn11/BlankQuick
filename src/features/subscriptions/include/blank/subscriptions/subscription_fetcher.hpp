@@ -33,11 +33,9 @@ struct proxy_route {
 struct fetch_request {
     std::string url{};
     std::string user_agent{"clash.meta/v" + std::string{node_model::kernel_version}};
-    // Explicit order, e.g. {direct, http(local mixed port)} or {socks5, direct}.
-    // A proxy-only list never silently falls back to direct.
+
     std::vector<proxy_route> routes{{}};
-    // Custom headers and conditional validators are confined to the initial
-    // origin; standard transport headers are managed by the HTTP backend.
+
     std::vector<http_header> headers{};
     std::string if_none_match{};
     std::string if_modified_since{};
@@ -48,21 +46,17 @@ struct fetch_request {
     std::int64_t max_body_bytes{node_input::default_input_bytes};
     header_limits response_header_limits{};
     node_input::parse_limits parser_limits{};
-    // Optional enterprise/private CA certificates in PEM. System trust is kept.
+
     std::string extra_ca_pem{};
 };
 
 // NOLINTEND(altera-struct-pack-align, readability-redundant-member-init)
 // NOLINTEND(fuchsia-default-arguments-calls)
 
-// Requires a live QCoreApplication/QGuiApplication, but exposes no Qt types.
-// Blocking API for a worker. No file/profile state is changed on failure.
 // NOLINTBEGIN(fuchsia-default-arguments-declarations)
 [[nodiscard]] auto fetch_subscription(const fetch_request& request,
                                       std::stop_token cancellation = {}) noexcept -> fetch_result;
-// Owns the request in a std::async worker. Scheduling may throw std::system_error
-// or std::bad_alloc; network/parse failures are returned in fetch_result.
-// Keep the future alive: destruction of a running std::async future may wait.
+
 [[nodiscard]] auto fetch_subscription_async(fetch_request request,
                                             std::stop_token cancellation = {})
     -> std::future<fetch_result>;

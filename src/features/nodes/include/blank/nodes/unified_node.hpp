@@ -15,16 +15,12 @@
 #include <variant>
 #include <vector>
 
-// 统一节点模型（遵循 ISO C++20，仅依赖标准库，Mihomo 版本由生成的内核契约记录）
-// 按核心、链路、协议参数和元数据组织，采用冷热分离所有权设计
 namespace node_model {
 
-// ISO C++ 聚合体保持自然对齐与显式类内初始化
 // NOLINTBEGIN(altera-struct-pack-align, readability-redundant-member-init)
 
 #include "kernel_revision.inc"
 
-// 第 1 层：全协议通用核心（热数据）。所有出站协议必有名称与协议类型；无端点出站使用 nullopt
 enum class protocol_type : std::int8_t {
     unspecified,
     shadowsocks,
@@ -57,27 +53,22 @@ enum class protocol_type : std::int8_t {
     easytier,
 };
 
-// 远程目标端点（服务器地址与端口）
 struct remote_endpoint {
     std::string host{};
     std::int64_t port{};
 };
 
-// 节点核心标识（名称、协议类型、可选远程端点）
 struct universal_core {
     std::string name{};
     protocol_type protocol{protocol_type::unspecified};
     std::optional<remote_endpoint> remote{};
 };
 
-// 第 2 层：通用链路与传输控制（冷数据）。跨协议通用的安全层、传输层与拨号控制
 using string_map = std::vector<std::pair<std::string, std::string>>;
 using string_list_map = std::vector<std::pair<std::string, std::vector<std::string>>>;
 
-// IP 版本偏好策略
 enum class ip_preference : std::int8_t { dual, ipv4, ipv6, ipv4_prefer, ipv6_prefer };
 
-// TLS 基础配置
 struct tls_config {
     std::optional<bool> enabled{};
     std::string server_name{};
@@ -91,70 +82,59 @@ struct tls_config {
     bool disable_sni{};
 };
 
-// ECH（加密客户端问候）配置
 struct ech_config {
     bool enable{};
     std::string config{};
     std::string query_server_name{};
 };
 
-// 跨协议共享的 REALITY 配置
 struct reality_config {
     std::string public_key{};
     std::string short_id{};
     bool support_x25519mlkem768{};
 };
 
-// ShadowTLS 伪装配置
 struct shadow_tls_config {
     std::string password{};
     std::int64_t version{};
 };
 
-// Restls 伪装配置
 struct restls_config {
     std::string password{};
     std::string version_hint{};
     std::string restls_script{};
 };
 
-// JLS 伪装配置
 struct jls_config {
     std::string username{};
     std::string password{};
 };
 
-// TLS 镜像时间规格
 struct tls_mirror_time_spec {
     std::int64_t base_nanoseconds{};
     std::int64_t uniform_random_multiplier_nanoseconds{};
 };
 
-// TLS 镜像传输层填充开关
 struct tls_mirror_transport_layer_padding {
     bool enabled{};
 };
 
-// TLS 镜像连接注册
 struct tls_mirror_connection_enrolment {
     std::string primary_ingress_outbound{};
     std::string primary_egress_outbound{};
 };
 
-// TLS 镜像流量请求头
 struct tls_mirror_traffic_header {
     std::string name{};
     std::string value{};
     std::vector<std::string> values{};
 };
 
-// TLS 镜像转移候选
 struct tls_mirror_traffic_transfer_candidate {
     std::int64_t weight{};
     std::int64_t goto_location{};
 };
 
-// TLS 镜像流量步进定义
 struct tls_mirror_traffic_step {
     std::string name{};
     std::string host{};
@@ -168,12 +148,10 @@ struct tls_mirror_traffic_step {
     bool h2_do_not_wait_for_download_finish{};
 };
 
-// TLS 镜像流量生成器
 struct tls_mirror_traffic_generator {
     std::vector<tls_mirror_traffic_step> steps{};
 };
 
-// TLSMirror 流量伪装总配置
 struct tlsmirror_config {
     std::string primary_key{};
     std::vector<int> explicit_nonce_ciphersuites{};
@@ -184,7 +162,6 @@ struct tlsmirror_config {
     bool sequence_watermarking_enabled{};
 };
 
-// 安全与伪装层聚合配置
 struct security_config {
     tls_config tls{};
     std::optional<ech_config> ech{};
@@ -195,20 +172,17 @@ struct security_config {
     std::optional<tlsmirror_config> tlsmirror{};
 };
 
-// HTTP 传输层配置
 struct http_transport {
     std::string method{};
     std::vector<std::string> path{};
     string_list_map headers{};
 };
 
-// HTTP/2 传输层配置
 struct http2_transport {
     std::vector<std::string> host{};
     std::string path{};
 };
 
-// gRPC 传输层配置
 struct grpc_transport {
     std::string grpc_service_name{};
     std::string grpc_user_agent{};
@@ -218,7 +192,6 @@ struct grpc_transport {
     std::int64_t max_streams{};
 };
 
-// WebSocket 传输层配置
 struct websocket_transport {
     std::string path{};
     string_map headers{};
@@ -228,7 +201,6 @@ struct websocket_transport {
     bool v2ray_http_upgrade_fast_open{};
 };
 
-// mKCP 传输层配置
 struct mkcp_transport {
     std::int64_t mtu{};
     std::int64_t tti{};
@@ -241,7 +213,6 @@ struct mkcp_transport {
     std::string header{};
 };
 
-// Mekya 传输层配置
 struct mekya_transport {
     std::string url{};
     std::int64_t h2_pool_size{};
@@ -255,7 +226,6 @@ struct mekya_transport {
     mkcp_transport kcp{};
 };
 
-// XHTTP 连接复用配置
 struct xhttp_reuse_config {
     std::string max_concurrency{};
     std::string max_connections{};
@@ -265,7 +235,6 @@ struct xhttp_reuse_config {
     std::int64_t h_keep_alive_period{};
 };
 
-// XHTTP 下行通道分离与独立覆盖配置
 struct xhttp_download_config {
     std::optional<std::string> path{};
     std::optional<std::string> host{};
@@ -289,7 +258,6 @@ struct xhttp_download_config {
     std::optional<std::string> client_fingerprint{};
 };
 
-// XHTTP 传输层配置
 struct xhttp_transport {
     std::string path{};
     std::string host{};
@@ -318,14 +286,12 @@ struct xhttp_transport {
     std::optional<xhttp_download_config> download_settings{};
 };
 
-// TCP Brutal 拥塞控制配置
 struct brutal_config {
     bool enabled{};
     std::string uplink{};
     std::string downlink{};
 };
 
-// Smux 多路复用配置
 struct smux_config {
     bool enabled{};
     std::string protocol{};
@@ -338,18 +304,15 @@ struct smux_config {
     brutal_config brutal_opts{};
 };
 
-// IP 栈模式与拥塞控制配置
 struct ip_stack_config {
     std::string mode{};
     std::string congestion_controller{};
 };
 
-// 传输层载荷强类型变体
 using transport_payload =
     std::variant<std::monostate, websocket_transport, grpc_transport, http_transport,
                  http2_transport, xhttp_transport, mkcp_transport, mekya_transport>;
 
-// UDP 数据包封装与编码控制（XUDP、PacketAddr、UDP-over-TCP 等）
 struct packet_control {
     bool packet_addr{};
     bool xudp{};
@@ -360,7 +323,6 @@ struct packet_control {
     std::int64_t udp_over_stream_version{};
 };
 
-// 带宽与上下行速率控制
 struct bandwidth_control {
     std::string uplink{};
     std::string downlink{};
@@ -368,16 +330,13 @@ struct bandwidth_control {
     std::int64_t down_speed{};
 };
 
-// 端口跳跃时间间隔（支持秒数或字符串）
 using hopping_interval = std::variant<std::monostate, std::chrono::seconds, std::string>;
 
-// 端口跳跃控制配置
 struct port_hopping_control {
     std::string ports{};
     hopping_interval interval{};
 };
 
-// QUIC 传输与拥塞控制参数
 struct quic_control {
     std::int64_t recv_window_conn{};
     std::int64_t recv_window{};
@@ -403,7 +362,6 @@ struct quic_control {
     std::chrono::milliseconds keep_alive_interval{};
 };
 
-// 通用链路控制聚合（前置代理、网络模式、安全、传输载荷等）
 struct link_control {
     std::string dialer_proxy{};
     std::string interface_name{};
@@ -422,15 +380,11 @@ struct link_control {
     quic_control quic{};
 };
 
-// 第 3 层：各协议专有凭证与参数（冷数据，强类型无类型擦除）
-
-// Simple-obfs 插件参数
 struct simple_obfs_param {
     std::string mode{};
     std::string host{"bing.com"};
 };
 
-// V2Ray-Plugin 插件参数
 struct v2ray_plugin_param {
     std::string mode{};
     std::string host{"bing.com"};
@@ -448,7 +402,6 @@ struct v2ray_plugin_param {
     bool v2ray_http_upgrade_fast_open{};
 };
 
-// Gost-Plugin 插件参数
 struct gost_plugin_param {
     std::string mode{};
     std::string host{"bing.com"};
@@ -464,7 +417,6 @@ struct gost_plugin_param {
     bool mux{true};
 };
 
-// ShadowTLS 插件参数
 struct shadow_tls_plugin_param {
     std::string password{};
     std::string host{};
@@ -477,7 +429,6 @@ struct shadow_tls_plugin_param {
     std::optional<std::vector<std::string>> alpn{};
 };
 
-// Restls 插件参数
 struct restls_plugin_param {
     std::string password{};
     std::string host{};
@@ -489,7 +440,6 @@ struct restls_plugin_param {
     bool force_tls12{};
 };
 
-// JLS 插件参数
 struct jls_plugin_param {
     std::string host{};
     std::string username{};
@@ -497,7 +447,6 @@ struct jls_plugin_param {
     std::vector<std::string> alpn{};
 };
 
-// Kcptun 插件参数
 struct kcptun_plugin_param {
     std::string key_material{};
     std::string crypt{};
@@ -526,15 +475,13 @@ struct kcptun_plugin_param {
     std::int64_t keepalive{};
 };
 
-// Shadowsocks 混淆插件变体
 using shadowsocks_plugin = std::variant<std::monostate, simple_obfs_param, v2ray_plugin_param,
                                         gost_plugin_param, shadow_tls_plugin_param,
                                         restls_plugin_param, jls_plugin_param, kcptun_plugin_param>;
-// Snell 混淆变体
+
 using snell_obfuscation = std::variant<std::monostate, simple_obfs_param, shadow_tls_plugin_param,
                                        restls_plugin_param, jls_plugin_param>;
 
-// Shadowsocks 专有参数
 struct shadowsocks_param {
     static constexpr protocol_type protocol_tag{protocol_type::shadowsocks};
 
@@ -543,7 +490,6 @@ struct shadowsocks_param {
     shadowsocks_plugin plugin{};
 };
 
-// ShadowsocksR 专有参数
 struct shadowsocksr_param {
     static constexpr protocol_type protocol_tag{protocol_type::shadowsocksr};
 
@@ -555,7 +501,6 @@ struct shadowsocksr_param {
     std::string protocol_param{};
 };
 
-// Socks5 专有参数
 struct socks5_param {
     static constexpr protocol_type protocol_tag{protocol_type::socks5};
 
@@ -563,7 +508,6 @@ struct socks5_param {
     std::string password{};
 };
 
-// HTTP 代理专有参数
 struct http_param {
     static constexpr protocol_type protocol_tag{protocol_type::http};
 
@@ -572,7 +516,6 @@ struct http_param {
     string_map headers{};
 };
 
-// VMess 专有参数
 struct vmess_param {
     static constexpr protocol_type protocol_tag{protocol_type::vmess};
 
@@ -583,7 +526,6 @@ struct vmess_param {
     bool authenticated_length{};
 };
 
-// VLESS 专有参数
 struct vless_param {
     static constexpr protocol_type protocol_tag{protocol_type::vless};
 
@@ -592,7 +534,6 @@ struct vless_param {
     std::string encryption{};
 };
 
-// Snell 专有参数
 struct snell_param {
     static constexpr protocol_type protocol_tag{protocol_type::snell};
 
@@ -602,14 +543,12 @@ struct snell_param {
     snell_obfuscation obfs_opts{};
 };
 
-// Trojan 嵌套 SS 选项
 struct trojan_ss_option {
     bool enabled{};
     std::string method{};
     std::string password{};
 };
 
-// Trojan 专有参数
 struct trojan_param {
     static constexpr protocol_type protocol_tag{protocol_type::trojan};
 
@@ -617,7 +556,6 @@ struct trojan_param {
     trojan_ss_option ss_opts{};
 };
 
-// Hysteria v1 专有参数
 struct hysteria_param {
     static constexpr protocol_type protocol_tag{protocol_type::hysteria};
 
@@ -628,7 +566,6 @@ struct hysteria_param {
     std::string obfs{};
 };
 
-// Hysteria 2 Realm 扩展选项
 struct hysteria2_realm_option {
     bool enable{};
     std::string server_url{};
@@ -644,7 +581,6 @@ struct hysteria2_realm_option {
     std::vector<std::string> alpn{};
 };
 
-// Hysteria 2 专有参数
 struct hysteria2_param {
     static constexpr protocol_type protocol_tag{protocol_type::hysteria2};
 
@@ -656,7 +592,6 @@ struct hysteria2_param {
     hysteria2_realm_option realm_opts{};
 };
 
-// AmneziaWG (AWG) 混淆扩展参数
 struct amnezia_wg_param {
     std::int64_t version{};
     std::int64_t junk_count{};
@@ -690,7 +625,6 @@ struct amnezia_wg_param {
     bool disable_cookies{};
 };
 
-// WireGuard 对端配置
 struct wireguard_peer_param {
     std::string server{};
     std::int64_t port{};
@@ -700,7 +634,6 @@ struct wireguard_peer_param {
     std::vector<std::string> allowed_ips{};
 };
 
-// WireGuard 专有参数（支持 AmneziaWG 混淆扩展）
 struct wireguard_param {
     static constexpr protocol_type protocol_tag{protocol_type::wireguard};
 
@@ -722,7 +655,6 @@ struct wireguard_param {
     std::int64_t refresh_server_ip_interval{};
 };
 
-// TUIC 协议专有参数
 struct tuic_param {
     static constexpr protocol_type protocol_tag{protocol_type::tuic};
 
@@ -732,7 +664,6 @@ struct tuic_param {
     std::string ipv4_address{};
 };
 
-// ShadowQUIC 专有参数
 struct shadowquic_param {
     static constexpr protocol_type protocol_tag{protocol_type::shadowquic};
 
@@ -740,7 +671,6 @@ struct shadowquic_param {
     std::string password{};
 };
 
-// Gost 转发中继专有参数
 struct gost_relay_param {
     static constexpr protocol_type protocol_tag{protocol_type::gost_relay};
 
@@ -750,22 +680,18 @@ struct gost_relay_param {
     std::string password{};
 };
 
-// 直连出站
 struct direct_param {
     static constexpr protocol_type protocol_tag{protocol_type::direct};
 };
 
-// DNS 解析出站
 struct dns_param {
     static constexpr protocol_type protocol_tag{protocol_type::dns};
 };
 
-// 拒绝/拦截出站
 struct reject_param {
     static constexpr protocol_type protocol_tag{protocol_type::reject};
 };
 
-// 重匹配出站
 struct rematch_param {
     static constexpr protocol_type protocol_tag{protocol_type::rematch};
 
@@ -773,7 +699,6 @@ struct rematch_param {
     std::optional<std::string> target_sub_rule{};
 };
 
-// SSH 隧道出站专有参数
 struct ssh_param {
     static constexpr protocol_type protocol_tag{protocol_type::ssh};
 
@@ -785,7 +710,6 @@ struct ssh_param {
     std::vector<std::string> host_key_algorithms{};
 };
 
-// Mieru 协议专有参数
 struct mieru_param {
     static constexpr protocol_type protocol_tag{protocol_type::mieru};
 
@@ -798,7 +722,6 @@ struct mieru_param {
     std::string traffic_pattern{};
 };
 
-// AnyTLS 协议专有参数
 struct anytls_param {
     static constexpr protocol_type protocol_tag{protocol_type::anytls};
 
@@ -810,7 +733,6 @@ struct anytls_param {
     bool disable_reuse{};
 };
 
-// Sudoku HTTP 伪装掩码选项
 struct sudoku_http_mask_options {
     bool disable{};
     std::string mode{};
@@ -820,7 +742,6 @@ struct sudoku_http_mask_options {
     std::string multiplex{};
 };
 
-// Sudoku 协议专有参数
 struct sudoku_param {
     static constexpr protocol_type protocol_tag{protocol_type::sudoku};
 
@@ -842,7 +763,6 @@ struct sudoku_param {
     std::vector<std::string> custom_tables{};
 };
 
-// MASQUE 协议专有参数
 struct masque_param {
     static constexpr protocol_type protocol_tag{protocol_type::masque};
 
@@ -858,7 +778,6 @@ struct masque_param {
     std::vector<std::string> dns{};
 };
 
-// TrustTunnel 协议专有参数
 struct trusttunnel_param {
     static constexpr protocol_type protocol_tag{protocol_type::trusttunnel};
 
@@ -871,7 +790,6 @@ struct trusttunnel_param {
     std::int64_t max_streams{};
 };
 
-// OpenVPN 客户端专有参数
 struct openvpn_param {
     static constexpr protocol_type protocol_tag{protocol_type::openvpn};
 
@@ -901,7 +819,6 @@ struct openvpn_param {
     std::vector<std::string> dns{};
 };
 
-// Tailscale 虚拟网专有参数
 struct tailscale_param {
     static constexpr protocol_type protocol_tag{protocol_type::tailscale};
 
@@ -915,13 +832,11 @@ struct tailscale_param {
     std::optional<bool> exit_node_allow_lan_access{};
 };
 
-// ZeroTier Orbit 选项
 struct zero_tier_orbit_option {
     std::string world{};
     std::string seed{};
 };
 
-// ZeroTier 虚拟网专有参数
 struct zerotier_param {
     static constexpr protocol_type protocol_tag{protocol_type::zerotier};
 
@@ -945,7 +860,6 @@ struct zerotier_param {
     std::int64_t remote_trace_level{};
 };
 
-// EasyTier 虚拟网专有参数
 struct easytier_param {
     static constexpr protocol_type protocol_tag{protocol_type::easytier};
 
@@ -980,7 +894,6 @@ struct easytier_param {
     std::string local_public_key{};
 };
 
-// 协议专有参数变体联合体（覆盖 28 种出站协议，空间复用）
 using protocol_detail =
     std::variant<std::monostate, shadowsocks_param, shadowsocksr_param, socks5_param, http_param,
                  vmess_param, vless_param, snell_param, trojan_param, hysteria_param,
@@ -989,17 +902,13 @@ using protocol_detail =
                  anytls_param, sudoku_param, masque_param, trusttunnel_param, openvpn_param,
                  tailscale_param, zerotier_param, easytier_param>;
 
-// 通过节点的 const 所有权指针访问的冷配置块（第二层链路控制 + 第三层专有凭证）
 struct node_configuration {
     link_control link{};
     protocol_detail detail{};
 };
 
-// 第 4
-// 层：客户端管理元数据（高频访问的热数据，禁止发给内核；冷热分离为设计访问分类，实际收益需经性能测试确认）
 enum class probe_status : std::int8_t { never_tested, testing, reachable, timed_out, failed };
 
-// 客户端运行时元数据（哈希存储槽、国家代码、测速状态、延迟与倍率等；哈希由外部计算提供，本模型不自动保证唯一性）
 struct client_metadata {
     static constexpr int hash_byte_count{32};
 
@@ -1012,20 +921,17 @@ struct client_metadata {
     std::optional<std::int64_t> download_bytes_per_second{};
 };
 
-// 统一节点模型（内嵌核心与元数据热数据，独占持有只读冷配置）
 struct unified_node {
     universal_core core{};
     client_metadata metadata{};
     std::unique_ptr<const node_configuration> configuration{};
 };
 
-// 协议参数 Concept 约束
 template <typename Parameter>
 concept protocol_parameter = std::same_as<Parameter, std::monostate> || requires {
     { Parameter::protocol_tag } -> std::convertible_to<protocol_type>;
 };
 
-// 从参数变体中安全提取协议枚举类型（保证无异常抛出）
 [[nodiscard]] constexpr auto
 protocol_of(const protocol_detail& detail) noexcept // NOLINT(bugprone-exception-escape)
     -> protocol_type {
@@ -1043,7 +949,6 @@ protocol_of(const protocol_detail& detail) noexcept // NOLINT(bugprone-exception
         detail);
 }
 
-// 校验核心层协议类型与凭证变体类型一致性（仅做类型匹配，默认未配置状态亦可能返回 true）
 [[nodiscard]] inline auto has_matching_protocol(const unified_node& node) noexcept -> bool {
     if (!node.configuration) {
         return node.core.protocol == protocol_type::unspecified;
@@ -1052,7 +957,6 @@ protocol_of(const protocol_detail& detail) noexcept // NOLINT(bugprone-exception
            node.core.protocol == protocol_of(node.configuration->detail);
 }
 
-// 获取协议在 Mihomo 内核中的标准字符串名称
 [[nodiscard]] constexpr auto kernel_protocol_name(protocol_type protocol) noexcept
     -> std::string_view {
     switch (protocol) {
@@ -1063,19 +967,16 @@ protocol_of(const protocol_detail& detail) noexcept // NOLINT(bugprone-exception
     return {};
 }
 
-// 编译期静态架构与内存约束保证
-static_assert(std::is_aggregate_v<unified_node>); // 必须是 C++20 聚合类型（支持聚合初始化）
-static_assert(std::is_trivially_copyable_v<client_metadata>);      // 元数据必须可平凡复制
-static_assert(std::is_nothrow_move_constructible_v<unified_node>); // 统一节点必须支持无异常移动构造
-static_assert(
-    !std::is_copy_constructible_v<unified_node>);    // 禁止隐式深拷贝（遵循零法则与独占所有权）
-inline constexpr int protocol_alternative_count{29}; // 包含 monostate 与 28 种协议的变体分支总数
-static_assert(std::cmp_equal(std::variant_size_v<protocol_detail>,
-                             protocol_alternative_count));        // 检查变体分支总数与预期一致
-static_assert(sizeof(unified_node) < sizeof(node_configuration)); // 检查节点本体尺寸小于冷配置对象
+static_assert(std::is_aggregate_v<unified_node>);
+static_assert(std::is_trivially_copyable_v<client_metadata>);
+static_assert(std::is_nothrow_move_constructible_v<unified_node>);
+static_assert(!std::is_copy_constructible_v<unified_node>);
+inline constexpr int protocol_alternative_count{29};
+static_assert(std::cmp_equal(std::variant_size_v<protocol_detail>, protocol_alternative_count));
+static_assert(sizeof(unified_node) < sizeof(node_configuration));
 
 // NOLINTEND(altera-struct-pack-align, readability-redundant-member-init)
 
 } // namespace node_model
 
-#endif // BLANK_QUICK_UNIFIED_NODE_HPP
+#endif

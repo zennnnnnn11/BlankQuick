@@ -8,7 +8,7 @@
 
 int coreRequestTimeout(const QByteArray& path, const QByteArray& method,
                        int regularMilliseconds) noexcept {
-    // Config parsing may initialize three Geo databases sequentially (90 seconds each).
+
     if (path == "/configs?force=true" && method == "PUT") {
         return static_cast<int>(timeout_budget::config_apply.count());
     }

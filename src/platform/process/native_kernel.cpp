@@ -125,7 +125,7 @@ class Attributes final {
     Attributes& operator=(Attributes&&) = delete;
 
     [[nodiscard]] LPPROC_THREAD_ATTRIBUTE_LIST get() noexcept {
-        // Win32 requires its opaque attribute list to live in caller-owned aligned storage.
+
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): opaque Win32 storage.
         return reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(storage_.data());
     }
@@ -154,7 +154,7 @@ blank::windows::Handle createInJob(HANDLE job, const QString& executable,
     auto environment = QProcessEnvironment::systemEnvironment();
     const auto keys = environment.keys();
     for (const auto& key : keys) {
-        // mihomo reads CLASH_* overrides and hooks before applying its configuration file.
+
         if (key.startsWith(QStringLiteral("CLASH_"), Qt::CaseInsensitive) ||
             key.compare(QStringLiteral("SKIP_SAFE_PATH_CHECK"), Qt::CaseInsensitive) == 0 ||
             key.compare(QStringLiteral("SAFE_PATHS"), Qt::CaseInsensitive) == 0) {
@@ -202,7 +202,7 @@ class NativeKernel::Impl {
     QString initialConfiguration;
     quint16 controllerPort = 0;
     blank::windows::Handle process;
-    // Declared last: the non-inheritable job closes before process handles and runtime files.
+
     blank::windows::Handle job;
 };
 
@@ -265,8 +265,7 @@ NativeKernel::NativeKernel(const KernelOptions& options)
 
 NativeKernel::~NativeKernel() {
     if (impl_->process && WaitForSingleObject(impl_->process.get(), 0) == WAIT_TIMEOUT) {
-        // Construction/active teardown happens on a worker. Controllers keep an
-        // asynchronous cleanup owner alive; a normally stopped destructor never waits.
+
         static_cast<void>(stop({}));
     }
 }
@@ -337,7 +336,7 @@ QString NativeKernel::stop(const QString& signalHelper) {
                 WaitForSingleObject(helper.get(), 500);
                 WaitForSingleObject(impl_->process.get(), 1500);
             } catch (const std::exception&) {
-                // Console signaling failed: immediately use the mandatory owned-job fallback.
+
                 requireWindows(TerminateJobObject(impl_->job.get(), 1) != FALSE);
             }
         }
@@ -345,7 +344,7 @@ QString NativeKernel::stop(const QString& signalHelper) {
             requireWindows(TerminateJobObject(impl_->job.get(), 1) != FALSE);
         }
         requireWindows(WaitForSingleObject(impl_->process.get(), 2000) == WAIT_OBJECT_0);
-        // Termination is asynchronous; confirm the entire job, not just the root process.
+
         for (int attempt = 0; attempt < 200; ++attempt) {
             if (jobEmpty(impl_->job.get())) {
                 if (impl_->directory.remove()) {
@@ -353,7 +352,7 @@ QString NativeKernel::stop(const QString& signalHelper) {
                 }
                 return {};
             }
-            Sleep(10); // Worker thread only; never blocks the GUI thread.
+            Sleep(10);
         }
         return QStringLiteral("Timed out waiting for the owned kernel job to exit.");
     } catch (const std::exception& error) {
@@ -383,7 +382,7 @@ ListenerCheck checkProxyListener(quint16 port, quint32 processId) {
     if (port == 0 || processId == 0) {
         return {};
     }
-    // 按系统代理实际使用的 IPv4 端点核验连接归属，兼容通配和双栈监听。
+
     QTcpSocket connection;
     connection.setProxy(QNetworkProxy::NoProxy);
     connection.connectToHost(QHostAddress::LocalHost, port);

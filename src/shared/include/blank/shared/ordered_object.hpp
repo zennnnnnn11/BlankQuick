@@ -10,11 +10,9 @@
 #include <utility>
 
 namespace json_detail {
-// CPU loops and explicit member initialization follow repository policy.
+
 // NOLINTBEGIN(altera-unroll-loops,fuchsia-default-arguments-calls,readability-redundant-member-init)
 
-// A scoped index for bulk edits. The object must not be structurally edited elsewhere
-// while this index is alive. Positions remain valid when the ordered vector grows.
 class ordered_object final {
   public:
     explicit ordered_object(nlohmann::ordered_json& value) : object{value.get_ref<object_type&>()} {

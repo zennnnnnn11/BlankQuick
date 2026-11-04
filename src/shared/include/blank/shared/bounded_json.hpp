@@ -14,8 +14,6 @@
 
 namespace json_detail {
 
-// SAX avoids the callback DOM parser's scan of the parent after every object.
-// Each frame owns its unfinished container; no reference survives a vector growth.
 // NOLINTBEGIN(altera-struct-pack-align,altera-unroll-loops,fuchsia-default-arguments-calls,readability-redundant-member-init)
 enum class read_error : std::int8_t { none, invalid_document, resource_limit };
 struct read_options {
@@ -49,19 +47,19 @@ template <json_document Json> class document_reader final : public nlohmann::jso
     auto number_unsigned(Json::number_unsigned_t value) -> bool override {
         return scalar(value);
     }
-    auto number_float(Json::number_float_t value, const Json::string_t& /*text*/) -> bool override {
+    auto number_float(Json::number_float_t value, const Json::string_t&) -> bool override {
         return scalar(value);
     }
     auto string(Json::string_t& value) -> bool override {
         return scalar(std::move(value));
     }
-    auto binary(Json::binary_t& /*value*/) noexcept -> bool override {
+    auto binary(Json::binary_t&) noexcept -> bool override {
         return reject(read_error::invalid_document);
     }
-    auto start_object(std::size_t /*size*/) -> bool override {
+    auto start_object(std::size_t) -> bool override {
         return start(Json::object());
     }
-    auto start_array(std::size_t /*size*/) -> bool override {
+    auto start_array(std::size_t) -> bool override {
         return start(Json::array());
     }
     auto end_object() -> bool override {
@@ -86,8 +84,8 @@ template <json_document Json> class document_reader final : public nlohmann::jso
         current.key = std::move(value);
         return true;
     }
-    auto parse_error(std::size_t /*position*/, const std::string& /*last_token*/,
-                     const Json::exception& /*exception*/) noexcept -> bool override {
+    auto parse_error(std::size_t, const std::string&, const Json::exception&) noexcept
+        -> bool override {
         return reject(read_error::invalid_document);
     }
     [[nodiscard]] auto take(bool accepted) noexcept -> read_result<Json> {
@@ -98,7 +96,6 @@ template <json_document Json> class document_reader final : public nlohmann::jso
     }
 
   private:
-    // MSVC STL debug-iterator allocation is diagnosed despite noexcept constructors.
     struct frame { // NOLINT(bugprone-exception-escape)
         Json value{};
         std::unordered_map<std::string, std::size_t> indices{};
@@ -137,7 +134,7 @@ template <json_document Json> class document_reader final : public nlohmann::jso
         } else if constexpr (std::same_as<Json, nlohmann::ordered_json>) {
             auto& object = current.value.template get_ref<typename Json::object_t&>();
             if (current.index == object.size()) {
-                // Uniqueness was established by key(); bypass ordered_map's linear search.
+
                 object.emplace_back(std::move(current.key), std::move(value));
             } else {
                 static_cast<Json::object_t::Container&>(object).at(current.index).second =

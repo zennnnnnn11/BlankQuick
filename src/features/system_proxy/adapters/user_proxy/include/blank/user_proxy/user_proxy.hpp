@@ -24,7 +24,6 @@ enum class ProxyRestoreResult : quint8 {
     Conflict,
 };
 
-// The caller holds the per-user journal lock for the complete ownership interval.
 class UserProxyTransaction final {
   public:
     using Reader = std::function<UserProxySnapshot()>;

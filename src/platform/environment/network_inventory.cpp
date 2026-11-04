@@ -32,7 +32,7 @@ bool ownedName(const wchar_t* name) {
         return false;
     }
     const auto text = QString::fromWCharArray(name);
-    // Observation filter only: this name never authorizes device or route deletion.
+
     return text.size() == 43 && text.startsWith(QStringLiteral("BlankQuick-")) &&
            std::ranges::all_of(text.sliced(11), [](QChar value) {
                return (value >= u'0' && value <= u'9') || (value >= u'a' && value <= u'f');
@@ -52,7 +52,7 @@ NetworkSnapshot readNetworkInventory(bool detailed) try {
             throw std::runtime_error("Network inventory exceeded its size limit.");
         }
         storage.resize((bytes + sizeof(std::max_align_t) - 1) / sizeof(std::max_align_t));
-        // IP Helper writes its linked ABI structures into this aligned caller-owned buffer.
+
         // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
         adapters = reinterpret_cast<IP_ADAPTER_ADDRESSES*>(storage.data());
         status = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST,

@@ -47,7 +47,7 @@ constexpr DEVPROPKEY presentProperty{
 };
 
 GUID deviceGuid(const QString& name) {
-    // sing-tun 0.4.28 uses these raw MD5 bytes as a Windows GUID, not as a security digest.
+
     const auto bytes = QCryptographicHash::hash("wintun" + name.toUtf8(), QCryptographicHash::Md5);
     GUID guid{};
     std::memcpy(&guid, bytes.constData(), sizeof(guid));
@@ -116,7 +116,7 @@ QString property(HDEVINFO devices, SP_DEVINFO_DATA& info, DWORD kind, DWORD expe
     std::array<wchar_t, 1024> buffer{};
     DWORD type = 0;
     DWORD size = 0;
-    // SetupAPI's byte buffer carries a bounded UTF-16 Windows property.
+
     // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
     blank::windows::check(SetupDiGetDeviceRegistryPropertyW(devices, &info, kind, &type,
                                                             reinterpret_cast<BYTE*>(buffer.data()),
@@ -215,7 +215,7 @@ bool routesRemain(const TunPlan& plan, bool requireDefaults = false) {
                 return true;
             }
             if (route.DestinationPrefix.PrefixLength == 0) {
-                // SOCKADDR_INET is the SDK IPv4/IPv6 union accepted by Qt's sockaddr overload.
+
                 // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
                 const QHostAddress address(
                     reinterpret_cast<const sockaddr*>(&route.DestinationPrefix.Prefix));
@@ -269,7 +269,7 @@ TunPlan observeTun(const QString& journal, std::optional<TunRequirements> requir
     if (ConvertInterfaceGuidToLuid(&guid, &luid) != NO_ERROR) {
         throw std::runtime_error("The TUN network interface is not ready.");
     }
-    // GetIfEntry2 fills the output enums before they are read; Windows expects a zeroed buffer.
+
     // NOLINTNEXTLINE(bugprone-invalid-enum-default-initialization)
     MIB_IF_ROW2 row{};
     row.InterfaceLuid = luid;
@@ -313,7 +313,7 @@ TunHealth inspectTun(const QString& journal) try {
     if (status != NO_ERROR) {
         throw std::system_error(static_cast<int>(status), std::system_category());
     }
-    // GetIfEntry2 overwrites the SDK output enums before use.
+
     // NOLINTNEXTLINE(bugprone-invalid-enum-default-initialization)
     MIB_IF_ROW2 row{};
     row.InterfaceLuid = luid;

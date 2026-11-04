@@ -44,7 +44,6 @@ struct ActivationInput {
     std::vector<profile_payload::assembly_diagnostic> assemblyDiagnostics;
 };
 
-// Each source is coherent independently; this does not claim a cross-store transaction.
 [[nodiscard]] ActivationInput
 makeActivationInput(const profile_runtime::activation_snapshot& profile,
                     const runtime_config::settings_snapshot& settings,
@@ -58,12 +57,12 @@ enum class TransactionKind : quint8 {
 };
 
 enum class TransactionOutcome : quint8 {
-    Rejected,         // No candidate write was accepted.
-    Applied,          // Requested state confirmed by readback.
-    RolledBack,       // Previous state reapplied and confirmed.
-    Cancelled,        // Cancelled before any write was submitted.
-    Uncertain,        // A submitted write or rollback could not be confirmed.
-    PartiallyApplied, // Configuration confirmed; the following TUN operation failed.
+    Rejected,
+    Applied,
+    RolledBack,
+    Cancelled,
+    Uncertain,
+    PartiallyApplied,
 };
 
 enum class TransactionStage : quint8 {
@@ -113,8 +112,6 @@ enum class NativeCheckPolicy : quint8 {
     EphemeralFakeIp,
 };
 
-// Local diagnostics can contain script logs and kernel output with credentials.
-// Retained for explicit inspection; never forwarded to logMessage automatically.
 struct ActivationDiagnostics {
     runtime_config::configuration_error configurationError{};
     std::vector<profile_payload::assembly_diagnostic> assembly;
@@ -149,7 +146,7 @@ enum class ActivationRejection : quint8 {
 };
 
 struct ActivationSubmission {
-    qint64 requestId = 0; // Nonzero only when accepted.
+    qint64 requestId = 0;
     ActivationRejection rejection = ActivationRejection::None;
 
     [[nodiscard]] constexpr bool accepted() const noexcept {

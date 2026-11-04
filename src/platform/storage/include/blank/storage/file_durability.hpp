@@ -10,7 +10,6 @@ struct DurableWrite {
     QString error;
 };
 
-// Worker-thread API. Reports OS flush success, not a hardware power-loss guarantee.
 [[nodiscard]] QString flushDirectory(const QString& directoryPath);
 [[nodiscard]] DurableWrite writeDurableFile(const QString& path, const QByteArray& bytes,
                                             const std::stop_token& stop = {});

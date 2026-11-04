@@ -53,7 +53,7 @@ void cachePath(const QString& path, const QString& root) {
 QJsonObject providerPaths(QJsonObject entries, const QString& kind, const QString& root) {
     for (auto item = entries.begin(); item != entries.end(); ++item) {
         if (!item.value().isObject()) {
-            continue; // The core owns provider schema and protocol validation.
+            continue;
         }
         auto provider = item.value().toObject();
         auto path = provider.value(QStringLiteral("path")).toString();
@@ -153,8 +153,7 @@ ServiceConfig compileServiceConfig(const QString& json, quint16 mixedPort, const
                      });
     const auto port = object.value(QStringLiteral("mixed-port")).toInteger(-1);
     require(port >= 1 && port <= 65535, "mixed-port must be between 1 and 65535.");
-    // Controller transport, the live DNS engine and the owned TUN lifecycle are reserved. Other
-    // fields passes through to mihomo, including new protocols and options unknown to this client.
+
     for (const auto* key : {
              "external-controller",
              "external-controller-tls",

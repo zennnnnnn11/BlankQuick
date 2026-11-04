@@ -29,7 +29,7 @@
 
 namespace profile_storage::detail {
 namespace {
-// ISO C++20 aggregates, standard spans and private generated reflection.
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,altera-struct-pack-align,readability-redundant-member-init,altera-unroll-loops,fuchsia-default-arguments-calls)
 using nlohmann::json;
 
@@ -410,7 +410,7 @@ auto decode_index(std::string_view text, std::int64_t max_profiles) -> std::vect
         auto document = parse_document(text);
         object_size(document, 2);
         static_cast<void>(document_array(document, "profiles", max_profiles));
-        // Read legacy settings in memory; loading never rewrites the manifest.
+
         for (auto& profile : document.at("profiles")) {
             auto& settings = profile.at("settings");
             if (!settings.is_object()) {

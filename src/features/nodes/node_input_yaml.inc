@@ -1,5 +1,5 @@
-// Alias expansion is lazy and budgeted; Tree::resolve() is deliberately avoided.
-// ISO C++20 CPU adapters use the same local style exceptions as node_input.cpp.
+
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace)
 // NOLINTBEGIN(fuchsia-default-arguments-calls)
 // NOLINTBEGIN(fuchsia-default-arguments-declarations)
@@ -12,29 +12,27 @@
     return text.len == 0 ? std::string_view{} : std::string_view{text.str, text.len};
 }
 
-// The opaque argument is mandated by ryml's C callback ABI and never owns data.
 [[noreturn]] auto yaml_basic_error(ryml::csubstr message, const ryml::ErrorDataBasic& location,
-                                   void* /*context*/) -> void {
+                                   void*) -> void {
     static_cast<void>(message);
     static_cast<void>(location);
     fail(parse_error::invalid_document);
 }
 
 [[noreturn]] auto yaml_parse_error(ryml::csubstr message, const ryml::ErrorDataParse& location,
-                                   void* /*context*/) -> void {
+                                   void*) -> void {
     static_cast<void>(message);
     static_cast<void>(location);
     fail(parse_error::invalid_document);
 }
 
 [[noreturn]] auto yaml_visit_error(ryml::csubstr message, const ryml::ErrorDataVisit& location,
-                                   void* /*context*/) -> void {
+                                   void*) -> void {
     static_cast<void>(message);
     static_cast<void>(location);
     fail(parse_error::invalid_document);
 }
 
-// This parse-local data bundle exposes its independent traversal state.
 // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
 struct yaml_context {
     yaml_context(const ryml::Tree& input_tree, const parse_limits& input_limits)
@@ -86,7 +84,6 @@ auto yaml_merge(json& object, const json& inherited) -> void {
 
 [[nodiscard]] auto yaml_value(yaml_context& context, ryml::ConstNodeRef node) -> json;
 
-// The traversal is mutually recursive and bounded by yaml_value.
 // NOLINTNEXTLINE(misc-no-recursion)
 [[nodiscard]] auto yaml_mapping(yaml_context& context, ryml::ConstNodeRef node) -> json {
     auto result = json::object();
@@ -117,7 +114,6 @@ auto yaml_merge(json& object, const json& inherited) -> void {
     return result;
 }
 
-// This mutually recursive conversion is bounded by depth, graph-path and value budgets.
 // NOLINTNEXTLINE(misc-no-recursion)
 [[nodiscard]] auto yaml_value(yaml_context& context, ryml::ConstNodeRef node) -> json {
     if (++context.expanded > context.limits.get().max_expanded_values ||
@@ -139,7 +135,7 @@ auto yaml_merge(json& object, const json& inherited) -> void {
             result.push_back(yaml_value(context, child));
         }
     } else if (node.has_val() && !node.val_is_null()) {
-        // Preserve quoted/numeric-looking secrets and leading-zero short IDs.
+
         result = std::string{yaml_view(node.val())};
     }
     context.path.pop_back();
@@ -261,8 +257,7 @@ auto parse_clash_yaml(std::string_view input, const parse_limits& limits,
     -> material::clash_material {
     auto result = material::clash_material{.sections = json::object()};
     visit_yaml_root<false>(
-        input, limits,
-        [&](yaml_context& context, ryml::ConstNodeRef root, ryml::Parser& /*parser*/) -> void {
+        input, limits, [&](yaml_context& context, ryml::ConstNodeRef root, ryml::Parser&) -> void {
             for (const auto child : root.children()) {
                 if (!child.has_key() || child.is_key_ref()) {
                     fail(parse_error::invalid_document);

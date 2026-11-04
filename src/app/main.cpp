@@ -27,7 +27,7 @@
 #include <winuser.h>
 
 namespace {
-// Repository policy requires anonymous namespaces for implementation-local functions.
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace)
 class blank_window_events final : public QAbstractNativeEventFilter {
   public:

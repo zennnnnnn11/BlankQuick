@@ -24,7 +24,7 @@
 
 namespace runtime_config::detail {
 namespace {
-// CPU loops and explicit aggregate initialization follow repository policy.
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,altera-struct-pack-align,fuchsia-default-arguments-calls,altera-unroll-loops,readability-redundant-member-init)
 constexpr std::int64_t maximum_port{65535};
 struct schema_field {
@@ -91,7 +91,6 @@ auto fixed_integer(const json& value, std::string_view type) -> void {
     }
 }
 
-// The patch parser bounds depth before this schema walk; only fixed schema objects recurse.
 // NOLINTNEXTLINE(misc-no-recursion)
 auto validate_fixed_value(const json& value, std::string_view path, std::string_view type) -> void {
     if (value.is_null()) {
@@ -100,7 +99,7 @@ auto validate_fixed_value(const json& value, std::string_view path, std::string_
     if (type.starts_with('*')) {
         type.remove_prefix(1);
     }
-    // ISO C++20 intentionally does not depend on Abseil.
+
     // NOLINTNEXTLINE(abseil-string-find-str-contains)
     if (type.starts_with("map[") || type.find("orderedmap.") != std::string_view::npos) {
         if (!value.is_object()) {
@@ -156,7 +155,7 @@ struct graph_target {
     std::size_t index{};
     target_kind kind{};
 };
-// MSVC STL debug-iterator allocation is diagnosed despite noexcept constructors.
+
 struct reference_graph { // NOLINT(bugprone-exception-escape)
     std::unordered_map<std::string_view, graph_target> names{};
     std::vector<std::vector<std::size_t>> edges{};
@@ -180,7 +179,6 @@ auto require_target(const reference_graph& graph, std::string_view target) -> vo
     }
 }
 
-// Source/target order is the conventional directed edge notation; all calls are private.
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 auto add_edge(reference_graph& graph, std::string_view source, std::string_view target,
               std::int64_t limit) -> void {
@@ -223,7 +221,6 @@ auto group_fallback(const json& group, const reference_graph& graph) -> void {
     }
 }
 
-// Group and collection arguments use JSON privately, with fixed named call sites.
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 auto group_edges(reference_graph& graph, const json& group, const json& nodes,
                  const name_set& providers, const generation_limits& limits) -> void {
@@ -298,7 +295,6 @@ auto group_edges(reference_graph& graph, const json& group, const json& nodes,
     return graph;
 }
 
-// A synchronous borrowed validation scope; all referenced documents outlive it.
 // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
 struct rule_context {
     rule_context(const name_set& input_providers, const reference_graph& input_outbounds,
@@ -338,7 +334,6 @@ struct rule_context {
     }
 }
 
-// Source and target follow the same directed-edge convention as add_edge.
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 auto add_subrule_reference(std::string_view source, std::string_view target,
                            const rule_context& context) -> void {
@@ -553,7 +548,7 @@ auto validate_final(const json& document, const runtime_context& context,
     const auto proxy_provider_names = index_names(proxy_providers);
     auto graph = reference_graph{};
     graph.names.reserve(nodes.size() + groups.size());
-    // Target kinds make validation independent of registration order.
+
     for (const auto& group : groups) {
         insert_name(graph, group, target_kind::group);
     }

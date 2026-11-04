@@ -16,7 +16,7 @@
 
 namespace runtime_config {
 namespace {
-// CPU code has no FPGA unroll requirement.
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,fuchsia-default-arguments-calls,altera-unroll-loops)
 template <typename Material>
     requires std::same_as<Material, profile_payload::minimal_profile> ||
@@ -61,7 +61,7 @@ auto compose(const Material& material, const client_settings& settings,
             servers.push_back("system");
         }
     }
-    // 覆写可改动基础设置，必须对最终候选重新检查保护字段和引用关系。
+
     detail::validate_final(applied.value, context, limits, result.effective);
     result.config_json = applied.value.dump();
 }

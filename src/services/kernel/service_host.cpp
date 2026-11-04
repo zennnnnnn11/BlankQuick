@@ -161,7 +161,7 @@ ServiceHost::ServiceHost(QObject* parent) : QObject(parent) {
         tun.insert(QStringLiteral("device"), plan_.device);
         pendingConfig_.insert(QStringLiteral("tun"), tun);
         operation_ = Operation::Enable;
-        // DNS 常驻，TUN 切换只提交 tun 字段，不重载策略组和节点选择。
+
         sendHttp("/configs", "PATCH",
                  QJsonDocument(QJsonObject{{QStringLiteral("tun"), tun}}).toJson());
     });
@@ -245,8 +245,7 @@ ServiceHost::ServiceHost(QObject* parent) : QObject(parent) {
         if ((operation_ == Operation::Api || operation_ == Operation::ConfigApply ||
              operation_ == Operation::EnvironmentDns) &&
             reply_) {
-            // Sleep can expire an HTTP deadline before its disconnect event is delivered.
-            // A failed read/cache refresh does not prove the owned TUN is damaged.
+
             reply_->abort();
             return;
         }
@@ -363,8 +362,7 @@ void ServiceHost::received(const QJsonObject& frame) try {
             respond(id, 200, "{}");
             return;
         }
-        // This core only retires an old log subscriber on a matching log write.
-        // Keep one debug subscription and let the client filter levels without reopening it.
+
         logLevel_ = QStringLiteral("debug");
         openLogs();
         respond(id, 200,
@@ -808,7 +806,7 @@ void ServiceHost::stop(const QString& id, const QString& error) {
 }
 
 void ServiceHost::stopProcess() {
-    // worker 的结果尚未被主线程接收前，仍可能持有目录或写入 TUN 日志。
+
     if (launchWork_ || compilerWork_ || plannerWork_ || observerWork_ || stopWork_ ||
         cleanupWork_) {
         return;
@@ -866,7 +864,7 @@ void ServiceHost::cleanupFinished() {
         return;
     }
     if (cleanup_ == Cleanup::Stop) {
-        // Job 退出和所属 TUN 清理均确认后，才能向客户端宣告资源已释放。
+
         stopping_ = false;
         reportEnvironment(stopError_.isEmpty() ? QStringLiteral("网络资源已清理") : stopError_);
         pipe_.send({

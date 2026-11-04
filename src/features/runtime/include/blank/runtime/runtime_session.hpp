@@ -112,8 +112,6 @@ struct RuntimeChange {
     QString group;
 };
 
-// QObject event-loop adapter. No window, QML registration or presentation model.
-// Call methods on its owning thread. Config generation and native -t run on workers.
 class RuntimeSession final : public QObject {
     Q_OBJECT
   public:

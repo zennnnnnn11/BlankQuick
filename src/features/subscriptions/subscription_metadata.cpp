@@ -23,10 +23,8 @@
 
 namespace subscription_fetcher {
 namespace {
-// Repository ISO C++20 aggregate/default-argument style, not Fuchsia/FPGA policy.
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace, fuchsia-default-arguments-calls,
-// fuchsia-default-arguments-declarations, altera-unroll-loops, altera-struct-pack-align,
-// abseil-string-find-str-contains, readability-redundant-member-init)
 
 [[nodiscard]] constexpr auto trim(std::string_view text) noexcept -> std::string_view {
     const auto first = text.find_first_not_of(" \t");
@@ -413,8 +411,7 @@ auto parse_metadata(std::span<const http_header> headers, metadata_result& resul
     return true;
 }
 // NOLINTEND(llvm-prefer-static-over-anonymous-namespace, fuchsia-default-arguments-calls,
-// fuchsia-default-arguments-declarations, altera-unroll-loops, altera-struct-pack-align,
-// abseil-string-find-str-contains, readability-redundant-member-init)
+
 } // namespace
 
 auto parse_response_headers(std::span<const http_header> headers,

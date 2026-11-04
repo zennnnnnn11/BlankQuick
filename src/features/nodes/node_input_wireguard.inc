@@ -1,5 +1,5 @@
-// Native WireGuard input is data only; hook commands are never evaluated.
-// ISO C++20 CPU adapters use the same local style exceptions as node_input.cpp.
+
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace)
 // NOLINTBEGIN(fuchsia-default-arguments-calls)
 // NOLINTBEGIN(fuchsia-default-arguments-declarations)

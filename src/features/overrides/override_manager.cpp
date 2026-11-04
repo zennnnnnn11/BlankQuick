@@ -33,7 +33,7 @@
 
 namespace overrides {
 namespace {
-// Same ISO CPU/storage conventions as profile_storage; no runtime policy is shared.
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,altera-struct-pack-align,readability-redundant-member-init,altera-unroll-loops,fuchsia-default-arguments-calls)
 namespace fs = std::filesystem;
 using detail::fail;
@@ -76,7 +76,7 @@ auto safe_path(const fs::path& root, const fs::path& path) -> void {
             fail(override_error::unsafe_path);
         }
     }
-    // Include ancestors above the supplied data directory as well as children.
+
     auto current = path.root_path();
     for (const auto& part : path.relative_path()) {
         current /= part;
@@ -403,8 +403,7 @@ auto stage_content(const manager_options& options, const index_entry& entry, std
                              std::string_view expected_revision, bool updating) -> stored_override {
     validate_item(item, options);
     auto entry = make_entry(item);
-    // Allocate the returned object before publication, so allocation failure cannot
-    // turn a successfully committed write into an apparent failed operation.
+
     auto result = stored_override{.item = item, .revision = entry.summary.revision};
     result.item.id = entry.summary.id;
     const auto session = locked_store{options};
@@ -486,7 +485,7 @@ auto stage_content(const manager_options& options, const index_entry& entry, std
     const auto binding = binding_for(index, profile_id);
     auto selected = std::unordered_set<std::string>{};
     auto entries = std::vector<std::reference_wrapper<const index_entry>>{};
-    // 全局覆写优先，随后按绑定顺序追加；同一 ID 只执行一次。
+
     for (const auto& entry : index.items) {
         if (entry.summary.is_global) {
             selected.insert(entry.summary.id);
@@ -594,7 +593,7 @@ auto stage_content(const manager_options& options, const index_entry& entry, std
 [[nodiscard]] auto collect(const manager_options& options) -> cleanup_result {
     const auto session = locked_store{options};
     const auto index = session.read_index();
-    // Verify published content before deleting any potentially recoverable version.
+
     for (const auto& entry : index.items) {
         static_cast<void>(read_content(options, entry));
     }

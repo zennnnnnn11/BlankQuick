@@ -10,7 +10,6 @@
 
 namespace node_input {
 
-// 错误和警告不保存原始链接、密码或密钥，可直接用于导入结果展示。
 enum class parse_error : std::int8_t {
     none,
     unsupported_protocol,
@@ -26,7 +25,6 @@ enum class parse_error : std::int8_t {
     invalid_document,
 };
 
-// 长度单位为字节；行数及节点数限制也约束恶意订阅的内存占用。
 inline constexpr std::int64_t default_input_bytes{33554432};
 inline constexpr std::int64_t default_line_bytes{262144};
 inline constexpr std::int64_t default_node_limit{100000};
@@ -56,10 +54,10 @@ struct node_parse_result {
 enum class node_collection : std::int8_t { lines, proxies, outbounds, endpoints, peers, nodes };
 
 struct line_diagnostic {
-    std::int64_t line{}; // 解码后文本的 1 基行号；JSON 无物理行号时为 0。
+    std::int64_t line{};
     parse_error error{parse_error::none};
     std::vector<std::string> ignored_parameters{};
-    std::int64_t index{}; // 集合中从 1 开始的位置；JSON 不伪造物理行号。
+    std::int64_t index{};
     node_collection collection{node_collection::lines};
 };
 
@@ -75,14 +73,11 @@ struct subscription_result {
     std::vector<node_model::unified_node> nodes{};
     std::vector<line_diagnostic> diagnostics{};
     subscription_encoding encoding{subscription_encoding::plain_text};
-    parse_error error{parse_error::none}; // 仅表示整包错误；节点错误在 diagnostics。
+    parse_error error{parse_error::none};
     subscription_format format{subscription_format::uri_lines};
 };
 // NOLINTEND(altera-struct-pack-align, readability-redundant-member-init)
 
-// 单链接、明文/Base64 订阅、Clash YAML、Sing-box JSON 和 WireGuard conf。
-// 两个入口都截获解析和分配异常；批量模式保留出错前已经成功装配的节点。
-// ISO C++ 默认参数用于可选资源限制，不遵循 Fuchsia 的禁用默认参数风格。
 // NOLINTBEGIN(fuchsia-default-arguments-declarations)
 [[nodiscard]] auto parse_uri(std::string_view input, const parse_limits& limits = {}) noexcept
     -> node_parse_result;

@@ -61,7 +61,7 @@ void finishService(const std::shared_ptr<ServiceContext>& context, const QString
     QCoreApplication::exit(error.isEmpty() ? 0 : 1);
 }
 
-DWORD WINAPI serviceControl(DWORD control, DWORD /*unused*/, void* /*unused*/, void* data) {
+DWORD WINAPI serviceControl(DWORD control, DWORD, void*, void* data) {
     if (control == SERVICE_CONTROL_STOP || control == SERVICE_CONTROL_SHUTDOWN ||
         control == SERVICE_CONTROL_PRESHUTDOWN) {
         const auto* context = static_cast<ServiceContext*>(data);
@@ -72,7 +72,7 @@ DWORD WINAPI serviceControl(DWORD control, DWORD /*unused*/, void* /*unused*/, v
 
 void startRuntime(const std::shared_ptr<ServiceContext>& context) try {
     auto* application = QCoreApplication::instance();
-    // These objects belong to the application / host QObject tree.
+
     auto* host = &blank::qt::makeChild<ServiceHost>(*application);
     auto* notify = &blank::qt::makeChild<QWinEventNotifier>(*host, context->stop.get());
     auto* pending = &blank::qt::makeChild<QTimer>(*host);
@@ -115,7 +115,7 @@ void startRuntime(const std::shared_ptr<ServiceContext>& context) try {
     finishService(context, QStringLiteral("Unexpected service initialization failure."));
 }
 
-void WINAPI serviceEntry(DWORD /*unused*/, wchar_t** /*unused*/) try {
+void WINAPI serviceEntry(DWORD, wchar_t**) try {
     const auto context = std::make_shared<ServiceContext>();
     blank::windows::check(context->stop != nullptr && context->done != nullptr);
     context->handle = RegisterServiceCtrlHandlerExW(serviceName, serviceControl, context.get());
@@ -126,7 +126,7 @@ void WINAPI serviceEntry(DWORD /*unused*/, wchar_t** /*unused*/) try {
     blank::windows::check(SetServiceStatus(context->handle, &context->status) != FALSE);
     QMetaObject::invokeMethod(
         QCoreApplication::instance(), [context] { startRuntime(context); }, Qt::QueuedConnection);
-    // SCM dispatch owns this thread; the Qt event loop and all QObjects stay on main().
+
     WaitForSingleObject(context->done.get(), INFINITE);
 } catch (...) {
     QMetaObject::invokeMethod(

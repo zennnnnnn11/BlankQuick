@@ -139,7 +139,7 @@ void CoreLogSocket::checkHealth() {
         retry(tr("日志握手超时，正在重连"));
         return;
     }
-    // This core never reads WebSocket Ping frames. Quiet logs are normal; probe HTTP liveness.
+
     auto request = request_;
     auto url = request.url();
     url.setScheme(QStringLiteral("http"));

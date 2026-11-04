@@ -25,7 +25,7 @@ using ScmHandle = std::unique_ptr<std::remove_pointer_t<SC_HANDLE>, ScmCloser>;
 SERVICE_STATUS_PROCESS status(SC_HANDLE service) {
     SERVICE_STATUS_PROCESS result{};
     DWORD size = 0;
-    // The SCM interface specifies a byte buffer for SERVICE_STATUS_PROCESS.
+
     // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
     blank::windows::check(QueryServiceStatusEx(service, SC_STATUS_PROCESS_INFO,
                                                reinterpret_cast<BYTE*>(&result), sizeof(result),
@@ -244,7 +244,7 @@ QString uninstallService() try {
             "TUN recovery is unresolved; the service and journal were retained.");
     }
     blank::windows::check(DeleteService(service.get()) != FALSE);
-    // Remove only known artifacts after SCM confirmed successful cleanup.
+
     const auto destination = installedServiceDirectory();
     verifyTrustedPath(destination);
     const auto files = bundleFiles();

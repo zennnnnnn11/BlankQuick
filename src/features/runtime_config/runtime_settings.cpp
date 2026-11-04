@@ -20,7 +20,7 @@
 
 namespace runtime_config::detail {
 namespace {
-// Documented product defaults below are explicit policy values, not protocol magic.
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,fuchsia-default-arguments-calls,altera-unroll-loops)
 constexpr std::int64_t maximum_port{65535};
 constexpr std::int64_t maximum_geo_hours{8760};
@@ -256,7 +256,7 @@ auto settings_from_document(const json& document) -> client_settings {
     result.dns.fake_ip_filter = dns.at("fake_ip_filter").get<std::vector<std::string>>();
     result.dns.respect_rules = dns.at("respect_rules").get<bool>();
     if (legacy_system) {
-        // 旧 system 模式迁移为系统上游，不再关闭内核 DNS。
+
         result.dns.append_system_dns = true;
         if (result.dns.bootstrap.empty()) {
             result.dns.bootstrap = {"system"};
@@ -269,9 +269,8 @@ auto settings_from_document(const json& document) -> client_settings {
     return result;
 }
 
-// JSON subscripts intentionally create named object properties.
 // NOLINTBEGIN(cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
-// These literals are auditable DNS/cache and well-known sniffed-port policy.
+
 // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
 auto base_document(const client_settings& settings, const runtime_context& context) -> json {
     validate_settings(settings);

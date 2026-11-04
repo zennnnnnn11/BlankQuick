@@ -11,7 +11,7 @@ namespace {
 blank::windows::LocalMemory pipeDescriptor(const QStringList& sessions) {
     auto sddl = QStringLiteral("O:SYG:SYD:P(A;;GA;;;SY)(A;;GA;;;BA)");
     for (const auto& sid : sessions) {
-        // Specific rights omit FILE_CREATE_PIPE_INSTANCE, unlike GENERIC_WRITE.
+
         sddl += QStringLiteral("(A;;0x0012019b;;;%1)").arg(sid);
     }
     return securityDescriptor(sddl);
@@ -100,7 +100,7 @@ void SecurePipe::accepted() try {
     blank::windows::check(DuplicateHandle(GetCurrentProcess(), anchor_.get(), GetCurrentProcess(),
                                           &raw, 0, FALSE, DUPLICATE_SAME_ACCESS) != FALSE);
     blank::windows::Handle duplicate(raw);
-    // QLocalSocket owns a duplicate; the anchor remains alive to prevent pipe-name squatting.
+
     blank::windows::check(peer_.setSocketDescriptor(std::bit_cast<qintptr>(duplicate.get())));
     std::ignore = duplicate.release();
     authentication_.start(std::chrono::milliseconds{5000});
@@ -148,7 +148,7 @@ void SecurePipe::read() try {
 }
 
 void SecurePipe::sendEvent(const QJsonObject& frame) {
-    // Live diagnostics may be dropped under backpressure; control replies must still get through.
+
     if (peer_.bytesToWrite() < qint64{1024} * 1024) {
         send(frame);
     }

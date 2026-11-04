@@ -1,5 +1,5 @@
-// Sing-box names are translated explicitly; they are not Mihomo key aliases.
-// ISO C++20 CPU adapters use the same local style exceptions as node_input.cpp.
+
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace)
 // NOLINTBEGIN(fuchsia-default-arguments-calls)
 // NOLINTBEGIN(fuchsia-default-arguments-declarations)
@@ -13,7 +13,6 @@ struct singbox_mapping { // NOLINT(bugprone-exception-escape)
     options target{};
 };
 
-// Source and destination are deliberately paired at each conversion call.
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 auto translate(singbox_mapping& mapping, std::string_view from, std::string_view destination)
     -> void {
@@ -77,8 +76,7 @@ auto singbox_tls(singbox_mapping& mapping, uri_protocol protocol) -> void {
     if (!engine.empty() && engine != "go") {
         fail(parse_error::unsupported_parameter);
     }
-    // CA stores, SPKI pins, and TLS-version constraints have no per-node
-    // equivalent in the audited Mihomo model. Never confuse them with mTLS.
+
     for (const auto* key : {
              "tls.certificate",
              "tls.certificate_path",
@@ -144,7 +142,7 @@ auto singbox_tls(singbox_mapping& mapping, uri_protocol protocol) -> void {
     }
     auto result = json::object();
     for (const auto& [name, item] : value.items()) {
-        // HTTPHeader is Listable in Sing-box; WS/Upgrade in Mihomo is scalar.
+
         if (item.is_array()) {
             if (item.size() != 1) {
                 fail(parse_error::unsupported_parameter);
@@ -180,7 +178,7 @@ auto singbox_transport(singbox_mapping& mapping) -> void {
         set_option(mapping.target, "network", "grpc");
         translate(mapping, "transport.service_name", "grpc-opts.grpc-service-name");
     } else if (kind == "http") {
-        // Sing-box HTTP uses H2 with TLS and HTTP camouflage without TLS.
+
         const auto tls = enabled_option(mapping.target, "tls");
         set_option(mapping.target, "network", tls ? "h2" : "tcp");
         if (tls) {

@@ -23,7 +23,6 @@ void checkWinInet(BOOL success) {
     }
 }
 
-// WinINet fixes this tagged union ABI; dwOption selects the active member.
 wchar_t* optionText(INTERNET_PER_CONN_OPTIONW option) {
     return option.Value.pszValue; // NOLINT(cppcoreguidelines-pro-type-union-access)
 }
@@ -157,7 +156,7 @@ void writeUserProxy(const UserProxySnapshot& snapshot) {
 }
 
 void notifyUserProxy() {
-    // Both notifications are attempted even if the first one fails after the setting was written.
+
     const auto changed = InternetSetOptionW(nullptr, INTERNET_OPTION_SETTINGS_CHANGED, nullptr, 0);
     const auto changedError = GetLastError();
     const auto refreshed = InternetSetOptionW(nullptr, INTERNET_OPTION_REFRESH, nullptr, 0);
@@ -196,7 +195,7 @@ void UserProxyTransaction::apply(quint16 port) {
                            .toJson(QJsonDocument::Compact);
     QSaveFile journal(path_);
     journal.setDirectWriteFallback(false);
-    // 先提交恢复记录；后续写代理报错时，现场也可能已经改变。
+
     if (!journal.open(QIODevice::WriteOnly) || journal.write(bytes) != bytes.size() ||
         !journal.commit()) {
         throw std::runtime_error("Cannot persist the proxy recovery snapshot; nothing changed.");
@@ -234,7 +233,7 @@ ProxyRestoreResult UserProxyTransaction::restore() {
     if (current != before && current != intended) {
         return ProxyRestoreResult::Conflict;
     }
-    // Reissue notifications even when an earlier write restored values but its broadcast failed.
+
     write_(before);
     if (read_() != before) {
         throw std::runtime_error("Proxy restoration verification failed; record retained.");

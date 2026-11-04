@@ -40,7 +40,7 @@
 #include "profile_digest.hpp"
 
 namespace profile_storage::detail {
-// Per-manager, bounded validation hints. No payloads or global state are retained.
+
 // NOLINTBEGIN(altera-struct-pack-align,readability-redundant-member-init)
 namespace {
 struct validated_asset {
@@ -59,7 +59,7 @@ struct validation_state {
 
 namespace profile_storage {
 namespace {
-// The repository uses private namespaces, ISO aggregates and standard spans.
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,altera-struct-pack-align,readability-redundant-member-init,altera-unroll-loops,fuchsia-default-arguments-calls)
 using detail::storage_failure;
 namespace fs = std::filesystem;
@@ -115,7 +115,7 @@ auto remember_valid(detail::validation_state* state, const profile_record& recor
         }
         state->assets.push_back(std::move(asset));
     } catch (...) {
-        // An optional acceleration hint must never turn a published success into failure.
+
         return;
     }
 }
@@ -457,7 +457,7 @@ class store_session {
 
     auto stage(profile_record& record, std::string_view raw, const prepared_assets& prepared) const
         -> void {
-        // 先写不可变代次；profiles.json 提交才是对读者可见的发布点。
+
         record.generation = new_id();
         record.node_count = prepared.nodes;
         record.raw_bytes = std::ssize(raw);
@@ -524,7 +524,7 @@ struct encoded_snapshot {
 
 [[nodiscard]] auto capture_assets(const storage_options& options, const asset_request& request)
     -> encoded_snapshot {
-    // 原文与缓存在同一锁内读取，随后在锁外解码，避免混合不同代次。
+
     const auto session = store_session{options};
     auto records = session.index();
     const auto& record = find_record(records, request.id);
@@ -582,8 +582,7 @@ auto touch(profile_record& record, bool body_replaced) -> void {
         if (!fs::is_directory(target) || target == root) {
             return false;
         }
-        // Inspect every descendant before remove_all; never traverse a junction
-        // or symbolic link. The lock excludes cooperating filesystem mutations.
+
         const auto entries = fs::recursive_directory_iterator{target};
         const auto accepted =
             std::ranges::all_of(entries, [&root](const fs::directory_entry& entry) -> bool {
@@ -634,7 +633,7 @@ auto record_cleanup(cleanup_result& result, bool removed) noexcept -> void {
     if (obsolete.empty()) {
         return result;
     }
-    // Preserve recoverable backups if the currently published assets are bad.
+
     validate_raw_bytes(active, session.read_raw_bytes(active));
     ensure_cached_nodes(active, session.read_cache_bytes(active), settings.max_nodes, state);
     for (const auto& path : obsolete) {
@@ -643,8 +642,6 @@ auto record_cleanup(cleanup_result& result, bool removed) noexcept -> void {
     return result;
 }
 
-// Allocate the public return value before publishing, so an allocation failure
-// cannot be reported after the index has already committed.
 [[nodiscard]] auto prepare_record(const profile_record& record) -> profile_record {
     return record;
 }
@@ -728,8 +725,7 @@ auto record_cleanup(cleanup_result& result, bool removed) noexcept -> void {
     const auto session = store_session{options};
     auto records = session.index();
     check_size(std::ssize(records) + 1, options.max_profiles);
-    // Commit an empty index before staging the first generation, so a crash
-    // or failed first publication leaves a recognizable, recoverable store.
+
     if (!fs::exists(options.directory / "profiles.json")) {
         session.commit(records);
     }
@@ -769,7 +765,7 @@ auto record_cleanup(cleanup_result& result, bool removed) noexcept -> void {
 
 [[nodiscard]] auto store_replace(const storage_options& options, const profile_refresh& input)
     -> profile_record {
-    // Preserve conflict precedence, then recheck revision after CPU preparation.
+
     const auto current = store_get(options, input.id);
     match_revision(current, input.expected_revision);
     validate_account(input.account);
@@ -779,7 +775,7 @@ auto record_cleanup(cleanup_result& result, bool removed) noexcept -> void {
     auto& record = find_record(records, input.id);
     match_revision(record, input.expected_revision);
     merge_account(record.account, input.account);
-    // A fresh body without validators invalidates old conditional requests.
+
     record.account.etag = input.account.etag;
     record.account.last_modified = input.account.last_modified;
     touch(record, true);
@@ -837,8 +833,7 @@ auto record_cleanup(cleanup_result& result, bool removed) noexcept -> void {
         auto records = session.index();
         auto& record = find_record(records, profile_id);
         match_revision(record, expected_revision);
-        // Captured bytes were checked outside the file lock; the revision check
-        // above prevents publishing over a concurrent refresh, edit or deletion.
+
         merge_account(record.account, fetched.metadata.account);
         touch(record, false);
         auto published = prepare_record(record);

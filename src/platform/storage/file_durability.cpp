@@ -71,7 +71,7 @@ DurableWrite writeDurableFile(const QString& path, const QByteArray& bytes,
             .error = QStringLiteral("无法获取临时文件的原生句柄"),
         };
     }
-    // Qt exposes a CRT file descriptor on Windows. Borrow, never close, its native handle.
+
     auto* const handle = std::bit_cast<HANDLE>(native);
     if (FlushFileBuffers(handle) == FALSE) {
         return {

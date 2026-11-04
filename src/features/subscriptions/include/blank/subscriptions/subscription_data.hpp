@@ -7,8 +7,6 @@
 #include <string>
 #include <vector>
 
-// Owned subscription values shared by download, persistence and activation layers.
-// This header has no network backend, worker or filesystem dependencies.
 namespace subscription_data {
 // NOLINTBEGIN(altera-struct-pack-align,readability-redundant-member-init)
 enum class fetch_error : std::int8_t {
@@ -36,27 +34,26 @@ enum class fetch_error : std::int8_t {
 };
 
 struct fetch_attempt {
-    std::int64_t route_index{}; // Zero based; no proxy credentials or token URL.
+    std::int64_t route_index{};
     fetch_error error{fetch_error::none};
     std::int64_t http_status{};
 };
 
 struct fetch_result {
     node_input::subscription_result subscription{};
-    std::string raw_body{}; // Successful 200 document bytes before parsing; empty on failure/304.
+    std::string raw_body{};
     metadata_result metadata{};
     fetch_error error{fetch_error::none};
     std::int64_t http_status{};
     std::int64_t route_index{};
     std::int64_t redirect_count{};
-    bool not_modified{};     // 304: retain the previously stored nodes and metadata.
-    std::string final_url{}; // May contain a subscription token; not a log string.
+    bool not_modified{};
+    std::string final_url{};
     std::vector<fetch_attempt> attempts{};
 };
 // NOLINTEND(altera-struct-pack-align,readability-redundant-member-init)
 } // namespace subscription_data
 
-// Source compatibility for callers using the original transport namespace.
 namespace subscription_fetcher {
 using subscription_data::fetch_attempt;
 using subscription_data::fetch_error;

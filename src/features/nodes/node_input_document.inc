@@ -1,5 +1,5 @@
-// Private document adapters share the existing typed Mihomo binding machinery.
-// ISO C++20 CPU adapters use the same local style exceptions as node_input.cpp.
+
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace)
 // NOLINTBEGIN(fuchsia-default-arguments-calls)
 // NOLINTBEGIN(fuchsia-default-arguments-declarations)
@@ -95,7 +95,7 @@ auto append_document_node(subscription_result& result, const document_location& 
         if (value.is_null()) {
             continue;
         }
-        // Case/dash normalization must not make two different keys silently collide.
+
         if (result.values.contains(normalize_key(key))) {
             fail(parse_error::invalid_parameter);
         }
@@ -131,7 +131,7 @@ auto append_document_node(subscription_result& result, const document_location& 
     } else {
         result.remote = raw_endpoint(result.fields);
     }
-    // Mihomo network:http is HTTP camouflage; share-link type:http means H2.
+
     if (lower(option_text(result.fields, "network")) == "http") {
         set_option(result.fields, "network", "tcp");
         set_option(result.fields, "headerType", "http");

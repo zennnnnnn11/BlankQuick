@@ -31,9 +31,9 @@ enum class override_error : std::int8_t {
 
 // NOLINTBEGIN(altera-struct-pack-align,readability-redundant-member-init)
 struct override_item {
-    std::string id{}; // Canonical lowercase UUID, 32 hexadecimal digits.
+    std::string id{};
     std::string name{};
-    std::string ext{}; // "yaml" or "js".
+    std::string ext{};
     bool is_global{};
     std::string content{};
 };

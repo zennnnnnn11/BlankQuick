@@ -15,7 +15,6 @@ inline constexpr std::int64_t default_header_fields{256};
 inline constexpr std::int64_t default_header_bytes{65536};
 inline constexpr std::int64_t default_header_value_bytes{8192};
 
-// Values are owned UTF-8/HTTP bytes, never views into a destroyed network reply.
 // NOLINTBEGIN(altera-struct-pack-align, readability-redundant-member-init)
 struct http_header {
     std::string name{};
@@ -30,8 +29,6 @@ struct header_limits {
 
 // NOLINTEND(altera-struct-pack-align, readability-redundant-member-init)
 
-// Exact header names win over cloud-storage metadata prefixes. Invalid optional
-// fields do not invalidate valid nodes. Warnings never contain header values.
 // NOLINTBEGIN(fuchsia-default-arguments-declarations)
 [[nodiscard]] auto parse_response_headers(std::span<const http_header> headers,
                                           const header_limits& limits = {}) noexcept

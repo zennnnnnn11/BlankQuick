@@ -19,9 +19,8 @@ namespace overrides::detail {
 
 using dom::document;
 
-// Exception transport is copyable; the final type is always caught by const reference.
 // NOLINTNEXTLINE(altera-struct-pack-align)
-class override_failure final : public std::exception { // clazy:exclude=copyable-polymorphic
+class override_failure final : public std::exception {
   public:
     explicit override_failure(override_error selected) noexcept : error{selected} {}
     [[nodiscard]] auto code() const noexcept -> override_error {

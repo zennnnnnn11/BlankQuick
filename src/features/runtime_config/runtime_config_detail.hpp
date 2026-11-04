@@ -10,7 +10,7 @@ namespace runtime_config::detail {
 using json = json_detail::document;
 
 // NOLINTNEXTLINE(altera-struct-pack-align)
-class configuration_failure final : public std::exception { // clazy:exclude=copyable-polymorphic
+class configuration_failure final : public std::exception {
   public:
     explicit configuration_failure(configuration_error selected) noexcept : error{selected} {}
     [[nodiscard]] auto code() const noexcept -> configuration_error {

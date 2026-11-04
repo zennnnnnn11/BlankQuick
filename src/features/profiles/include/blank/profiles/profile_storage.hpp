@@ -18,7 +18,7 @@ namespace profile_storage {
 
 namespace detail {
 struct validation_state;
-} // namespace detail
+}
 
 inline constexpr std::chrono::milliseconds default_lock_timeout{5000};
 inline constexpr std::int64_t default_profile_limit{10000};
@@ -52,7 +52,7 @@ template <typename Value> struct storage_result {
 };
 
 struct storage_options {
-    std::filesystem::path directory{}; // Absolute, dedicated local data directory.
+    std::filesystem::path directory{};
     std::chrono::milliseconds lock_timeout{default_lock_timeout};
     std::int64_t max_profiles{default_profile_limit};
     std::int64_t max_index_bytes{default_index_limit};
@@ -63,20 +63,20 @@ struct storage_options {
 
 struct profile_settings {
     std::string name{};
-    std::string subscription_url{}; // Empty for a local import; may contain credentials.
-    std::optional<std::chrono::seconds> auto_update_interval{}; // nullopt disables updates.
-    bool preserve_original_rules{}; // Stored user choice; does not activate rules in this layer.
+    std::string subscription_url{};
+    std::optional<std::chrono::seconds> auto_update_interval{};
+    bool preserve_original_rules{};
 };
 
 struct profile_record {
     std::string id{};
-    std::string revision{};   // Optimistic concurrency token; changes on every edit.
-    std::string generation{}; // Immutable raw.txt/nodes.json directory; private file layout.
+    std::string revision{};
+    std::string generation{};
     profile_settings settings{};
     subscription_data::account_metadata account{};
     std::int64_t created_unix_seconds{};
-    std::int64_t updated_unix_seconds{}; // Last successful body replacement.
-    std::int64_t checked_unix_seconds{}; // Also advances on a successful HTTP 304.
+    std::int64_t updated_unix_seconds{};
+    std::int64_t checked_unix_seconds{};
     std::int64_t node_count{};
     std::int64_t raw_bytes{};
     std::int64_t cache_bytes{};
@@ -84,7 +84,6 @@ struct profile_record {
     std::string cache_sha256{};
 };
 
-// Borrowed inputs are consumed synchronously; no reference survives the call.
 struct profile_input {
     profile_settings settings{};
     subscription_data::account_metadata account{};
@@ -109,7 +108,7 @@ struct profile_edit {
 struct metadata_update {
     std::string id{};
     std::string expected_revision{};
-    subscription_data::account_metadata account{}; // Present values patch; absent values persist.
+    subscription_data::account_metadata account{};
 };
 
 struct node_snapshot {
@@ -119,10 +118,9 @@ struct node_snapshot {
 
 struct raw_snapshot {
     profile_record profile{};
-    std::string raw{}; // Exact response document bytes, including BOM/line endings.
+    std::string raw{};
 };
 
-// A single locked read of one published generation. No policy assembly occurs here.
 struct material_snapshot {
     profile_record profile{};
     std::vector<node_model::unified_node> nodes{};
@@ -130,7 +128,7 @@ struct material_snapshot {
 };
 
 struct cleanup_result {
-    bool cleanup_pending{}; // Logical deletion has committed; physical retry may be needed.
+    bool cleanup_pending{};
     std::int64_t removed_directories{};
 };
 // NOLINTEND(altera-struct-pack-align, readability-redundant-member-init)
@@ -139,11 +137,8 @@ struct cleanup_result {
 [[nodiscard]] auto used_bytes(const profile_record& profile) noexcept
     -> std::optional<std::int64_t>;
 
-// Blocking worker API. No Qt/JSON types escape this header. Cooperating readers
-// and writers serialize via an RAII file lock; cold starts never parse raw.txt.
 class profile_manager {
   public:
-    // Invalid options throw std::invalid_argument; no filesystem changes here.
     explicit profile_manager(storage_options selected);
 
     [[nodiscard]] auto list() const noexcept -> storage_result<std::vector<profile_record>>;

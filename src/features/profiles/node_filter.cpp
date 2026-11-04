@@ -13,7 +13,6 @@
 #include <system_error>
 #include <variant>
 
-// ISO C++ internals have translation-unit scope; fixed loops target CPUs and use standard defaults.
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,altera-unroll-loops,fuchsia-default-arguments-calls)
 namespace {
 
@@ -45,7 +44,6 @@ constexpr int mapped_ipv4_marker{65535};
     return !std::ranges::search(text, token, {}, ascii_lower, ascii_lower).empty();
 }
 
-// Haystack/needle order mirrors standard search; no ownership or interchangeable roles.
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 [[nodiscard]] constexpr auto contains_word(std::string_view text, std::string_view word) noexcept
     -> bool {
@@ -75,7 +73,7 @@ constexpr int mapped_ipv4_marker{65535};
 }
 
 [[nodiscard]] constexpr auto announcement_name(std::string_view name) noexcept -> bool {
-    // Avoid broad matches such as 流量/群/traffic/reset: normal routes use those labels too.
+
     constexpr auto phrases = std::to_array<std::string_view>({
         "剩余流量",
         "剩餘流量",
@@ -212,7 +210,6 @@ constexpr int mapped_ipv4_marker{65535};
     return value;
 }
 
-// Expanded and compressed IPv6, including IPv4-mapped loopback/unspecified addresses.
 [[nodiscard]] auto ipv6_words(std::string_view text) noexcept
     -> std::optional<std::array<int, ipv6_word_count>> {
     auto words = std::array<int, ipv6_word_count>{};

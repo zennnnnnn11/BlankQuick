@@ -22,28 +22,23 @@
 
 namespace overrides::detail {
 namespace {
-// ISO CPU adapters follow the existing bounded document reader's local exceptions.
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,altera-struct-pack-align,readability-redundant-member-init,altera-unroll-loops,fuchsia-default-arguments-calls)
 
 [[nodiscard]] auto view(ryml::csubstr value) noexcept -> std::string_view {
     return value.empty() ? std::string_view{} : std::string_view{value.str, value.len};
 }
 
-// ryml mandates the opaque C callback argument. It never owns anything.
-[[noreturn]] auto basic_error(ryml::csubstr /*message*/, const ryml::ErrorDataBasic& /*location*/,
-                              void* /*context*/) -> void {
+[[noreturn]] auto basic_error(ryml::csubstr, const ryml::ErrorDataBasic&, void*) -> void {
     fail(override_error::invalid_document);
 }
-[[noreturn]] auto parse_error(ryml::csubstr /*message*/, const ryml::ErrorDataParse& /*location*/,
-                              void* /*context*/) -> void {
+[[noreturn]] auto parse_error(ryml::csubstr, const ryml::ErrorDataParse&, void*) -> void {
     fail(override_error::invalid_document);
 }
-[[noreturn]] auto visit_error(ryml::csubstr /*message*/, const ryml::ErrorDataVisit& /*location*/,
-                              void* /*context*/) -> void {
+[[noreturn]] auto visit_error(ryml::csubstr, const ryml::ErrorDataVisit&, void*) -> void {
     fail(override_error::invalid_document);
 }
 
-// Parse-local traversal state is deliberately an exposed data bundle.
 // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
 struct yaml_state {
     yaml_state(const ryml::Tree& input_tree, const engine_options& input_options)
@@ -108,7 +103,6 @@ auto inherit_mapping(json_detail::ordered_object& target, const document& inheri
     }
 }
 
-// Recursion is bounded by yaml_value's graph path, depth and expansion budgets.
 // NOLINTNEXTLINE(misc-no-recursion)
 [[nodiscard]] auto yaml_mapping(yaml_state& state, ryml::ConstNodeRef node) -> document {
     auto result = document::object();
@@ -136,7 +130,7 @@ auto inherit_mapping(json_detail::ordered_object& target, const document& inheri
     for (const auto child : node.children()) {
         const auto key = std::string{view(child.key())};
         if (key != "<<" || child.is_key_quoted()) {
-            // Explicit keys override inherited values in document order.
+
             indexed.member(key) = yaml_value(state, child);
         }
     }
@@ -156,7 +150,6 @@ auto inherit_mapping(json_detail::ordered_object& target, const document& inheri
     return state.tree.get().cref(*std::prev(before));
 }
 
-// Alias cycles are rejected and even repeated noncyclic aliases consume the budget.
 // NOLINTNEXTLINE(misc-no-recursion)
 [[nodiscard]] auto yaml_value(yaml_state& state, ryml::ConstNodeRef node) -> document {
     if (++state.expanded > state.options.get().max_values ||
@@ -191,7 +184,6 @@ auto inherit_mapping(json_detail::ordered_object& target, const document& inheri
     return result;
 }
 
-// Worklist entries expose independent traversal fields.
 // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
 struct value_location {
     value_location(const document& input_value, std::int64_t input_depth) noexcept
@@ -234,7 +226,6 @@ auto insert_sequence(document& target, const document& patch, merge_verb verb) -
     target.insert(position, patch.begin(), patch.end());
 }
 
-// Input and resulting documents are independently bounded. No source is mutated.
 // NOLINTNEXTLINE(misc-no-recursion)
 auto merge_mapping(document& target, const document& patch, std::int64_t depth,
                    const engine_options& options) -> void {

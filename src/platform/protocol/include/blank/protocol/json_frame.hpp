@@ -77,8 +77,6 @@ template <std::default_initializable T> class FrameResult final {
     std::optional<FrameError> error_;
 };
 
-// Newline-delimited JSON objects. A partial frame is distinct from a protocol error.
-// Errors latch until clear(); callers decide how and when to disconnect the peer.
 class JsonFrames final {
   public:
     [[nodiscard]] FrameResult<std::monostate> append(QByteArrayView bytes);

@@ -32,11 +32,7 @@
 namespace node_input {
 namespace {
 
-// ISO C++20 CPU code: keep the repository's anonymous namespaces, explicit
-// initializers and natural alignment. Abseil/Fuchsia/FPGA policies do not apply.
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace, fuchsia-default-arguments-calls,
-// fuchsia-default-arguments-declarations, altera-unroll-loops, altera-struct-pack-align,
-// abseil-string-find-str-contains, readability-redundant-member-init)
 
 using nlohmann::json;
 using node_model::node_configuration;
@@ -162,7 +158,6 @@ struct utf8_lead {
     return *found;
 }
 
-// 严格 UTF-8 检查同时拒绝 NUL/控制字符；不把查询中的 '+' 当作空格。
 auto validate_text(std::string_view value, bool multiline = false) -> void {
     constexpr std::uint32_t continuation_mask{0x3f};
     constexpr std::uint32_t continuation_tag{0x80};
@@ -583,8 +578,6 @@ struct option_value {
     bool consumed{};
 };
 
-// Clang diagnoses the MSVC map's internal debug-iterator allocation despite
-// its constructor's noexcept declaration; this aggregate has no user constructor.
 struct options { // NOLINT(bugprone-exception-escape)
     std::map<std::string, option_value, std::less<>> values{};
     parse_limits limits{};
@@ -597,13 +590,12 @@ struct options { // NOLINT(bugprone-exception-escape)
         fail(parse_error::resource_limit);
     }
     if (parsed.error != json_detail::read_error::none) {
-        // Preserve the input parser's existing JSON-exception classification.
+
         return json::parse(text, nullptr, true, true);
     }
     return std::move(parsed.value);
 }
 
-// Depth is bounded by bounded_json before recursive flattening.
 // NOLINTNEXTLINE(misc-no-recursion)
 auto set_option(options& target, std::string_view key, const json& value) -> void {
     const auto normalized = normalize_key(key);
@@ -627,7 +619,6 @@ auto set_option(options& target, std::string_view key, const json& value) -> voi
     return &found->second.value;
 }
 
-// Key and fallback are intentionally string views in this private accessor.
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 [[nodiscard]] auto option_text(options& source, std::string_view key,
                                std::string_view fallback = {}) -> std::string {
@@ -643,7 +634,6 @@ auto read_option(options& source, std::string_view key, value_type& target) -> v
     }
 }
 
-// A directed alias pair uses the declaration/table's source, destination order.
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 auto alias(options& source, std::string_view from, std::string_view destination) -> void {
     const auto* value = find_option(source, from);
@@ -653,7 +643,6 @@ auto alias(options& source, std::string_view from, std::string_view destination)
     }
 }
 
-// 查询键名不区分大小写及 '-'/'_'；优先采用显式内核键，标量重复时最后一项生效。
 [[nodiscard]] auto structured_parameter(std::string_view key) -> bool {
     const auto normalized = normalize_key(key);
     return normalized == "extra" || normalized == "ech" || normalized == "smux" ||
@@ -848,7 +837,6 @@ auto read_value(const json& value, std::vector<node_model::wireguard_peer_param>
     }
 }
 
-// 从审计映射生成的强类型叶字段绑定；不使用反射、类型擦除或公开 JSON 类型。
 #include "node_input_bindings.inc"
 
 auto normalize_common(options& source, uri_protocol protocol) -> void {
@@ -892,7 +880,7 @@ auto normalize_common(options& source, uri_protocol protocol) -> void {
     for (const auto& item : aliases) {
         const auto from = item.first;
         const auto destination = item.second;
-        // WG's public-key belongs to the peer, not REALITY.
+
         if (from != "public-key") {
             alias(source, from, destination);
         }
@@ -966,7 +954,6 @@ auto normalize_common(options& source, uri_protocol protocol) -> void {
     return std::string{key};
 }
 
-// XHTTP extra uses the same bounded JSON tree.
 // NOLINTNEXTLINE(misc-no-recursion, readability-function-cognitive-complexity)
 auto import_xhttp_extra(options& source, std::string_view prefix, const json& extra) -> void {
     if (!extra.is_object()) {
@@ -1700,7 +1687,6 @@ auto parse_vmess_json(uri_parts& parts, std::string_view encoded) -> void {
     return endpoint(authority, require_port ? 0 : default_port);
 }
 
-// Independent URI grammar branches remain together for authority/credential precedence.
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
 [[nodiscard]] auto parse_parts(std::string_view input, const parse_limits& limits) -> uri_parts {
     const auto separator = input.find("://");
@@ -1868,7 +1854,6 @@ auto parse_lines(std::string_view text, const parse_limits& limits, subscription
 #include "node_input_wireguard.inc"
 #include "node_input_yaml.inc"
 
-// Base64 nesting is explicitly limited to two unwraps.
 // NOLINTNEXTLINE(misc-no-recursion)
 auto dispatch_subscription(std::string_view input, const parse_limits& limits,
                            subscription_result& result, std::int64_t unwraps) -> void {
@@ -1901,8 +1886,7 @@ auto dispatch_subscription(std::string_view input, const parse_limits& limits,
 }
 
 // NOLINTEND(llvm-prefer-static-over-anonymous-namespace, fuchsia-default-arguments-calls,
-// fuchsia-default-arguments-declarations, altera-unroll-loops, altera-struct-pack-align,
-// abseil-string-find-str-contains, readability-redundant-member-init)
+
 } // namespace
 
 namespace material {

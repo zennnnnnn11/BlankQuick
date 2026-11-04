@@ -63,7 +63,7 @@ auto collect_output(QProcess& process, const kernel_check_options& options,
     const auto path = directory.filePath(QStringLiteral("candidate.json"));
     auto file = QFile{path};
     if (!file.open(QIODevice::WriteOnly) ||
-        // The explicit length preserves embedded NULs; QFile does not require a terminator.
+
         // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
         file.write(candidate.data(), std::ssize(candidate)) != std::ssize(candidate)) {
         return {.error = kernel_check_error::io_failure};

@@ -7,12 +7,10 @@
 #include <string>
 #include <vector>
 
-// Account values and diagnostics require no node parser or network implementation.
 namespace subscription_data {
 // NOLINTBEGIN(altera-struct-pack-align,readability-redundant-member-init)
 struct account_metadata {
-    // Bytes and Unix seconds. Missing differs from explicit zero; no unlimited
-    // quota convention is inferred. expire=0 means no expiry on common panels.
+
     std::optional<std::int64_t> upload_bytes{};
     std::optional<std::int64_t> download_bytes{};
     std::optional<std::int64_t> total_bytes{};
@@ -68,7 +66,6 @@ struct metadata_result {
 // NOLINTEND(altera-struct-pack-align,readability-redundant-member-init)
 } // namespace subscription_data
 
-// Original names remain available to existing source callers.
 namespace subscription_fetcher {
 using subscription_data::account_metadata;
 using subscription_data::metadata_error;

@@ -8,13 +8,10 @@
 #include <string_view>
 #include <vector>
 
-// Private implementation boundary; callers use profile_storage.hpp.
 namespace profile_storage::detail {
 
-// Exception ABI alignment is deliberate; this is not an FPGA transfer struct.
-// Standard exception transport needs copying; this final type is caught by const reference.
 // NOLINTNEXTLINE(altera-struct-pack-align)
-class storage_failure final : public std::exception { // clazy:exclude=copyable-polymorphic
+class storage_failure final : public std::exception {
   public:
     explicit storage_failure(storage_error selected) noexcept : error{selected} {}
     [[nodiscard]] auto code() const noexcept -> storage_error {

@@ -14,7 +14,6 @@ class ChildParentError final : public std::logic_error {
     using std::logic_error::logic_error;
 };
 
-// Qt owns the child after setParent. The returned reference only observes it.
 template <typename Child, typename... Arguments>
     requires std::derived_from<Child, QObject> && std::constructible_from<Child, Arguments...>
 [[nodiscard]] Child& makeChild(QObject& parent, Arguments&&... arguments) {

@@ -26,7 +26,6 @@
 #include <utility>
 #include <vector>
 
-// ISO C++ CPU data uses natural alignment, standard defaults and TU-local helpers.
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,fuchsia-default-arguments-calls,altera-unroll-loops,altera-struct-pack-align,readability-redundant-member-init)
 namespace {
 
@@ -55,8 +54,7 @@ constexpr std::int64_t maximum_tolerance{65535};
 constexpr auto builtins = std::to_array<std::string_view>(
     {"DIRECT", "REJECT", "REJECT-DROP", "COMPATIBLE", "PASS", "PASS-RULE"});
 
-// Copying is required by the standard exception ABI, not polymorphic cloning.
-class assembly_failure final : public std::exception { // clazy:exclude=copyable-polymorphic
+class assembly_failure final : public std::exception {
   public:
     explicit assembly_failure(assembly_error selected) noexcept : error{selected} {}
     [[nodiscard]] auto code() const noexcept -> assembly_error {
@@ -173,7 +171,7 @@ auto unknown_fields(const json& object, std::span<const std::string_view> known,
     for (const auto& [key, value] : object.items()) {
         static_cast<void>(value);
         if (std::ranges::find(known, key) == known.end()) {
-            // Do not echo arbitrary server keys into logs/diagnostics.
+
             notice(result, diagnostic_kind::ignored_field, index, "unknown-option");
         }
     }
@@ -744,8 +742,7 @@ struct assembly_draft {
                                     std::string_view raw, const assembly_options& options)
     -> assembly_result {
     auto draft = prepare_draft(nodes, raw, options);
-    // All borrowed name indices have been destroyed before any node moves.
-    // Commit only after every allocation and validation has succeeded.
+
     if (draft.managed) {
         auto destination = std::int64_t{};
         for (const auto* selected : draft.selected) {

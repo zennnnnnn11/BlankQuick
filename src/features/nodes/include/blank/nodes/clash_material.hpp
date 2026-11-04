@@ -5,12 +5,11 @@
 #include <nlohmann/json.hpp>
 #include <string_view>
 
-// Document boundary for profile assembly; parsing internals remain in the nodes slice.
 namespace node_input::material {
 
 // NOLINTBEGIN(altera-struct-pack-align,readability-redundant-member-init)
 struct clash_material {
-    // Canonical null JSON uses the library's standard default constructor.
+
     // NOLINTNEXTLINE(fuchsia-default-arguments-calls)
     nlohmann::json sections{};
     parse_error error{parse_error::none};

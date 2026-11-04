@@ -6,6 +6,6 @@
 
 namespace profile_storage::detail {
 [[nodiscard]] auto sha256(std::string_view data) -> std::string;
-} // namespace profile_storage::detail
+}
 
 #endif

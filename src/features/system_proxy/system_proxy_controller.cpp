@@ -198,7 +198,7 @@ void SystemProxyController::readOutput() {
                    reportedState == QStringLiteral("foreign") ||
                    reportedState == QStringLiteral("check-error")) {
             environmentPending_ = false;
-            // foreign 只说明现场变化，不能据此宣告本实例已完成还原。
+
             Q_EMIT changed();
             continue;
         } else if (reportedState == QStringLiteral("owned")) {
@@ -229,7 +229,7 @@ void SystemProxyController::finished() {
             message_ = tr("操作未完成，系统代理已还原：%1").arg(error_);
         }
     } else if (result_ == QStringLiteral("blocked") && claim_ == Claim::Released) {
-        // This instance never changed the proxy. A foreign lease is not our restoration failure.
+
         state_ = State::Foreign;
     } else {
         state_ = State::RecoveryRequired;

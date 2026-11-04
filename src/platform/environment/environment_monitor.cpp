@@ -29,17 +29,15 @@ void publishNetwork(void* context, MIB_NOTIFICATION_TYPE type) noexcept {
     }
 }
 
-void CALLBACK interfaceChanged(void* context, MIB_IPINTERFACE_ROW* /*unused*/,
-                               MIB_NOTIFICATION_TYPE type) {
+void CALLBACK interfaceChanged(void* context, MIB_IPINTERFACE_ROW*, MIB_NOTIFICATION_TYPE type) {
     publishNetwork(context, type);
 }
 
-void CALLBACK routeChanged(void* context, MIB_IPFORWARD_ROW2* /*unused*/,
-                           MIB_NOTIFICATION_TYPE type) {
+void CALLBACK routeChanged(void* context, MIB_IPFORWARD_ROW2*, MIB_NOTIFICATION_TYPE type) {
     publishNetwork(context, type);
 }
 
-ULONG CALLBACK powerChanged(void* context, ULONG type, void* /*unused*/) {
+ULONG CALLBACK powerChanged(void* context, ULONG type, void*) {
     auto* buffer = static_cast<EnvironmentBuffer*>(context);
     if (type == PBT_APMSUSPEND) {
         buffer->publish(EnvironmentChange::Suspending);
@@ -63,8 +61,7 @@ class NativeEnvironmentNotifications final {
         const bool interfaces =
             interfaces_ == nullptr || CancelMibChangeNotify2(interfaces_) == NO_ERROR;
         if (!power || !routes || !interfaces) {
-            // Never free a context that Windows may still call. Owned-process guards recover on
-            // exit.
+
             OutputDebugStringW(L"BlankQuick could not unregister environment callbacks.\n");
             TerminateProcess(GetCurrentProcess(), ERROR_INVALID_HANDLE);
             std::terminate();
@@ -109,7 +106,7 @@ void EnvironmentBuffer::publish(EnvironmentChange change) noexcept {
 }
 
 void EnvironmentBuffer::retain(EnvironmentBatch batch) noexcept {
-    // A failed older observation must not overwrite a newer native suspend/resume state.
+
     kinds_.fetch_or(batch.kinds);
 }
 
@@ -140,7 +137,7 @@ EnvironmentMonitor::EnvironmentMonitor(EnvironmentOptions options, QObject* pare
         if (!result.error.isEmpty()) {
             Q_EMIT failed(result.error);
         } else {
-            // Close the observation/registration race with one post-registration snapshot.
+
             buffer_->publish(EnvironmentChange::Network);
             Q_EMIT registered();
         }
@@ -167,7 +164,7 @@ EnvironmentMonitor::~EnvironmentMonitor() {
         native_ = registration_.future().takeResult().native;
     }
     if (native_) {
-        // Cancellation can wait for callbacks; callbacks never depend on the GUI or worker pool.
+
         std::ignore =
             QtConcurrent::run([native = std::move(native_)]() mutable { native.reset(); });
     }

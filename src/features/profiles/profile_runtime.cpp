@@ -14,7 +14,6 @@
 
 namespace profile_runtime::detail {
 
-// Independent state bundle; published material and cached activations are immutable.
 // NOLINTBEGIN(altera-struct-pack-align,readability-redundant-member-init)
 struct session_state {
     std::shared_ptr<const profile_storage::material_snapshot> material{};
@@ -26,7 +25,6 @@ struct session_state {
 
 } // namespace profile_runtime::detail
 
-// Standard shared ownership and CPU alignment; callbacks use standard default options.
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,fuchsia-default-arguments-calls,altera-struct-pack-align,readability-redundant-member-init)
 namespace {
 
@@ -44,7 +42,7 @@ valid_options(const profile_payload::assembly_options& options) noexcept -> bool
     if (!valid_options(options)) {
         throw std::invalid_argument{"Invalid activation limits"};
     }
-    // Allocate the state before transferring the material; failure leaves the input intact.
+
     auto state = std::make_shared<profile_runtime::detail::session_state>();
     state->options = options;
     state->material =
@@ -84,8 +82,7 @@ valid_options(const profile_payload::assembly_options& options) noexcept -> bool
                     .generation = state.material->profile.generation,
                 },
         });
-    // Expensive preparation stays outside the lock. Concurrent first activations
-    // may prepare twice, but all readers receive the same published snapshot.
+
     const auto lock = std::scoped_lock{state.mutex};
     auto& slot = state.cache.at(index);
     if (!slot) {

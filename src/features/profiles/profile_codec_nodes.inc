@@ -1,5 +1,5 @@
-// Private, bounded per-node SAX tape. Keys use generated IDs, not owning strings or hash sets.
-// Same ISO CPU-code style exceptions as the surrounding private codec implementation.
+
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,altera-struct-pack-align,readability-redundant-member-init,altera-unroll-loops,fuchsia-default-arguments-calls)
 using cache_key_id = std::int64_t;
 using cache_scalar =
@@ -133,7 +133,7 @@ template <cache_value Value>
 
 template <cache_value Value, std::size_t... Indices>
 [[nodiscard]] auto read_cache_record(std::span<cache_token> tape, std::size_t index,
-                                     std::index_sequence<Indices...> /*indices*/) -> Value {
+                                     std::index_sequence<Indices...>) -> Value {
     constexpr auto& members = record_traits<Value>::members;
     constexpr auto keys =
         std::to_array<cache_key_id>({cache_key(std::get<Indices>(members).first)...});
@@ -330,17 +330,17 @@ class node_cache_reader final : public nlohmann::json_sax<json> {
     auto number_unsigned(json::number_unsigned_t value) -> bool override {
         return scalar(value);
     }
-    auto number_float(json::number_float_t value, const json::string_t& /*text*/) -> bool override {
+    auto number_float(json::number_float_t value, const json::string_t&) -> bool override {
         return scalar(value);
     }
     auto string(json::string_t& value) -> bool override {
         return scalar(std::move(value));
     }
-    auto binary(json::binary_t& /*value*/) noexcept -> bool override {
+    auto binary(json::binary_t&) noexcept -> bool override {
         return false;
     }
-    auto parse_error(std::size_t /*offset*/, const std::string& /*token*/,
-                     const json::exception& /*error*/) noexcept -> bool override {
+    auto parse_error(std::size_t, const std::string&, const json::exception&) noexcept
+        -> bool override {
         return false;
     }
 
@@ -380,7 +380,7 @@ class node_cache_reader final : public nlohmann::json_sax<json> {
         }
         return true;
     }
-    auto start_object(std::size_t /*elements*/) -> bool override {
+    auto start_object(std::size_t) -> bool override {
         check_depth();
         if (depth == 0) {
             if (started) {
@@ -402,7 +402,7 @@ class node_cache_reader final : public nlohmann::json_sax<json> {
         }
         return true;
     }
-    auto start_array(std::size_t /*elements*/) -> bool override {
+    auto start_array(std::size_t) -> bool override {
         check_depth();
         if (depth == 1 && field == root_field::nodes) {
             nodes_array = true;

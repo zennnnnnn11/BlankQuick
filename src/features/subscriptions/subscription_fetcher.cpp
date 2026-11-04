@@ -35,10 +35,8 @@
 
 namespace subscription_fetcher {
 namespace {
-// Repository ISO C++20/default-argument/aggregate conventions, not Fuchsia/FPGA policy.
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace, fuchsia-default-arguments-calls,
-// fuchsia-default-arguments-declarations, altera-unroll-loops, altera-struct-pack-align,
-// abseil-string-find-str-contains, readability-redundant-member-init)
 
 using steady_clock = std::chrono::steady_clock;
 
@@ -211,7 +209,7 @@ auto validate_request(const fetch_request& request) -> void {
 }
 
 struct request_context {
-    const fetch_request* request{}; // Observer; the synchronous caller owns the request.
+    const fetch_request* request{};
     QUrl initial_url{};
     QByteArray authorization{};
     QSslConfiguration ssl{};
@@ -233,7 +231,7 @@ struct request_context {
     request.setSslConfiguration(context.ssl);
     request.setRawHeader(QByteArray{"User-Agent"}, bytes(options.user_agent));
     request.setRawHeader(QByteArray{"Accept"}, QByteArray{"*/*"});
-    // 跨源重定向不携带订阅凭据、自定义请求头或条件缓存标识。
+
     if (same_origin(context.initial_url, url)) {
         for (const auto& header : options.headers) {
             request.setRawHeader(bytes(header.name), bytes(header.value));
@@ -329,15 +327,14 @@ auto consume_body(QNetworkReply& reply, wire_response& response, const fetch_req
 
 [[nodiscard]] auto get_response(const QNetworkProxy& proxy, const request_context& context,
                                 const QUrl& url) -> wire_response {
-    // A fresh manager per hop confines origin authentication caches as well as
-    // cookies. Qt's Manual auth flag also disables HTTP proxy challenges.
+
     auto manager = QNetworkAccessManager{nullptr};
     manager.setProxy(proxy);
     auto response = wire_response{};
     auto loop = QEventLoop{nullptr};
     auto timer = QTimer{nullptr};
     auto callback_error = std::exception_ptr{};
-    // Observer only. QNetworkAccessManager owns the reply and frees it on exit.
+
     auto* reply = manager.get(network_request(context, url));
     if (reply == nullptr) {
         fail(fetch_error::network_failure);
@@ -410,7 +407,7 @@ auto consume_body(QNetworkReply& reply, wire_response& response, const fetch_req
         response.headers.push_back({pair.first.toStdString(), pair.second.toStdString()});
     }
     response.redirect = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
-    // Release promptly after our context connections have been removed by loop's destruction.
+
     reply->deleteLater();
     return response;
 }
@@ -573,8 +570,7 @@ auto finish_response(wire_response response, const fetch_request& request, fetch
     return result;
 }
 // NOLINTEND(llvm-prefer-static-over-anonymous-namespace, fuchsia-default-arguments-calls,
-// fuchsia-default-arguments-declarations, altera-unroll-loops, altera-struct-pack-align,
-// abseil-string-find-str-contains, readability-redundant-member-init)
+
 } // namespace
 
 auto fetch_subscription(const fetch_request& request, std::stop_token cancellation) noexcept

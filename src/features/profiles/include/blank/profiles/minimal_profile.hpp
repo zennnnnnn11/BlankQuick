@@ -24,7 +24,6 @@ enum class provider_type : std::int8_t { http, file, inline_payload };
 enum class rule_behavior : std::int8_t { domain, ipcidr, classical };
 enum class rule_format : std::int8_t { yaml, text, mrs };
 
-// Omitted options stay omitted; runtime defaults belong to the kernel.
 // NOLINTBEGIN(altera-struct-pack-align,readability-redundant-member-init)
 struct proxy_group {
     std::string name{};
@@ -65,7 +64,6 @@ struct rule_provider {
     std::string path_in_bundle{};
 };
 
-// Subscription material only: no ports, DNS, TUN, listeners or GUI settings.
 struct minimal_profile {
     std::vector<node_model::unified_node> proxies{};
     std::vector<proxy_group> proxy_groups{};
@@ -100,8 +98,8 @@ enum class diagnostic_kind : std::int8_t {
 
 struct assembly_diagnostic {
     diagnostic_kind kind{};
-    std::int64_t index{}; // 1-based group/node index; zero for document-wide notices.
-    std::string field{};  // Field name only; never a URL, node name or credential.
+    std::int64_t index{};
+    std::string field{};
 };
 
 struct assembly_options {
@@ -120,8 +118,6 @@ struct assembly_result {
     assembly_error error{assembly_error::none};
 };
 
-// The same four-part material with shared, immutable node handles for repeat activation.
-// Aliasing handles retain the complete source pool without cloning any cold configuration.
 using shared_node_pool = std::shared_ptr<const std::vector<node_model::unified_node>>;
 struct minimal_profile_snapshot {
     std::vector<std::shared_ptr<const node_model::unified_node>> proxies{};
@@ -137,10 +133,6 @@ struct shared_assembly_result {
 };
 // NOLINTEND(altera-struct-pack-align,readability-redundant-member-init)
 
-// Explicit ownership transfer. Nodes remain unchanged if assembly fails; on success
-// the vector is moved (cold configurations are never cloned). Raw is borrowed only.
-// The throwing interface returns exactly the four-part payload; GUI code can use
-// the nonthrowing interface for structured errors and repair diagnostics instead.
 // NOLINTBEGIN(fuchsia-default-arguments-declarations)
 [[nodiscard]] auto assemble_minimal_profile(std::vector<node_model::unified_node>&& nodes,
                                             std::string_view raw,
@@ -150,7 +142,7 @@ struct shared_assembly_result {
                                                 std::string_view raw,
                                                 const assembly_options& options = {}) noexcept
     -> assembly_result;
-// Repeatable borrowed assembly. Neither mode consumes, filters or modifies the source pool.
+
 [[nodiscard]] auto try_assemble_minimal_profile(const shared_node_pool& nodes, std::string_view raw,
                                                 const assembly_options& options = {}) noexcept
     -> shared_assembly_result;

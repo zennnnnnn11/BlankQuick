@@ -36,9 +36,7 @@ KernelController::~KernelController() {
     if (launchPending_) {
         auto pending = launch_.future();
         const auto helper = options_.signalHelper;
-        // A completed result can still await its main-thread completion event.
-        // Keep the future alive on a worker as well, so its process never tears
-        // down synchronously when this watcher is destroyed.
+
         static_cast<void>(QtConcurrent::run([pending, helper]() mutable {
             pending.waitForFinished();
             if (pending.resultCount() != 0) {
@@ -52,7 +50,7 @@ KernelController::~KernelController() {
     } else if (kernel_ && !cleanup_.isRunning()) {
         const auto kernel = kernel_;
         const auto helper = options_.signalHelper;
-        // Keep resources alive until the worker has confirmed Job exit and removed files.
+
         static_cast<void>(QtConcurrent::run([kernel, helper] { return kernel->stop(helper); }));
     }
 }
@@ -127,10 +125,10 @@ void KernelController::publishStatus() {
     if (published_ == current) {
         return;
     }
-    // 先提交完整快照；同一 State 下的资源释放也必须通知观察者。
+
     published_ = current;
     Q_EMIT statusChanged();
-    // 同步观察者可重入并更新元数据，派生通知按最后已通知值去重。
+
     if (notifiedState_ != state_) {
         notifiedState_ = state_;
         Q_EMIT stateChanged();
@@ -180,7 +178,7 @@ void KernelController::start() {
             const auto version = object.value(QStringLiteral("version")).toString();
             if (reply->error() != QNetworkReply::NoError || pid <= 0 ||
                 std::cmp_greater(pid, UINT32_MAX) || version.isEmpty() || version.size() > 128) {
-                // 启动响应失败不证明服务未启动内核，资源仍须由停止流程确认释放。
+
                 deadline_.stop();
                 error_ = tr("服务无法启动内核：%1").arg(reply->errorString());
                 serviceResources_ = Resources::Uncertain;
@@ -310,7 +308,7 @@ void KernelController::versionFinished(QNetworkReply* reply, quint64 generation)
         fail(tr("内核版本响应无效"));
         return;
     }
-    // Recheck ownership after HTTP, using the same single-flight worker.
+
     pendingVersion_ = reportedVersion;
     listenerGeneration_ = generation_;
     listener_.setFuture(

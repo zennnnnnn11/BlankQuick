@@ -66,7 +66,7 @@ blank::windows::LocalMemory securityDescriptor(const QString& sddl) {
 
 QString tokenLogonSid(HANDLE token) {
     const auto bytes = tokenInformation(token, TokenGroups);
-    // GetTokenInformation returns this Windows ABI header followed by GroupCount entries.
+
     // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
     const auto* groups = reinterpret_cast<const TOKEN_GROUPS*>(bytes.data());
     // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
@@ -175,7 +175,7 @@ void verifyServicePipe(HANDLE pipe) {
     blank::windows::check(service != nullptr);
     SERVICE_STATUS_PROCESS state{};
     DWORD bytes = 0;
-    // QueryServiceStatusEx requires a byte buffer for the fixed Windows status structure.
+
     // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
     blank::windows::check(QueryServiceStatusEx(service.get(), SC_STATUS_PROCESS_INFO,
                                                reinterpret_cast<BYTE*>(&state), sizeof(state),
@@ -190,7 +190,7 @@ void verifyServicePipe(HANDLE pipe) {
 bool runningAsSystem() {
     const auto token = processToken(GetCurrentProcess());
     const auto bytes = tokenInformation(token.get(), TokenUser);
-    // The returned buffer is aligned storage for TOKEN_USER.
+
     // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
     const auto* user = reinterpret_cast<const TOKEN_USER*>(bytes.data());
     // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)

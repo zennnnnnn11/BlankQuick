@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
     if (!queried || !alive || actualCreation != expectedCreation) {
         return 3;
     }
-    FreeConsole(); // Also works when launched manually from a console during diagnosis.
+    FreeConsole();
     if (AttachConsole(pid) == FALSE) {
         return 4;
     }

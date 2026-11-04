@@ -142,7 +142,7 @@ void ConfigSwitcher::request(const QByteArray& path, const QByteArray& method,
 void ConfigSwitcher::apply() {
     step_ = Step::Apply;
     deadline_.start(rollingBack_ ? timeouts_.rollback : timeouts_.forward);
-    // 请求已提交就可能生效；丢失响应不能当作尚未写入。
+
     submitted_ = true;
     const auto payload =
         rollingBack_ ? previous_
@@ -182,8 +182,7 @@ bool ConfigSwitcher::verifyProxies(const QJsonObject& object) const {
     const auto exists = [&object](const QJsonValue& entry) {
         const auto definition = entry.toObject();
         const auto actual = object.value(definition.value(QStringLiteral("name")).toString());
-        // The core applies filters, providers and dynamic membership. Input members are not
-        // an exact description of the runtime group's `all` array.
+
         return actual.isObject() &&
                !actual.toObject().value(QStringLiteral("type")).toString().isEmpty();
     };
@@ -216,7 +215,7 @@ void ConfigSwitcher::received(QNetworkReply* reply, quint64 generation) {
         const bool rejected = step_ == Step::Apply && !rollingBack_ &&
                               (status == 400 || status == 403 || status == 409 || status == 413);
         if (rejected) {
-            // Core parsing and service admission reject these before applying a candidate.
+
             submitted_ = false;
         }
         diagnostics_.push_back({
@@ -227,7 +226,7 @@ void ConfigSwitcher::received(QNetworkReply* reply, quint64 generation) {
             .rollback = rollingBack_,
         });
         if (step_ == Step::Apply && (status == 0 || status == 503 || status == 504)) {
-            // 前一请求可能仍在解析或应用配置，不能并行提交回滚。
+
             complete(
                 TransactionOutcome::Uncertain,
                 tr("配置提交结果未确认（HTTP %1）；请停止并重建会话，未发起并行回滚").arg(status));
@@ -266,7 +265,7 @@ void ConfigSwitcher::received(QNetworkReply* reply, quint64 generation) {
         return;
     }
     case Step::Apply:
-        // 配置解析和资源回读各有预算，Geo 初始化不挤占核验时间。
+
         deadline_.start(timeouts_.verification);
         step_ = Step::General;
         request("/configs");
@@ -373,7 +372,7 @@ void ConfigSwitcher::received(QNetworkReply* reply, quint64 generation) {
 }
 
 void ConfigSwitcher::restoreNext() {
-    // 订阅更新可改变组成员，只恢复仍存在且包含原节点的可选择组。
+
     const auto selections = rollingBack_ ? previousSelected_ : selected_;
     while (!remaining_.isEmpty()) {
         const auto group = remaining_.takeFirst();

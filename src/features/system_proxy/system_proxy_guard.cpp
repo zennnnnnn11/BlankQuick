@@ -22,7 +22,7 @@ void report(const QString& state, const QString& message) {
                            .toJson(QJsonDocument::Compact) +
                        '\n';
     DWORD written = 0;
-    // A dead owner may already have closed stdout. Restoration must still run.
+
     WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), bytes.constData(), static_cast<DWORD>(bytes.size()),
               &written, nullptr);
 }
@@ -139,7 +139,7 @@ int main(int argc, char* argv[]) {
             }
         } catch (const std::exception& error) {
             report(QStringLiteral("error"), QString::fromLocal8Bit(error.what()));
-            // A failed set/notification/readback can occur after the actual mutation.
+
             static_cast<void>(restore(transaction));
             return 5;
         }

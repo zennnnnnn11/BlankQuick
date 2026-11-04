@@ -8,13 +8,11 @@
 #include <span>
 #include <vector>
 
-// Narrow internal integration contract. No parser, script or storage implementation escapes.
 namespace overrides::dom {
 using json_detail::document;
 
 enum class failure_stage : std::int8_t { none, input, patch };
 
-// Independent result fields use natural alignment and explicit value initialization.
 // NOLINTBEGIN(altera-struct-pack-align,readability-redundant-member-init)
 struct document_result {
     document value{}; // NOLINT(fuchsia-default-arguments-calls)
@@ -24,7 +22,6 @@ struct document_result {
 };
 // NOLINTEND(altera-struct-pack-align,readability-redundant-member-init)
 
-// Failure discards the candidate. stage identifies the failure independently of report count.
 [[nodiscard]] auto apply_document(document candidate, std::span<const override_item> patches,
                                   const engine_options& options) noexcept -> document_result;
 } // namespace overrides::dom

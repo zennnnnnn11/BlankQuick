@@ -23,7 +23,7 @@
 
 namespace profile_storage::detail {
 namespace {
-// ISO CPU loops do not use FPGA unroll directives.
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,altera-unroll-loops)
 constexpr int sha256_bytes{32};
 constexpr int digest_block_bytes{8192};

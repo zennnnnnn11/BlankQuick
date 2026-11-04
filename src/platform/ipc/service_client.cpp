@@ -77,7 +77,7 @@ ServiceClient::~ServiceClient() {
 }
 
 PipeReply* ServiceClient::request(const QString& operation, const QJsonObject& arguments) {
-    // The Qt parent owns this reply through completion and teardown.
+
     auto* reply = &blank::qt::makeChild<PipeReply>(*this, nullptr);
     if (pending_.size() >= 16) {
         QTimer::singleShot(std::chrono::milliseconds{0}, reply,
@@ -128,13 +128,13 @@ void ServiceClient::connectPipe() try {
         servicePipe, access, 0, nullptr, OPEN_EXISTING,
         FILE_FLAG_OVERLAPPED | SECURITY_SQOS_PRESENT | SECURITY_IDENTIFICATION, nullptr));
     if (pipe.get() == INVALID_HANDLE_VALUE && GetLastError() == ERROR_PIPE_BUSY) {
-        // The previous owner may still be draining its job and adapter. Never block the GUI.
+
         QTimer::singleShot(std::chrono::milliseconds{100}, this, &ServiceClient::connectPipe);
         return;
     }
     blank::windows::check(pipe.get() != INVALID_HANDLE_VALUE);
     verifyServicePipe(pipe.get());
-    // QLocalSocket takes ownership of the documented native Windows HANDLE descriptor.
+
     blank::windows::check(socket_.setSocketDescriptor(std::bit_cast<qintptr>(pipe.get())));
     std::ignore = pipe.release();
     connected();
@@ -143,7 +143,7 @@ void ServiceClient::connectPipe() try {
 }
 
 void ServiceClient::connected() try {
-    // QLocalSocket exposes the Windows pipe HANDLE through its documented qintptr descriptor.
+
     verifyServicePipe(std::bit_cast<HANDLE>(socket_.socketDescriptor()));
     verified_ = true;
     const auto frames = std::exchange(unsent_, {});
@@ -156,7 +156,7 @@ void ServiceClient::connected() try {
 }
 
 void ServiceClient::received() {
-    // A queued continuation may outlive a disconnection or a failed verification.
+
     if (!verified_ || socket_.state() != QLocalSocket::ConnectedState) {
         return;
     }

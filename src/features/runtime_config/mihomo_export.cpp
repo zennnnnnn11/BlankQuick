@@ -22,7 +22,7 @@
 
 namespace runtime_config::detail {
 namespace {
-// Object subscripts create JSON properties; CPU loops have no FPGA unroll requirement.
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,altera-unroll-loops,fuchsia-default-arguments-calls,cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)
 constexpr std::int64_t maximum_port{65535};
 template <typename Value> struct optional_type : std::false_type {};
@@ -258,7 +258,6 @@ template <typename... Values>
         value);
 }
 
-// Only generator-owned protocol/plugin objects reach this bounded-depth merge.
 // NOLINTNEXTLINE(misc-no-recursion)
 auto merge_export(json& target, const json& source) -> void {
     for (const auto& [key, value] : source.items()) {

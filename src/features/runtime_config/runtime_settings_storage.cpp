@@ -28,7 +28,7 @@
 
 namespace runtime_config {
 namespace {
-// CPU file operations have no FPGA unroll requirement.
+
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,altera-struct-pack-align,fuchsia-default-arguments-calls,altera-unroll-loops)
 constexpr std::size_t revision_size{32};
 constexpr int maximum_depth{16};
@@ -36,7 +36,7 @@ constexpr std::int64_t maximum_file_size{16777216};
 namespace fs = std::filesystem;
 using detail::json;
 
-class settings_failure final : public std::exception { // clazy:exclude=copyable-polymorphic
+class settings_failure final : public std::exception {
   public:
     explicit settings_failure(settings_error selected) noexcept : error{selected} {}
     [[nodiscard]] auto code() const noexcept -> settings_error {

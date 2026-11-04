@@ -44,7 +44,6 @@ enum class configuration_error : std::int8_t {
     unexpected_failure,
 };
 
-// Standard container constructors intentionally use their default allocators.
 // NOLINTBEGIN(altera-struct-pack-align,readability-redundant-member-init,fuchsia-default-arguments-calls)
 struct dns_settings {
     dns_mode mode{dns_mode::fake_ip};
@@ -104,7 +103,7 @@ struct generation_limits {
 struct configuration_diagnostic {
     configuration_error error{};
     std::int64_t index{};
-    std::string field{}; // Fixed stage/field only; never a node name, credential or URL.
+    std::string field{};
 };
 
 struct effective_configuration {
@@ -115,7 +114,7 @@ struct effective_configuration {
 };
 
 struct configuration_result {
-    std::string config_json{}; // Candidate only. A successful native check is still required.
+    std::string config_json{};
     effective_configuration effective{};
     std::vector<configuration_diagnostic> diagnostics{};
     std::vector<overrides::patch_report> patch_reports{};
@@ -136,12 +135,11 @@ enum class settings_error : std::int8_t {
 
 struct settings_snapshot {
     client_settings settings{};
-    std::string revision{}; // Empty means the defaults have never been saved.
+    std::string revision{};
 };
 
 struct settings_result {
-    std::optional<settings_snapshot>
-        value{}; // Present only on success; error paths allocate nothing.
+    std::optional<settings_snapshot> value{};
     settings_error error{settings_error::none};
 };
 
@@ -173,19 +171,16 @@ struct kernel_check_options {
 struct kernel_check_result {
     kernel_check_error error{kernel_check_error::none};
     std::int64_t exit_code{};
-    std::string output{}; // Local debugging only; kernel messages may contain secrets.
+    std::string output{};
     bool output_truncated{};
 };
 // NOLINTEND(altera-struct-pack-align,readability-redundant-member-init,fuchsia-default-arguments-calls)
 
-// Creates per-instance credentials without touching files, sockets or system settings.
 // NOLINTBEGIN(fuchsia-default-arguments-declarations)
 [[nodiscard]] auto make_runtime_context(const std::filesystem::path& data_directory,
                                         std::int64_t controller_port = default_controller_port)
     -> runtime_context;
 
-// Pure composition: base + four-part material + supplied patches + final local checks.
-// No source material is consumed and no active configuration is mutated on failure.
 [[nodiscard]] auto generate(const profile_payload::minimal_profile& material,
                             const client_settings& settings, const runtime_context& context,
                             std::span<const overrides::override_item> patches = {},
@@ -195,16 +190,12 @@ struct kernel_check_result {
                             std::span<const overrides::override_item> patches = {},
                             const generation_limits& limits = {}) noexcept -> configuration_result;
 
-// Native -t only, never starts the running proxy or modifies system networking.
-// The caller supplies the dedicated kernel home containing required GEO/provider assets.
 [[nodiscard]] auto check_with_kernel(std::string_view candidate,
                                      const kernel_check_options& options,
                                      const std::stop_token& stop = {}) noexcept
     -> kernel_check_result;
 // NOLINTEND(fuchsia-default-arguments-declarations)
 
-// Synchronous worker API. Loading missing settings returns defaults without writing.
-// Settings are independent of profiles/overrides; secret and paths are never persisted here.
 class settings_manager {
   public:
     explicit settings_manager(settings_storage_options selected);
