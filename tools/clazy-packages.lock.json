@@ -1,0 +1,116 @@
+{
+  "repository": "https://repo.msys2.org/mingw/clang64",
+  "packages": [
+    {
+      "name": "mingw-w64-clang-x86_64-clang-libs",
+      "version": "23.1.4-1",
+      "file": "mingw-w64-clang-x86_64-clang-libs-23.1.4-1-any.pkg.tar.zst",
+      "sha256": "738a077684d68a2bf345a665456ca00e9e960ca4ab0e4074c10a890404011c5a",
+      "bytes": 24949216,
+      "dependencies": [
+        "mingw-w64-clang-x86_64-cc-libs",
+        "mingw-w64-clang-x86_64-llvm-libs=23.1.4"
+      ]
+    },
+    {
+      "name": "mingw-w64-clang-x86_64-clazy",
+      "version": "1.17.1-2",
+      "file": "mingw-w64-clang-x86_64-clazy-1.17.1-2-any.pkg.tar.zst",
+      "sha256": "9a8fc69ecee9656b59ac72489dc2144ccf7fd8f9b89032be76ac05140ad4717e",
+      "bytes": 828095,
+      "dependencies": [
+        "mingw-w64-clang-x86_64-cc-libs",
+        "mingw-w64-clang-x86_64-clang-libs",
+        "mingw-w64-clang-x86_64-llvm-libs"
+      ]
+    },
+    {
+      "name": "mingw-w64-clang-x86_64-libc++",
+      "version": "23.1.4-1",
+      "file": "mingw-w64-clang-x86_64-libc++-23.1.4-1-any.pkg.tar.zst",
+      "sha256": "88426f65bca8cfa96b0ec258ec6612b8a06ea1dc1c64511ac1e72388f4ae35f6",
+      "bytes": 1964734,
+      "dependencies": [
+        "mingw-w64-clang-x86_64-libunwind"
+      ]
+    },
+    {
+      "name": "mingw-w64-clang-x86_64-libffi",
+      "version": "3.8.0-1",
+      "file": "mingw-w64-clang-x86_64-libffi-3.8.0-1-any.pkg.tar.zst",
+      "sha256": "4d27339b52eabae86a1dff79cf432191ad8dd6acfa653b1179b12490234c66a6",
+      "bytes": 51575,
+      "dependencies": []
+    },
+    {
+      "name": "mingw-w64-clang-x86_64-libiconv",
+      "version": "1.19-1",
+      "file": "mingw-w64-clang-x86_64-libiconv-1.19-1-any.pkg.tar.zst",
+      "sha256": "26c4ac9f2023eecdfffb291cab40c60585a0cd0f72539ca03c5558f3ecd309ec",
+      "bytes": 736821,
+      "dependencies": []
+    },
+    {
+      "name": "mingw-w64-clang-x86_64-libunwind",
+      "version": "23.1.4-1",
+      "file": "mingw-w64-clang-x86_64-libunwind-23.1.4-1-any.pkg.tar.zst",
+      "sha256": "ddbae840cdd30103227635bcde02c70d197f078623c8a7774d9df9eb9af675ec",
+      "bytes": 64178,
+      "dependencies": []
+    },
+    {
+      "name": "mingw-w64-clang-x86_64-libxml2",
+      "version": "2.15.4-3",
+      "file": "mingw-w64-clang-x86_64-libxml2-2.15.4-3-any.pkg.tar.zst",
+      "sha256": "10fecf310113c94e1c318b54a42647b58d6d9df4cfa5673de56a5a7ad1f7af18",
+      "bytes": 1014573,
+      "dependencies": [
+        "mingw-w64-clang-x86_64-libiconv",
+        "mingw-w64-clang-x86_64-zlib"
+      ]
+    },
+    {
+      "name": "mingw-w64-clang-x86_64-llvm-libs",
+      "version": "23.1.4-1",
+      "file": "mingw-w64-clang-x86_64-llvm-libs-23.1.4-1-any.pkg.tar.zst",
+      "sha256": "78ee6c99c0ce2214e9f321a37d401326d9136d8c402274bc55e832cc598c5643",
+      "bytes": 34433422,
+      "dependencies": [
+        "mingw-w64-clang-x86_64-cc-libs",
+        "mingw-w64-clang-x86_64-libffi",
+        "mingw-w64-clang-x86_64-libxml2",
+        "mingw-w64-clang-x86_64-zlib",
+        "mingw-w64-clang-x86_64-zstd"
+      ]
+    },
+    {
+      "name": "mingw-w64-clang-x86_64-zlib",
+      "version": "1.3.2-3",
+      "file": "mingw-w64-clang-x86_64-zlib-1.3.2-3-any.pkg.tar.zst",
+      "sha256": "9dd6bee01521295224c2edeaa69e12dec3fdc0d33823047bb191a24c8bb68229",
+      "bytes": 111300,
+      "dependencies": []
+    },
+    {
+      "name": "mingw-w64-clang-x86_64-zstd",
+      "version": "1.5.7-2",
+      "file": "mingw-w64-clang-x86_64-zstd-1.5.7-2-any.pkg.tar.zst",
+      "sha256": "2d75c4ddf8f4f7b76fe33e3f1eea16450f9b3aede14285c886462d72f0ffd87d",
+      "bytes": 597342,
+      "dependencies": [
+        "mingw-w64-clang-x86_64-cc-libs"
+      ]
+    },
+    {
+      "name": "mingw-w64-clang-x86_64-clang",
+      "version": "23.1.4-1",
+      "file": "mingw-w64-clang-x86_64-clang-23.1.4-1-any.pkg.tar.zst",
+      "sha256": "249ebf29cf4782fd3d816296081fd6c25e4b5e13945591b63006443c91238dff",
+      "bytes": 34002422,
+      "purpose": "Matching builtin headers only; compiler and its toolchain are not installed.",
+      "paths": [
+        "clang64/lib/clang"
+      ]
+    }
+  ]
+}

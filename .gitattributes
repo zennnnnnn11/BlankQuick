@@ -1,0 +1,3 @@
+# Preserve vendored release bytes so locked checksums survive Windows checkouts.
+third_party/nlohmann/* -text
+third_party/rapidyaml/* -text

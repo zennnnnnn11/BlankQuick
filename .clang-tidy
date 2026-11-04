@@ -1,0 +1,21 @@
+---
+Checks: '*, -llvmlibc-*, -fuchsia-trailing-return'
+WarningsAsErrors: '*'
+HeaderFilterRegex: '[/\\](src|include)[/\\]'
+SystemHeaders: false
+FormatStyle: file
+CheckOptions:
+  readability-identifier-naming.NamespaceCase: lower_case
+  readability-identifier-naming.ClassCase: lower_case
+  readability-identifier-naming.StructCase: lower_case
+  readability-identifier-naming.EnumCase: lower_case
+  readability-identifier-naming.EnumConstantCase: lower_case
+  readability-identifier-naming.FunctionCase: lower_case
+  readability-identifier-naming.VariableCase: lower_case
+  readability-identifier-naming.ParameterCase: lower_case
+  readability-identifier-naming.PrivateMemberCase: lower_case
+  readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
+  readability-identifier-length.MinimumVariableNameLength: '3'
+  readability-identifier-length.MinimumParameterNameLength: '3'
+  modernize-use-nodiscard.ReplacementString: '[[nodiscard]]'
+...

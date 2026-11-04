@@ -1,0 +1,12 @@
+{
+  "mihomo": {
+    "version": "1.19.33",
+    "sha256": "a4fbf2b8bc2b5416ce2d0d392ac59f2e0a234ea4fcf635b66bd21e62ea9641b9",
+    "source": "https://github.com/MetaCubeX/mihomo/releases/tag/v1.19.33"
+  },
+  "wintun": {
+    "version": "0.14.1",
+    "sha256": "e5da8447dc2c320edc0fc52fa01885c103de8c118481f683643cacc3220dafce",
+    "source": "https://www.wintun.net/builds/wintun-0.14.1.zip"
+  }
+}

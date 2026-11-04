@@ -1,0 +1,27 @@
+BasedOnStyle: LLVM
+Standard: c++23
+Language: Cpp
+IndentWidth: 4
+ContinuationIndentWidth: 4
+ColumnLimit: 100
+BreakBeforeBraces: Allman
+PointerAlignment: Left
+ReferenceAlignment: Left
+SortIncludes: CaseSensitive
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^<winsock2.h>$'
+    Priority: 1
+  - Regex: '^<ws2tcpip.h>$'
+    Priority: 1
+  - Regex: '^<[Ww]indows.h>$'
+    Priority: 2
+  - Regex: '^<iphlpapi.h>$'
+    Priority: 3
+  - Regex: '.*'
+    Priority: 4
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+InsertBraces: true
+SeparateDefinitionBlocks: Always

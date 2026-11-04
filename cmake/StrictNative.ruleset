@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RuleSet Name="All native and C++ Core Guidelines rules" Description="All native MSVC analysis rules fail the build." ToolsVersion="17.0">
+  <IncludeAll Action="Error" />
+</RuleSet>

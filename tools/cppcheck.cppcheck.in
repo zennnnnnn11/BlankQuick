@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="1">
+  <importproject>compile_commands.json</importproject>
+  <safe-checks>
+    <class-public />
+    <external-functions />
+    <internal-functions />
+    <external-variables />
+  </safe-checks>
+</project>

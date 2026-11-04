@@ -1,0 +1,7 @@
+[
+  {
+    "check": "compare-member-check",
+    "version": "1.17",
+    "reason": "Reproduced on Windows native MSYS2 Clazy package 1.17.1-2 / LLVM 23.1.4: this check alone crashes with 0xC0000005 while traversing MSVC 14.44 STL. Upstream bug 518098 has a related fix in the 1.18 development changelog. The 1.17.1 executable reports 1.17. Retest when upgrading; other checks remain enabled."
+  }
+]
