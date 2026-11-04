@@ -61,7 +61,7 @@ endif()
 
 qt_add_executable(blank_quick src/app/main.cpp cmake/application.manifest)
 qt_add_qml_module(blank_quick URI Blank VERSION 1.0 QML_FILES qml/Main.qml)
-target_link_libraries(blank_quick PRIVATE Qt6::Quick BlankQuick::Runtime)
+target_link_libraries(blank_quick PRIVATE Qt6::Quick BlankQuick::Runtime dwmapi)
 target_compile_options(blank_quick PRIVATE /guard:cf /guard:ehcont)
 target_compile_definitions(blank_quick PRIVATE QT_NO_KEYWORDS QT_NO_CAST_FROM_ASCII
     QT_NO_CAST_TO_ASCII QT_NO_CAST_FROM_BYTEARRAY QT_NO_URL_CAST_FROM_STRING

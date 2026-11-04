@@ -10,6 +10,8 @@ set(feature_directories
 set_source_files_properties(
     src/app/main.cpp
     PROPERTIES COMPILE_OPTIONS "${strict_msvc_options}")
+# Qt's ColorScheme signal instantiates a vendor QMetaType debug operator with C4866.
+set_property(SOURCE src/app/main.cpp APPEND PROPERTY COMPILE_OPTIONS /wd4866)
 set_source_files_properties(
     src/features/nodes/unified_node.cpp
     src/features/subscriptions/subscription_fetcher.cpp
