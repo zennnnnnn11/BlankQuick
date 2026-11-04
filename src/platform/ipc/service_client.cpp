@@ -54,8 +54,11 @@ void PipeReply::complete(int status, QByteArray body, const QString& failure) {
         setError(UnknownNetworkError, failure.isEmpty() ? tr("服务拒绝请求") : failure);
     }
     setFinished(true);
+    const QPointer<PipeReply> lifetime{this};
     Q_EMIT readyRead();
-    Q_EMIT finished();
+    if (lifetime) {
+        Q_EMIT finished();
+    }
 }
 
 ServiceClient::ServiceClient(QObject* parent) : QObject(parent) {

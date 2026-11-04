@@ -54,7 +54,12 @@ void CoreLogSocket::start(const QNetworkRequest& request) {
         request.rawHeader("Authorization") == request_.rawHeader("Authorization")) {
         return;
     }
+    const QPointer<CoreLogSocket> lifetime{this};
+    const auto nextGeneration = generation_ + 1;
     stop();
+    if (!lifetime || generation_ != nextGeneration) {
+        return;
+    }
     request_ = request;
     running_ = true;
     retryMs_ = 1000;
