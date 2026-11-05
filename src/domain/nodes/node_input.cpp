@@ -32,7 +32,9 @@
 namespace node_input {
 namespace {
 
-// NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace, fuchsia-default-arguments-calls,
+// ISO C++20 CPU parsing keeps natural aggregate layout, ordinary loops and local
+// defaults; it deliberately has no Abseil or FPGA-unrolling dependency.
+// NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,fuchsia-default-arguments-calls,fuchsia-default-arguments-declarations,altera-unroll-loops,altera-struct-pack-align,readability-redundant-member-init,abseil-string-find-str-contains)
 
 using nlohmann::json;
 using node_model::node_configuration;
@@ -83,8 +85,15 @@ constexpr std::int64_t wireguard_reserved_bytes{3};
 constexpr std::int64_t maximum_byte{255};
 constexpr std::int64_t maximum_warning_key{80};
 
-struct input_failure : std::exception {
-    explicit input_failure(parse_error code) noexcept : error{code} {}
+// Final exception values retain standard copy semantics; caught by const reference.
+class input_failure final : public std::exception { // clazy:exclude=copyable-polymorphic
+  public:
+    explicit input_failure(parse_error selected) noexcept : error{selected} {}
+    [[nodiscard]] auto code() const noexcept -> parse_error {
+        return error;
+    }
+
+  private:
     parse_error error{parse_error::invalid_parameter};
 };
 
@@ -125,6 +134,33 @@ struct input_failure : std::exception {
     }
     return result;
 }
+
+// 与 normalize_key 完全相同的 ASCII 规则，只比较而不创建中间字符串。
+// 不提前返回首个匹配项，调用者仍保留原有的文档字段覆盖顺序。
+[[nodiscard]] constexpr auto normalized_equals(std::string_view left,
+                                               std::string_view right) noexcept -> bool {
+    const auto skip_separators = [](std::string_view& text) constexpr noexcept -> void {
+        while (!text.empty() && (text.front() == '-' || text.front() == '_')) {
+            text.remove_prefix(1);
+        }
+    };
+    while (true) {
+        skip_separators(left);
+        skip_separators(right);
+        if (left.empty() || right.empty()) {
+            return left.empty() && right.empty();
+        }
+        if (lower_ascii(left.front()) != lower_ascii(right.front())) {
+            return false;
+        }
+        left.remove_prefix(1);
+        right.remove_prefix(1);
+    }
+}
+
+static_assert(normalized_equals("BASE_Nanoseconds", "base-nanoseconds"));
+static_assert(normalized_equals("_-", ""));
+static_assert(!normalized_equals("base.nanoseconds", "base-nanoseconds"));
 
 [[nodiscard]] constexpr auto hex_digit(char value) noexcept -> int {
     if (value >= '0' && value <= '9') {
@@ -291,7 +327,7 @@ auto validate_text(std::string_view value, bool multiline = false) -> void {
     }
 }
 
-[[nodiscard]] auto integer(std::string_view value) -> std::int64_t {
+[[nodiscard]] auto parse_integer(std::string_view value) -> std::int64_t {
     value = trim(value);
     if (value.empty()) {
         fail(parse_error::invalid_parameter);
@@ -303,6 +339,26 @@ auto validate_text(std::string_view value, bool multiline = false) -> void {
         fail(parse_error::invalid_parameter);
     }
     return result;
+}
+
+// 语法失败作为数据返回，供文档分发器选择 YAML；资源超限始终立即终止，
+// 不能退回另一个解析器继续尝试。这里不再靠第二次解析来制造第三方异常。
+[[nodiscard]] auto read_bounded_json(std::string_view text, const parse_limits& limits)
+    -> json_detail::read_result<json> {
+    auto parsed = json_detail::read<json>(
+        text, {.max_event_depth = limits.max_json_depth, .ignore_comments = true});
+    if (parsed.error == json_detail::read_error::resource_limit) {
+        fail(parse_error::resource_limit);
+    }
+    return parsed;
+}
+
+[[nodiscard]] auto parse_bounded_json(std::string_view text, const parse_limits& limits) -> json {
+    auto parsed = read_bounded_json(text, limits);
+    if (parsed.error != json_detail::read_error::none) {
+        fail(parse_error::invalid_parameter);
+    }
+    return std::move(parsed.value);
 }
 
 [[nodiscard]] auto scalar_string(const json& value) -> std::string {
@@ -336,13 +392,29 @@ auto read_pem(const json& value, std::optional<std::string>& result) -> void {
 }
 
 auto read_value(const json& value, std::int64_t& result) -> void {
-    result = integer(scalar_string(value));
+    // is_number_integer 同时接受 unsigned；先检查上界，再执行具名转换。
+    // 保留字符串数字兼容，浮点数和布尔值仍不属于整数输入。
+    if (value.is_number_unsigned()) {
+        const auto number = value.get<std::uint64_t>();
+        if (number > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
+            fail(parse_error::invalid_parameter);
+        }
+        result = static_cast<std::int64_t>(number);
+    } else if (value.is_number_integer()) {
+        result = value.get<std::int64_t>();
+    } else {
+        result = parse_integer(scalar_string(value));
+    }
     if (result < 0) {
         fail(parse_error::invalid_parameter);
     }
 }
 
 auto read_value(const json& value, bool& result) -> void {
+    if (value.is_boolean()) {
+        result = value.get<bool>();
+        return;
+    }
     const auto text = lower(scalar_string(value));
     if (text == "true" || text == "1" || text == "yes" || text == "on") {
         result = true;
@@ -383,14 +455,14 @@ auto read_value(const json& value, node_model::string_list_map& result) -> void 
     }
 }
 
-[[nodiscard]] auto duration_count(const json& value, std::int64_t units_per_second)
+[[nodiscard]] auto parse_duration_count(const json& value, std::int64_t units_per_second)
     -> std::int64_t {
     auto text = scalar_string(value);
     auto multiplier = std::int64_t{1};
     if (text.ends_with("ms")) {
         text.resize(text.size() - 2);
         if (units_per_second == 1) {
-            const auto count = integer(text);
+            const auto count = parse_integer(text);
             if (count < 0 || count % milliseconds_per_second != 0) {
                 fail(parse_error::invalid_parameter);
             }
@@ -404,7 +476,7 @@ auto read_value(const json& value, node_model::string_list_map& result) -> void 
         text.pop_back();
         multiplier = units_per_second * seconds_per_minute;
     }
-    const auto count = integer(text);
+    const auto count = parse_integer(text);
     if (count < 0 || count > std::numeric_limits<std::int64_t>::max() / multiplier) {
         fail(parse_error::invalid_parameter);
     }
@@ -412,24 +484,24 @@ auto read_value(const json& value, node_model::string_list_map& result) -> void 
 }
 
 auto read_value(const json& value, std::chrono::seconds& result) -> void {
-    result = std::chrono::seconds{duration_count(value, 1)};
+    result = std::chrono::seconds{parse_duration_count(value, 1)};
 }
 
 auto read_value(const json& value, std::chrono::milliseconds& result) -> void {
-    result = std::chrono::milliseconds{duration_count(value, milliseconds_per_second)};
+    result = std::chrono::milliseconds{parse_duration_count(value, milliseconds_per_second)};
 }
 
 auto read_value(const json& value, node_model::hopping_interval& result) -> void {
     const auto text = scalar_string(value);
     if (text.find('-') != std::string::npos) {
         const auto ends = split(text, '-');
-        if (ends.size() != 2 || integer(ends.front()) <= 0 ||
-            integer(ends.front()) > integer(ends.back())) {
+        if (ends.size() != 2 || parse_integer(ends.front()) <= 0 ||
+            parse_integer(ends.front()) > parse_integer(ends.back())) {
             fail(parse_error::invalid_parameter);
         }
         result = text;
     } else {
-        result = std::chrono::seconds{duration_count(value, 1)};
+        result = std::chrono::seconds{parse_duration_count(value, 1)};
     }
 }
 
@@ -457,7 +529,7 @@ auto read_value(const json& value, std::vector<std::byte>& result) -> void {
     } else {
         const auto text = scalar_string(value);
         if (text.starts_with('[')) {
-            bytes = json::parse(text);
+            bytes = parse_bounded_json(text, parse_limits{});
         } else if (text.find(',') != std::string::npos) {
             bytes = split(text, ',');
         } else {
@@ -473,8 +545,9 @@ auto read_value(const json& value, std::vector<std::byte>& result) -> void {
         fail(parse_error::invalid_parameter);
     }
     for (const auto& entry : bytes) {
-        const auto number = integer(scalar_string(entry));
-        if (number < 0 || number > maximum_byte) {
+        auto number = std::int64_t{};
+        read_value(entry, number);
+        if (number > maximum_byte) {
             fail(parse_error::invalid_parameter);
         }
         result.push_back(static_cast<std::byte>(number));
@@ -486,8 +559,9 @@ auto read_value(const json& value, std::vector<int>& result) -> void {
         fail(parse_error::invalid_parameter);
     }
     for (const auto& entry : value) {
-        const auto number = integer(scalar_string(entry));
-        if (number < 0 || number > std::numeric_limits<int>::max()) {
+        auto number = std::int64_t{};
+        read_value(entry, number);
+        if (number > std::numeric_limits<int>::max()) {
             fail(parse_error::invalid_parameter);
         }
         result.push_back(static_cast<int>(number));
@@ -501,7 +575,7 @@ auto read_member(const json& object, std::string_view key, value_type& target) -
         fail(parse_error::invalid_parameter);
     }
     for (const auto& [name, value] : object.items()) {
-        if (normalize_key(name) == normalize_key(key)) {
+        if (normalized_equals(name, key)) {
             read_value(value, target);
         }
     }
@@ -585,19 +659,6 @@ struct options { // NOLINT(bugprone-exception-escape)
     parse_limits limits{};
 };
 
-[[nodiscard]] auto bounded_json(std::string_view text, const parse_limits& limits) -> json {
-    auto parsed = json_detail::read<json>(
-        text, {.max_event_depth = limits.max_json_depth, .ignore_comments = true});
-    if (parsed.error == json_detail::read_error::resource_limit) {
-        fail(parse_error::resource_limit);
-    }
-    if (parsed.error != json_detail::read_error::none) {
-
-        return json::parse(text, nullptr, true, true);
-    }
-    return std::move(parsed.value);
-}
-
 // NOLINTNEXTLINE(misc-no-recursion)
 auto set_option(options& target, std::string_view key, const json& value) -> void {
     const auto normalized = normalize_key(key);
@@ -607,7 +668,10 @@ auto set_option(options& target, std::string_view key, const json& value) -> voi
     }
     if (value.is_object()) {
         for (const auto& [child_key, child] : value.items()) {
-            set_option(target, normalized + '.' + child_key, child);
+            auto child_name = normalized;
+            child_name += '.';
+            child_name += child_key;
+            set_option(target, child_name, child);
         }
     }
 }
@@ -684,7 +748,7 @@ auto parse_query(options& target, std::string_view query) -> void {
             set_option(target, key, entries);
         } else if (structured_parameter(key) &&
                    (content.starts_with('{') || content.starts_with('['))) {
-            set_option(target, key, bounded_json(content, target.limits));
+            set_option(target, key, parse_bounded_json(content, target.limits));
         } else {
             set_option(target, key, value);
         }
@@ -692,30 +756,24 @@ auto parse_query(options& target, std::string_view query) -> void {
 }
 
 [[nodiscard]] auto parse_protocol(std::string_view scheme) -> uri_protocol {
+    constexpr auto protocols = std::to_array<std::pair<std::string_view, uri_protocol>>({
+        {"vless", uri_protocol::vless},
+        {"vmess", uri_protocol::vmess},
+        {"ss", uri_protocol::shadowsocks},
+        {"trojan", uri_protocol::trojan},
+        {"hysteria2", uri_protocol::hysteria2},
+        {"hy2", uri_protocol::hysteria2},
+        {"hysteria2+realm", uri_protocol::hysteria2},
+        {"hy2+realm", uri_protocol::hysteria2},
+        {"tuic", uri_protocol::tuic},
+        {"wireguard", uri_protocol::wireguard},
+        {"wg", uri_protocol::wireguard},
+        {"anytls", uri_protocol::anytls},
+    });
     const auto text = lower(scheme);
-    if (text == "vless") {
-        return uri_protocol::vless;
-    }
-    if (text == "vmess") {
-        return uri_protocol::vmess;
-    }
-    if (text == "ss") {
-        return uri_protocol::shadowsocks;
-    }
-    if (text == "trojan") {
-        return uri_protocol::trojan;
-    }
-    if (text == "hysteria2" || text == "hy2" || text == "hysteria2+realm" || text == "hy2+realm") {
-        return uri_protocol::hysteria2;
-    }
-    if (text == "tuic") {
-        return uri_protocol::tuic;
-    }
-    if (text == "wireguard" || text == "wg") {
-        return uri_protocol::wireguard;
-    }
-    if (text == "anytls") {
-        return uri_protocol::anytls;
+    const auto found = std::ranges::find(protocols, text, &decltype(protocols)::value_type::first);
+    if (found != protocols.end()) {
+        return found->second;
     }
     fail(parse_error::unsupported_protocol);
 }
@@ -769,7 +827,7 @@ auto parse_query(options& target, std::string_view query) -> void {
     return !value.starts_with(":::") && !value.ends_with(":::") && groups < ipv6_groups;
 }
 
-[[nodiscard]] auto endpoint(std::string_view authority, std::int64_t default_port)
+[[nodiscard]] auto parse_endpoint(std::string_view authority, std::int64_t default_port)
     -> node_model::remote_endpoint {
     const auto colon = authority.rfind(':');
     auto host = authority.substr(0, colon);
@@ -812,7 +870,7 @@ auto parse_query(options& target, std::string_view query) -> void {
             })) {
             fail(parse_error::invalid_endpoint);
         }
-        port_number = integer(port);
+        port_number = parse_integer(port);
     }
     if (port_number <= 0 || port_number > maximum_port) {
         fail(parse_error::invalid_endpoint);
@@ -845,6 +903,69 @@ auto read_value(const json& value, std::vector<node_model::wireguard_peer_param>
 
 #include "node_input_bindings.inc"
 
+auto normalize_tls(options& source) -> void {
+    const auto* tls = find_option(source, "tls");
+    if (tls == nullptr || !tls->is_string()) {
+        return;
+    }
+    const auto text = lower(scalar_string(*tls));
+    if (text == "tls" || text == "reality") {
+        set_option(source, "tls", true);
+        if (text == "reality") {
+            set_option(source, "security", "reality");
+        }
+    } else if (text.empty() || text == "none") {
+        set_option(source, "tls", false);
+    }
+}
+
+auto normalize_security(options& source, uri_protocol protocol) -> void {
+    const auto* security = find_option(source, "security");
+    if (security == nullptr) {
+        return;
+    }
+    const auto text = lower(scalar_string(*security));
+    if (text == "tls" || text == "reality") {
+        set_option(source, "tls", true);
+    } else if (text == "none" || text.empty()) {
+        set_option(source, "tls", false);
+    } else if (protocol == uri_protocol::vmess &&
+               (text == "auto" || text == "aes-128-gcm" || text == "chacha20-poly1305")) {
+        alias(source, "security", "cipher");
+    } else {
+        fail(parse_error::unsupported_parameter);
+    }
+}
+
+auto normalize_packet_encoding(options& source) -> void {
+    const auto* encoding = find_option(source, "packet-encoding");
+    if (encoding == nullptr) {
+        return;
+    }
+    const auto text = lower(scalar_string(*encoding));
+    if (text == "packet" || text == "packetaddr") {
+        set_option(source, "packet-addr", true);
+        set_option(source, "xudp", false);
+    } else if (text == "xudp") {
+        set_option(source, "xudp", true);
+    } else if (text != "none" && !text.empty()) {
+        fail(parse_error::unsupported_parameter);
+    }
+}
+
+auto normalize_ech(options& source) -> void {
+    const auto* ech = find_option(source, "ech");
+    if (ech == nullptr) {
+        return;
+    }
+    if (ech->is_object()) {
+        set_option(source, "ech-opts", *ech);
+    } else {
+        set_option(source, "ech-opts.enable", true);
+        set_option(source, "ech-opts.config", *ech);
+    }
+}
+
 auto normalize_common(options& source, uri_protocol protocol) -> void {
     constexpr auto aliases = std::to_array<std::pair<std::string_view, std::string_view>>({
         {"sni", "servername"},
@@ -863,7 +984,6 @@ auto normalize_common(options& source, uri_protocol protocol) -> void {
         {"hpkp", "fingerprint"},
         {"vcn", "name-cert-verify"},
         {"pbk", "reality-opts.public-key"},
-        {"public-key", "reality-opts.public-key"},
         {"sid", "reality-opts.short-id"},
         {"short-id", "reality-opts.short-id"},
         {"amp;pbk", "reality-opts.public-key"},
@@ -883,59 +1003,16 @@ auto normalize_common(options& source, uri_protocol protocol) -> void {
         {"brutal-up", "smux.brutal-opts.up"},
         {"brutal-down", "smux.brutal-opts.down"},
     });
+    // public-key 的含义由协议决定，只在 select_detail 的对应分支归一化。
     for (const auto& item : aliases) {
-        const auto from = item.first;
-        const auto destination = item.second;
-
-        if (from != "public-key") {
-            alias(source, from, destination);
-        }
+        alias(source, item.first, item.second);
     }
-    if (const auto* tls = find_option(source, "tls")) {
-        if (tls->is_string()) {
-            const auto text = lower(scalar_string(*tls));
-            if (text == "tls" || text == "reality") {
-                set_option(source, "tls", true);
-                if (text == "reality") {
-                    set_option(source, "security", "reality");
-                }
-            } else if (text.empty() || text == "none") {
-                set_option(source, "tls", false);
-            }
-        }
-    }
-    if (const auto* security = find_option(source, "security")) {
-        const auto text = lower(scalar_string(*security));
-        if (text == "tls" || text == "reality") {
-            set_option(source, "tls", true);
-        } else if (text == "none" || text.empty()) {
-            set_option(source, "tls", false);
-        } else if (protocol == uri_protocol::vmess &&
-                   (text == "auto" || text == "aes-128-gcm" || text == "chacha20-poly1305")) {
-            alias(source, "security", "cipher");
-        } else {
-            fail(parse_error::unsupported_parameter);
-        }
-    }
-    if (const auto* encoding = find_option(source, "packet-encoding")) {
-        const auto text = lower(scalar_string(*encoding));
-        if (text == "packet" || text == "packetaddr") {
-            set_option(source, "packet-addr", true);
-            set_option(source, "xudp", false);
-        } else if (text == "xudp") {
-            set_option(source, "xudp", true);
-        } else if (text != "none" && !text.empty()) {
-            fail(parse_error::unsupported_parameter);
-        }
-    }
-    if (const auto* ech = find_option(source, "ech")) {
-        if (ech->is_object()) {
-            set_option(source, "ech-opts", *ech);
-        } else {
-            set_option(source, "ech-opts.enable", true);
-            set_option(source, "ech-opts.config", *ech);
-        }
-    }
+    // 顺序是兼容契约：TLS 文本先归一化，security 再决定最终 TLS/VMess 密码；
+    // 覆盖顺序改变会使同时含 tls 与 security 的分享链接产生不同结果。
+    normalize_tls(source);
+    normalize_security(source, protocol);
+    normalize_packet_encoding(source);
+    normalize_ech(source);
 }
 
 [[nodiscard]] auto normalize_xhttp_key(std::string_view key) -> std::string {
@@ -1085,6 +1162,38 @@ auto configure_tcp(options& source, node_model::transport_payload& transport, ur
     }
 }
 
+auto configure_kcp(options& source, node_model::transport_payload& transport,
+                   std::string_view network, uri_protocol protocol) -> void {
+    if (protocol != uri_protocol::vmess) {
+        fail(parse_error::unsupported_parameter);
+    }
+    if (network == "mekya") {
+        transport = node_model::mekya_transport{};
+        alias(source, "url", "mekya-opts.url");
+    } else {
+        transport = node_model::mkcp_transport{};
+        alias(source, "seed", "mkcp-opts.seed");
+        alias(source, "path", "mkcp-opts.seed");
+        alias(source, "headerType", "mkcp-opts.header");
+    }
+}
+
+auto configure_xhttp(options& source, node_model::transport_payload& transport,
+                     uri_protocol protocol) -> void {
+    if (protocol != uri_protocol::vless) {
+        fail(parse_error::unsupported_parameter);
+    }
+    transport = node_model::xhttp_transport{};
+    alias(source, "path", "xhttp-opts.path");
+    alias(source, "host", "xhttp-opts.host");
+    alias(source, "mode", "xhttp-opts.mode");
+    if (const auto* extra = find_option(source, "extra")) {
+        const auto parsed =
+            extra->is_string() ? parse_bounded_json(scalar_string(*extra), source.limits) : *extra;
+        import_xhttp_extra(source, "xhttp-opts", parsed);
+    }
+}
+
 auto select_transport(options& source, node_configuration& configuration, uri_protocol protocol)
     -> void {
     alias(source, "net", "network");
@@ -1115,31 +1224,9 @@ auto select_transport(options& source, node_configuration& configuration, uri_pr
         alias(source, "host", "h2-opts.host");
         alias(source, "path", "h2-opts.path");
     } else if (network == "xhttp" || network == "splithttp") {
-        if (protocol != uri_protocol::vless) {
-            fail(parse_error::unsupported_parameter);
-        }
-        transport = node_model::xhttp_transport{};
-        alias(source, "path", "xhttp-opts.path");
-        alias(source, "host", "xhttp-opts.host");
-        alias(source, "mode", "xhttp-opts.mode");
-        if (const auto* extra = find_option(source, "extra")) {
-            const auto parsed =
-                extra->is_string() ? bounded_json(scalar_string(*extra), source.limits) : *extra;
-            import_xhttp_extra(source, "xhttp-opts", parsed);
-        }
+        configure_xhttp(source, transport, protocol);
     } else if (network == "kcp" || network == "mkcp" || network == "mekya") {
-        if (protocol != uri_protocol::vmess) {
-            fail(parse_error::unsupported_parameter);
-        }
-        if (network == "mekya") {
-            transport = node_model::mekya_transport{};
-            alias(source, "url", "mekya-opts.url");
-        } else {
-            transport = node_model::mkcp_transport{};
-            alias(source, "seed", "mkcp-opts.seed");
-            alias(source, "path", "mkcp-opts.seed");
-            alias(source, "headerType", "mkcp-opts.header");
-        }
+        configure_kcp(source, transport, network, protocol);
     } else if (network == "tcp" || network == "raw" || network.empty()) {
         configure_tcp(source, transport, protocol);
     } else {
@@ -1266,7 +1353,7 @@ auto select_detail(options& source, node_configuration& configuration, uri_proto
         configuration.detail = node_model::anytls_param{};
         for (const auto* const key : {"idle-session-check-interval", "idle-session-timeout"}) {
             if (const auto* value = find_option(source, key)) {
-                set_option(source, key, duration_count(*value, 1));
+                set_option(source, key, parse_duration_count(*value, 1));
             }
         }
         break;
@@ -1306,7 +1393,7 @@ auto select_detail(options& source, node_configuration& configuration, uri_proto
     const auto maximum = ipv6 ? ipv6_prefix : ipv4_prefix;
     auto prefix = maximum;
     if (slash != std::string_view::npos) {
-        prefix = integer(value.substr(slash + 1));
+        prefix = parse_integer(value.substr(slash + 1));
     } else if (require_prefix) {
         fail(parse_error::invalid_parameter);
     }
@@ -1381,10 +1468,10 @@ auto validate_wireguard(node_model::wireguard_param& parameter) -> void {
         address = canonical_ip(address, true).first;
     }
     for (auto& peer : parameter.peers) {
-        static_cast<void>(endpoint(peer.server.find(':') == std::string::npos
-                                       ? peer.server + ':' + std::to_string(peer.port)
-                                       : '[' + peer.server + "]:" + std::to_string(peer.port),
-                                   0));
+        static_cast<void>(parse_endpoint(peer.server.find(':') == std::string::npos
+                                             ? peer.server + ':' + std::to_string(peer.port)
+                                             : '[' + peer.server + "]:" + std::to_string(peer.port),
+                                         0));
         peer.public_key = canonical_wireguard_key(peer.public_key);
         if (!peer.pre_shared_key.empty()) {
             peer.pre_shared_key = canonical_wireguard_key(peer.pre_shared_key);
@@ -1504,10 +1591,10 @@ auto validate_detail(node_configuration& configuration, uri_protocol protocol) -
         fail(parse_error::unsupported_protocol);
     }
     if (auto* websocket =
-            std::get_if<node_model::websocket_transport>(&configuration.link.transport)) {
-        if (websocket->max_early_data > 0 && websocket->early_data_header_name.empty()) {
-            websocket->early_data_header_name = "Sec-WebSocket-Protocol";
-        }
+            std::get_if<node_model::websocket_transport>(&configuration.link.transport);
+        websocket != nullptr && websocket->max_early_data > 0 &&
+        websocket->early_data_header_name.empty()) {
+        websocket->early_data_header_name = "Sec-WebSocket-Protocol";
     }
     auto& security = configuration.link.security;
     if (security.reality.has_value() && security.reality->public_key.empty()) {
@@ -1627,8 +1714,8 @@ auto set_credential(uri_parts& parts, std::string_view userinfo, bool decoded_le
         if (ends.size() > 2) {
             fail(parse_error::invalid_endpoint);
         }
-        const auto first = integer(ends.front());
-        const auto last = integer(ends.back());
+        const auto first = parse_integer(ends.front());
+        const auto last = parse_integer(ends.back());
         if (first <= 0 || last > maximum_port || first > last) {
             fail(parse_error::invalid_endpoint);
         }
@@ -1641,7 +1728,7 @@ auto set_credential(uri_parts& parts, std::string_view userinfo, bool decoded_le
 
 auto parse_vmess_json(uri_parts& parts, std::string_view encoded) -> void {
     const auto decoded = decode_base64(percent_decode(encoded));
-    const auto object = bounded_json(decoded, parts.fields.limits);
+    const auto object = parse_bounded_json(decoded, parts.fields.limits);
     if (!object.is_object()) {
         fail(parse_error::invalid_uri);
     }
@@ -1662,7 +1749,7 @@ auto parse_vmess_json(uri_parts& parts, std::string_view encoded) -> void {
     const auto port = option_text(parts.fields, "port");
     const auto authority =
         host.find(':') == std::string::npos ? host + ':' + port : '[' + host + "]:" + port;
-    parts.remote = endpoint(authority, 0);
+    parts.remote = parse_endpoint(authority, 0);
     const auto mode = option_text(parts.fields, "network", option_text(parts.fields, "net", "tcp"));
     if (normalize_key(mode) != "tcp" && normalize_key(mode) != "raw" &&
         normalize_key(mode) != "kcp" && normalize_key(mode) != "mkcp") {
@@ -1686,11 +1773,11 @@ auto parse_vmess_json(uri_parts& parts, std::string_view encoded) -> void {
                 set_option(parts.fields, "ports", std::string{ports});
                 const auto adjusted_authority =
                     std::string{authority.substr(0, port_colon + 1)} + std::to_string(port);
-                return endpoint(adjusted_authority, default_port);
+                return parse_endpoint(adjusted_authority, default_port);
             }
         }
     }
-    return endpoint(authority, require_port ? 0 : default_port);
+    return parse_endpoint(authority, require_port ? 0 : default_port);
 }
 
 // NOLINTNEXTLINE(readability-function-cognitive-complexity)
@@ -1811,10 +1898,14 @@ auto parse_vmess_json(uri_parts& parts, std::string_view encoded) -> void {
     auto result = node_parse_result{};
     result.ignored_parameters = collect_ignored(source);
     result.node.emplace(node_model::unified_node{
-        .core = {.name = std::move(name),
-                 .protocol = model_protocol(parts.protocol),
-                 .remote = std::move(parts.remote)},
-        .configuration = std::make_unique<const node_configuration>(std::move(configuration))});
+        .core =
+            {
+                .name = std::move(name),
+                .protocol = model_protocol(parts.protocol),
+                .remote = std::move(parts.remote),
+            },
+        .configuration = std::make_unique<const node_configuration>(std::move(configuration)),
+    });
     return result;
 }
 
@@ -1845,10 +1936,11 @@ auto parse_lines(std::string_view text, const parse_limits& limits, subscription
         }
         auto parsed = parse_uri(line, limits);
         if (parsed.error != parse_error::none || !parsed.ignored_parameters.empty()) {
-            result.diagnostics.push_back(
-                {.line = line_number,
-                 .error = parsed.error,
-                 .ignored_parameters = std::move(parsed.ignored_parameters)});
+            result.diagnostics.push_back({
+                .line = line_number,
+                .error = parsed.error,
+                .ignored_parameters = std::move(parsed.ignored_parameters),
+            });
         }
         if (parsed.node.has_value()) {
             result.nodes.push_back(std::move(*parsed.node));
@@ -1876,7 +1968,9 @@ auto dispatch_subscription(std::string_view input, const parse_limits& limits,
     }
     if (starts_with_uri(input)) {
         parse_lines(input, limits, result);
-    } else if (has_yaml_root_key(input, limits)) {
+        return;
+    }
+    if (has_yaml_root_key(input, limits)) {
         result.format = subscription_format::clash_yaml;
         parse_clash_yaml(input, limits, result);
     } else if (has_wireguard_section(input, limits)) {
@@ -1897,7 +1991,7 @@ auto dispatch_subscription(std::string_view input, const parse_limits& limits,
     }
 }
 
-// NOLINTEND(llvm-prefer-static-over-anonymous-namespace, fuchsia-default-arguments-calls,
+// NOLINTEND(llvm-prefer-static-over-anonymous-namespace,fuchsia-default-arguments-calls,fuchsia-default-arguments-declarations,altera-unroll-loops,altera-struct-pack-align,readability-redundant-member-init,abseil-string-find-str-contains)
 
 } // namespace
 
@@ -1910,7 +2004,7 @@ auto extract_clash_material(std::string_view input, const parse_limits& limits) 
         }
         return read_clash_material(input, limits);
     } catch (const input_failure& failure) {
-        return {.error = failure.error};
+        return {.error = failure.code()};
     } catch (const std::bad_alloc&) {
         return {.error = parse_error::allocation_failure};
     } catch (const std::exception&) {
@@ -1933,7 +2027,7 @@ auto parse_uri(std::string_view input, const parse_limits& limits) noexcept -> n
         }
         return assemble(parse_parts(input, limits), true);
     } catch (const input_failure& failure) {
-        return {.error = failure.error};
+        return {.error = failure.code()};
     } catch (const json::exception&) {
         return {.error = parse_error::invalid_parameter};
     } catch (const std::bad_alloc&) {
@@ -1957,7 +2051,7 @@ auto parse_subscription(std::string_view input, const parse_limits& limits) noex
         }
         dispatch_subscription(input, limits, result, 0);
     } catch (const input_failure& failure) {
-        result.error = failure.error;
+        result.error = failure.code();
     } catch (const json::exception&) {
         result.error = parse_error::invalid_document;
     } catch (const std::bad_alloc&) {

@@ -127,6 +127,8 @@ function(blank_enforce_architecture)
     blank_create_data_fence()
     blank_check_directory("${policy}" "${PROJECT_SOURCE_DIR}")
     find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    execute_process(COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/check_lint_comments.py"
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" COMMAND_ERROR_IS_FATAL ANY)
     execute_process(COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/check_architecture.py"
         --includes-only WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         COMMAND_ERROR_IS_FATAL ANY)

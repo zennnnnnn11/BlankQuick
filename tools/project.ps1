@@ -328,6 +328,7 @@ try {
             Invoke-Tool 'cmake' @('--build', $buildRoot)
         }
         'check' {
+            Invoke-Tool 'python' @((Join-Path $PSScriptRoot 'check_lint_comments.py'))
             Invoke-Tool 'python' @((Join-Path $PSScriptRoot 'sync_mihomo.py'), 'check', '--offline')
             Invoke-Tool 'python' @((Join-Path $PSScriptRoot 'check_architecture.py'), '--build', $buildRoot)
             Invoke-Tool 'ctest' @('--test-dir', $buildRoot, '--output-on-failure')

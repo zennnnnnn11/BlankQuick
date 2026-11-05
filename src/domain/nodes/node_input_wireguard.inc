@@ -82,7 +82,7 @@ auto set_conf_field(wireguard_section& section, std::string key, std::string_vie
         set_json_member(fields, key, value);
     }
     auto source = object_options(fields, limits);
-    const auto remote = endpoint(option_text(source, "endpoint"), 0);
+    const auto remote = parse_endpoint(option_text(source, "endpoint"), 0);
     source.values.erase("endpoint");
     set_option(source, "server", remote.host);
     set_option(source, "port", remote.port);

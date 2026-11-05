@@ -15,7 +15,7 @@
 namespace json_detail {
 
 // NOLINTBEGIN(altera-struct-pack-align,altera-unroll-loops,fuchsia-default-arguments-calls,readability-redundant-member-init)
-enum class read_error : std::int8_t { none, invalid_document, resource_limit };
+enum class read_error : std::int8_t { none, invalid_document, invalid_number, resource_limit };
 struct read_options {
     std::int64_t max_event_depth{};
     std::int64_t max_values{std::numeric_limits<std::int64_t>::max()};
@@ -90,8 +90,12 @@ template <json_document Json> class document_reader final : public nlohmann::jso
     }
     auto parse_error([[maybe_unused]] std::size_t position,
                      [[maybe_unused]] const std::string& token,
-                     [[maybe_unused]] const Json::exception& failure) noexcept -> bool override {
-        return reject(read_error::invalid_document);
+                     const Json::exception& failure) noexcept -> bool override {
+        // nlohmann reports numeric overflow through the SAX error callback too.
+        // It is not a syntax mismatch: a format dispatcher must not retry it as YAML.
+        constexpr auto number_overflow = 406;
+        return reject(failure.id == number_overflow ? read_error::invalid_number
+                                                    : read_error::invalid_document);
     }
     [[nodiscard]] auto take(bool accepted) noexcept -> read_result<Json> {
         if (!accepted) {

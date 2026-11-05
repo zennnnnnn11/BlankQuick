@@ -55,7 +55,8 @@ struct fetch_request {
 
 // NOLINTBEGIN(fuchsia-default-arguments-declarations)
 [[nodiscard]] auto fetch_subscription(const fetch_request& request,
-                                      std::stop_token cancellation = {}) noexcept -> fetch_result;
+                                      const std::stop_token& cancellation = {}) noexcept
+    -> fetch_result;
 
 [[nodiscard]] [[maybe_unused]] auto fetch_subscription_async(fetch_request request,
                                                              std::stop_token cancellation = {})

@@ -6,6 +6,7 @@
 #include <QtCore/QTimer>
 #include <QtCore/QUrl>
 #include <QtCore/QVariant>
+#include <QtCore/QtTypes>
 #include <QtNetwork/QAuthenticator>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkProxy>
@@ -37,22 +38,51 @@
 namespace subscription_fetcher {
 namespace {
 
-// NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace, fuchsia-default-arguments-calls,
+// The adapter uses ordinary CPU loops and natural aggregate layout; optional
+// local arguments and ISO string operations follow the surrounding modules.
+// NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,fuchsia-default-arguments-calls,fuchsia-default-arguments-declarations,altera-unroll-loops,altera-struct-pack-align,readability-redundant-member-init,abseil-string-find-str-contains)
 
-using steady_clock = std::chrono::steady_clock;
+using std::chrono::steady_clock;
 
-struct request_failure {
+// This final exception retains standard value semantics and never owns a resource.
+class request_failure final : public std::exception { // clazy:exclude=copyable-polymorphic
+  public:
+    explicit request_failure(fetch_error selected) noexcept : error{selected} {}
+    [[nodiscard]] auto code() const noexcept -> fetch_error {
+        return error;
+    }
+
+  private:
     fetch_error error{};
 };
+
+constexpr auto first_printable_ascii = 32;
+constexpr auto delete_character = 127;
+constexpr auto maximum_url_bytes = 8192;
+constexpr auto maximum_user_agent_bytes = 1024;
+constexpr auto maximum_request_header_bytes = 65536;
+constexpr auto maximum_request_header_fields = 128;
+constexpr auto maximum_redirects = 20;
+constexpr auto maximum_ca_bytes = 1048576;
+constexpr auto maximum_port = 65535;
+constexpr auto http_port = 80;
+constexpr auto https_port = 443;
+constexpr auto http_ok = 200;
+constexpr auto response_buffer_bytes = 65536;
+constexpr auto cancellation_poll_ms = 20;
 
 [[noreturn]] auto fail(fetch_error error) -> void {
     throw request_failure{error};
 }
 
 [[nodiscard]] auto bytes(std::string_view text) -> QByteArray {
+    // Qt receives the explicit length; the borrowed view need not be NUL-terminated.
+    // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
     return QByteArray{text.data(), std::ssize(text)};
 }
 [[nodiscard]] auto qt_text(std::string_view text) -> QString {
+    // Qt receives the explicit UTF-8 byte length, not a C string.
+    // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
     return QString::fromUtf8(text.data(), std::ssize(text));
 }
 
@@ -68,12 +98,12 @@ struct request_failure {
 [[nodiscard]] constexpr auto clean_header_value(std::string_view value) noexcept -> bool {
     return std::ranges::none_of(value, [](char character) noexcept -> bool {
         const auto octet = static_cast<unsigned char>(character);
-        return (octet < 32 && character != '\t') || octet == 127;
+        return (octet < first_printable_ascii && character != '\t') || octet == delete_character;
     });
 }
 
 [[nodiscard]] auto http_url(std::string_view input) -> QUrl {
-    if (input.empty() || std::ssize(input) > 8192 || !clean_header_value(input) ||
+    if (input.empty() || std::ssize(input) > maximum_url_bytes || !clean_header_value(input) ||
         input.find('\t') != std::string_view::npos) {
         fail(fetch_error::invalid_request);
     }
@@ -95,7 +125,7 @@ struct request_failure {
 }
 
 auto validate_request_headers(const fetch_request& request) -> void {
-    if (request.user_agent.empty() || std::ssize(request.user_agent) > 1024 ||
+    if (request.user_agent.empty() || std::ssize(request.user_agent) > maximum_user_agent_bytes ||
         !clean_header_value(request.user_agent) || !clean_header_value(request.if_none_match) ||
         !clean_header_value(request.if_modified_since)) {
         fail(fetch_error::invalid_request);
@@ -114,7 +144,7 @@ auto validate_request_headers(const fetch_request& request) -> void {
         "set-cookie",
     });
     auto names = std::vector<std::string>{};
-    auto remaining = std::int64_t{65536};
+    auto remaining = std::int64_t{maximum_request_header_bytes};
     for (const auto& header : request.headers) {
         const auto name = lower(header.name);
         if (!valid_header_name(header.name) || !clean_header_value(header.value) ||
@@ -129,8 +159,9 @@ auto validate_request_headers(const fetch_request& request) -> void {
         remaining -= std::ssize(header.value);
         names.push_back(name);
     }
-    if (std::ssize(names) > 128 || std::ssize(request.if_none_match) > 8192 ||
-        std::ssize(request.if_modified_since) > 8192) {
+    if (std::ssize(names) > maximum_request_header_fields ||
+        std::ssize(request.if_none_match) > maximum_url_bytes ||
+        std::ssize(request.if_modified_since) > maximum_url_bytes) {
         fail(fetch_error::invalid_request);
     }
 }
@@ -141,10 +172,10 @@ auto validate_request(const fetch_request& request) -> void {
         request.route_timeout.count() <= 0 || request.route_timeout > max_timeout ||
         request.idle_timeout.count() <= 0 || request.idle_timeout > max_timeout ||
         request.routes.empty() || std::ssize(request.routes) > 4 || request.max_redirects < 0 ||
-        request.max_redirects > 20 || request.max_body_bytes <= 0 ||
+        request.max_redirects > maximum_redirects || request.max_body_bytes <= 0 ||
         request.max_body_bytes == std::numeric_limits<std::int64_t>::max() ||
         request.max_body_bytes > request.parser_limits.max_input_bytes ||
-        std::ssize(request.extra_ca_pem) > 1048576) {
+        std::ssize(request.extra_ca_pem) > maximum_ca_bytes) {
         fail(fetch_error::invalid_request);
     }
     const auto& limits = request.response_header_limits;
@@ -162,7 +193,7 @@ auto validate_request(const fetch_request& request) -> void {
         return QNetworkProxy{QNetworkProxy::NoProxy};
     case proxy_mode::http:
     case proxy_mode::socks5:
-        if (route.host.empty() || route.port <= 0 || route.port > 65535 ||
+        if (route.host.empty() || route.port <= 0 || route.port > maximum_port ||
             !clean_header_value(route.host) ||
             route.host.find_first_of("/\\ \t") != std::string::npos) {
             fail(fetch_error::invalid_request);
@@ -177,8 +208,8 @@ auto validate_request(const fetch_request& request) -> void {
 
 [[nodiscard]] auto same_origin(const QUrl& left, const QUrl& right) -> bool {
     return left.scheme() == right.scheme() && left.host() == right.host() &&
-           left.port(left.scheme() == u"https" ? 443 : 80) ==
-               right.port(right.scheme() == u"https" ? 443 : 80);
+           left.port(left.scheme() == u"https" ? https_port : http_port) ==
+               right.port(right.scheme() == u"https" ? https_port : http_port);
 }
 
 [[nodiscard]] auto ssl_configuration(const fetch_request& request) -> QSslConfiguration {
@@ -320,7 +351,7 @@ auto consume_body(QNetworkReply& reply, wire_response& response, const fetch_req
             return;
         }
         response.received_bytes += chunk.size();
-        if (status == 200) {
+        if (status == http_ok) {
             response.body.append(chunk.constData(), static_cast<std::size_t>(chunk.size()));
         }
     }
@@ -340,7 +371,7 @@ auto consume_body(QNetworkReply& reply, wire_response& response, const fetch_req
     if (reply == nullptr) {
         fail(fetch_error::network_failure);
     }
-    reply->setReadBufferSize(65536);
+    reply->setReadBufferSize(response_buffer_bytes);
     const auto credentials = manager.proxy();
     QObject::connect(&manager, &QNetworkAccessManager::proxyAuthenticationRequired, &loop,
                      [&, credentials, attempted = false](
@@ -384,7 +415,7 @@ auto consume_body(QNetworkReply& reply, wire_response& response, const fetch_req
             loop.quit();
         }
     });
-    timer.start(std::chrono::milliseconds{20});
+    timer.start(std::chrono::milliseconds{cancellation_poll_ms});
     if (!reply->isFinished()) {
         static_cast<void>(loop.exec(QEventLoop::ExcludeUserInputEvents));
     }
@@ -401,11 +432,12 @@ auto consume_body(QNetworkReply& reply, wire_response& response, const fetch_req
     }
     response.status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toLongLong();
     if (reply->error() != QNetworkReply::NoError &&
-        (response.status == 0 || response.status == 200)) {
+        (response.status == 0 || response.status == http_ok)) {
         response.error = network_error(reply->error());
     }
     for (const auto& pair : reply->rawHeaderPairs()) {
-        response.headers.push_back({pair.first.toStdString(), pair.second.toStdString()});
+        response.headers.push_back(
+            {.name = pair.first.toStdString(), .value = pair.second.toStdString()});
     }
     response.redirect = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
 
@@ -414,7 +446,13 @@ auto consume_body(QNetworkReply& reply, wire_response& response, const fetch_req
 }
 
 [[nodiscard]] constexpr auto redirect_status(std::int64_t status) noexcept -> bool {
-    return status == 301 || status == 302 || status == 303 || status == 307 || status == 308;
+    constexpr auto moved_permanently = 301;
+    constexpr auto found = 302;
+    constexpr auto see_other = 303;
+    constexpr auto temporary_redirect = 307;
+    constexpr auto permanent_redirect = 308;
+    return status == moved_permanently || status == found || status == see_other ||
+           status == temporary_redirect || status == permanent_redirect;
 }
 
 [[nodiscard]] auto redirect_target(const QUrl& source, const QUrl& target) -> QUrl {
@@ -438,16 +476,19 @@ auto finish_response(wire_response response, const fetch_request& request, fetch
     // 网络层到此只交付已经收完的字节。内容解析不需要网络对象；本层额外保留
     // 最终 URL 和跳转次数，方便诊断，同时不把传输现场泄漏给数据算法。
     auto decoded = subscription_data::decode_response(
-        {.body = std::move(response.body),
-         .headers = std::move(response.headers),
-         .status = response.status},
+        {
+            .body = std::move(response.body),
+            .headers = std::move(response.headers),
+            .status = response.status,
+        },
         {.headers = request.response_header_limits, .parser = request.parser_limits});
     decoded.final_url = std::move(result.final_url);
     decoded.redirect_count = result.redirect_count;
     result = std::move(decoded);
 }
 
-[[nodiscard]] auto fetch_route(request_context context, const proxy_route& route) -> fetch_result {
+[[nodiscard]] auto fetch_route(const request_context& context, const proxy_route& route)
+    -> fetch_result {
     auto result = fetch_result{};
     const auto proxy = network_proxy(route);
     auto current = context.initial_url;
@@ -493,7 +534,7 @@ auto finish_response(wire_response response, const fetch_request& request, fetch
            error == fetch_error::network_failure;
 }
 
-[[nodiscard]] auto fetch_checked(const fetch_request& request, std::stop_token cancellation)
+[[nodiscard]] auto fetch_checked(const fetch_request& request, const std::stop_token& cancellation)
     -> fetch_result {
     // 路由按调用者提供的顺序尝试，共享总超时预算，每条路由还有独立上限。
     // 只对明确的传输故障换路由；TLS、正文语义或资源限制错误不能靠重试掩盖。
@@ -517,12 +558,14 @@ auto finish_response(wire_response response, const fetch_request& request, fetch
     auto index = std::int64_t{};
     for (const auto& route : request.routes) {
         result = fetch_route(
-            {.request = &request,
-             .initial_url = url,
-             .authorization = authorization,
-             .ssl = config,
-             .deadline = std::min(deadline, steady_clock::now() + request.route_timeout),
-             .cancellation = cancellation},
+            {
+                .request = &request,
+                .initial_url = url,
+                .authorization = authorization,
+                .ssl = config,
+                .deadline = std::min(deadline, steady_clock::now() + request.route_timeout),
+                .cancellation = cancellation,
+            },
             route);
         result.route_index = index;
         attempts.push_back(
@@ -535,18 +578,18 @@ auto finish_response(wire_response response, const fetch_request& request, fetch
     result.attempts = std::move(attempts);
     return result;
 }
-// NOLINTEND(llvm-prefer-static-over-anonymous-namespace, fuchsia-default-arguments-calls,
+// NOLINTEND(llvm-prefer-static-over-anonymous-namespace,fuchsia-default-arguments-calls,fuchsia-default-arguments-declarations,altera-unroll-loops,altera-struct-pack-align,readability-redundant-member-init,abseil-string-find-str-contains)
 
 } // namespace
 
-auto fetch_subscription(const fetch_request& request, std::stop_token cancellation) noexcept
+auto fetch_subscription(const fetch_request& request, const std::stop_token& cancellation) noexcept
     -> fetch_result {
     try {
-        return fetch_checked(request, std::move(cancellation));
+        return fetch_checked(request, cancellation);
     } catch (const subscription_data::response_failure& failure) {
         return {.error = failure.code()};
     } catch (const request_failure& failure) {
-        return {.error = failure.error};
+        return {.error = failure.code()};
     } catch (const std::bad_alloc&) {
         return {.error = fetch_error::allocation_failure};
     } catch (const std::exception&) {
@@ -561,7 +604,7 @@ auto fetch_subscription_async(fetch_request request, std::stop_token cancellatio
     return std::async(std::launch::async,
                       [request = std::move(request),
                        cancellation = std::move(cancellation)]() mutable noexcept -> fetch_result {
-                          return fetch_subscription(request, std::move(cancellation));
+                          return fetch_subscription(request, cancellation);
                       });
 }
 } // namespace subscription_fetcher

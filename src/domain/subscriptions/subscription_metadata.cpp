@@ -24,7 +24,9 @@
 namespace subscription_fetcher {
 namespace {
 
-// NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace, fuchsia-default-arguments-calls,
+// ISO value parsing intentionally uses ordinary loops, natural aggregate layout
+// and standard strings rather than FPGA directives or an Abseil dependency.
+// NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace,fuchsia-default-arguments-calls,fuchsia-default-arguments-declarations,altera-unroll-loops,altera-struct-pack-align,readability-redundant-member-init,abseil-string-find-str-contains)
 
 [[nodiscard]] constexpr auto trim(std::string_view text) noexcept -> std::string_view {
     const auto first = text.find_first_not_of(" \t");
@@ -43,13 +45,17 @@ namespace {
 }
 
 [[nodiscard]] auto bytes(std::string_view text) -> QByteArray {
+    // Qt receives the explicit byte count; no NUL terminator is required.
+    // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
     return QByteArray{text.data(), std::ssize(text)};
 }
 
 [[nodiscard]] auto utf8_text(std::string_view text) -> bool {
+    constexpr auto first_printable_ascii = 32;
+    constexpr auto delete_character = 127;
     if (std::ranges::any_of(text, [](char character) noexcept -> bool {
             const auto octet = static_cast<unsigned char>(character);
-            return octet < 32 || octet == 127;
+            return octet < first_printable_ascii || octet == delete_character;
         })) {
         return false;
     }
@@ -57,7 +63,7 @@ namespace {
 }
 
 auto warn(metadata_result& result, metadata_field field, metadata_problem problem) -> void {
-    result.warnings.push_back({field, problem});
+    result.warnings.push_back({.field = field, .problem = problem});
 }
 
 [[nodiscard]] auto unsigned_count(std::string_view text) noexcept -> std::optional<std::int64_t> {
@@ -129,19 +135,32 @@ struct selected_header {
     return selected.value;
 }
 
-auto userinfo_count(metadata_result& result, std::string_view key, std::string_view value) -> void {
+struct userinfo_parameter {
+    std::string_view key{};
+    std::string_view value{};
+};
+
+auto userinfo_count(metadata_result& result, const userinfo_parameter& parameter) -> void {
     struct count_field {
         std::string_view key{};
         metadata_field field{};
         std::optional<std::int64_t>* target{};
     };
     const auto fields = std::to_array<count_field>({
-        {"upload", metadata_field::upload, &result.account.upload_bytes},
-        {"download", metadata_field::download, &result.account.download_bytes},
-        {"total", metadata_field::total, &result.account.total_bytes},
-        {"expire", metadata_field::expire, &result.account.expire_unix_seconds},
+        {.key = "upload", .field = metadata_field::upload, .target = &result.account.upload_bytes},
+        {
+            .key = "download",
+            .field = metadata_field::download,
+            .target = &result.account.download_bytes,
+        },
+        {.key = "total", .field = metadata_field::total, .target = &result.account.total_bytes},
+        {
+            .key = "expire",
+            .field = metadata_field::expire,
+            .target = &result.account.expire_unix_seconds,
+        },
     });
-    const auto found = std::ranges::find(fields, key, &count_field::key);
+    const auto found = std::ranges::find(fields, parameter.key, &count_field::key);
     if (found == fields.end()) {
         return;
     }
@@ -150,7 +169,7 @@ auto userinfo_count(metadata_result& result, std::string_view key, std::string_v
         warn(result, found->field, metadata_problem::duplicate);
         return;
     }
-    const auto parsed = unsigned_count(value);
+    const auto parsed = unsigned_count(parameter.value);
     if (!parsed.has_value()) {
         warn(result, found->field, metadata_problem::out_of_range);
         return;
@@ -168,8 +187,8 @@ auto parse_userinfo(std::string_view text, metadata_result& result) -> void {
                 warn(result, metadata_field::userinfo, metadata_problem::malformed);
             }
         } else {
-            userinfo_count(result, lower(trim(pair.substr(0, equal))),
-                           trim(pair.substr(equal + 1)));
+            const auto key = lower(trim(pair.substr(0, equal)));
+            userinfo_count(result, {.key = key, .value = trim(pair.substr(equal + 1))});
         }
         if (end == std::string_view::npos) {
             break;
@@ -182,6 +201,48 @@ struct disposition_parameter {
     std::string name{};
     std::string value{};
 };
+
+// Consume exactly one value and its delimiter. Quoted semicolons and escaped
+// quotes belong to the value; an unterminated quote invalidates the entire header.
+[[nodiscard]] auto disposition_value(std::string_view& text) -> std::optional<std::string> {
+    if (!text.starts_with('"')) {
+        const auto end = text.find(';');
+        auto value = std::string{trim(text.substr(0, end))};
+        text = end == std::string_view::npos ? std::string_view{} : text.substr(end + 1);
+        return value;
+    }
+    text.remove_prefix(1);
+    auto value = std::string{};
+    auto closed = false;
+    while (!text.empty()) {
+        const auto character = text.front();
+        text.remove_prefix(1);
+        if (character == '"') {
+            closed = true;
+            break;
+        }
+        if (character == '\\') {
+            if (text.empty()) {
+                return std::nullopt;
+            }
+            value += text.front();
+            text.remove_prefix(1);
+        } else {
+            value += character;
+        }
+    }
+    if (!closed) {
+        return std::nullopt;
+    }
+    text = trim(text);
+    if (!text.empty() && text.front() != ';') {
+        return std::nullopt;
+    }
+    if (!text.empty()) {
+        text.remove_prefix(1);
+    }
+    return value;
+}
 
 [[nodiscard]] auto disposition_parameters(std::string_view text)
     -> std::optional<std::vector<disposition_parameter>> {
@@ -199,43 +260,11 @@ struct disposition_parameter {
         }
         const auto name = lower(trim(text.substr(0, equal)));
         text = trim(text.substr(equal + 1));
-        auto value = std::string{};
-        if (text.starts_with('"')) {
-            text.remove_prefix(1);
-            auto closed = false;
-            while (!text.empty()) {
-                const auto character = text.front();
-                text.remove_prefix(1);
-                if (character == '"') {
-                    closed = true;
-                    break;
-                }
-                if (character == '\\') {
-                    if (text.empty()) {
-                        return std::nullopt;
-                    }
-                    value += text.front();
-                    text.remove_prefix(1);
-                } else {
-                    value += character;
-                }
-            }
-            if (!closed) {
-                return std::nullopt;
-            }
-            text = trim(text);
-            if (!text.empty() && text.front() != ';') {
-                return std::nullopt;
-            }
-            if (!text.empty()) {
-                text.remove_prefix(1);
-            }
-        } else {
-            const auto end = text.find(';');
-            value = trim(text.substr(0, end));
-            text = end == std::string_view::npos ? std::string_view{} : text.substr(end + 1);
+        auto value = disposition_value(text);
+        if (!value) {
+            return std::nullopt;
         }
-        result.push_back({name, std::move(value)});
+        result.push_back({.name = name, .value = std::move(*value)});
     }
     return result;
 }
@@ -247,7 +276,7 @@ struct disposition_parameter {
         return std::nullopt;
     }
     const auto charset = lower(text.substr(0, first));
-    const auto decoded = percent_bytes(text.substr(second + 1));
+    auto decoded = percent_bytes(text.substr(second + 1));
     if (!decoded.has_value()) {
         return std::nullopt;
     }
@@ -260,6 +289,19 @@ struct disposition_parameter {
     return std::nullopt;
 }
 
+[[nodiscard]] auto title_from_filename(std::string filename) -> std::string {
+    const auto suffix = filename.find_last_of('.');
+    if (suffix == std::string::npos || suffix == 0) {
+        return filename;
+    }
+    const auto extension = lower(filename.substr(suffix));
+    if (extension == ".yaml" || extension == ".yml" || extension == ".json" ||
+        extension == ".conf" || extension == ".txt") {
+        filename.erase(suffix);
+    }
+    return filename;
+}
+
 auto parse_disposition(std::string_view text, metadata_result& result) -> void {
     const auto parameters = disposition_parameters(text);
     if (!parameters.has_value()) {
@@ -269,21 +311,19 @@ auto parse_disposition(std::string_view text, metadata_result& result) -> void {
     auto plain = std::optional<std::string>{};
     auto extended = std::optional<std::string>{};
     for (const auto& parameter : *parameters) {
-        if (parameter.name == "filename") {
-            if (plain.has_value()) {
-                warn(result, metadata_field::disposition, metadata_problem::duplicate);
-            } else {
-                plain = parameter.value;
-            }
-        } else if (parameter.name == "filename*") {
-            if (extended.has_value()) {
-                warn(result, metadata_field::disposition, metadata_problem::duplicate);
-            } else {
-                extended = extended_filename(parameter.value);
-            }
-            if (!extended.has_value()) {
-                warn(result, metadata_field::disposition, metadata_problem::unsupported_encoding);
-            }
+        const auto is_extended = parameter.name == "filename*";
+        if (!is_extended && parameter.name != "filename") {
+            continue;
+        }
+        auto& target = is_extended ? extended : plain;
+        if (target.has_value()) {
+            warn(result, metadata_field::disposition, metadata_problem::duplicate);
+        } else {
+            target =
+                is_extended ? extended_filename(parameter.value) : std::optional{parameter.value};
+        }
+        if (is_extended && !extended.has_value()) {
+            warn(result, metadata_field::disposition, metadata_problem::unsupported_encoding);
         }
     }
     auto filename = extended.value_or(plain.value_or(""));
@@ -297,15 +337,7 @@ auto parse_disposition(std::string_view text, metadata_result& result) -> void {
     }
     result.account.suggested_filename = filename;
     if (!result.account.profile_name.has_value()) {
-        const auto suffix = filename.find_last_of('.');
-        if (suffix != std::string::npos && suffix != 0) {
-            const auto extension = lower(filename.substr(suffix));
-            if (extension == ".yaml" || extension == ".yml" || extension == ".json" ||
-                extension == ".conf" || extension == ".txt") {
-                filename.erase(suffix);
-            }
-        }
-        result.account.profile_name = std::move(filename);
+        result.account.profile_name = title_from_filename(std::move(filename));
     }
 }
 
@@ -410,7 +442,7 @@ auto parse_metadata(std::span<const http_header> headers, metadata_result& resul
     }
     return true;
 }
-// NOLINTEND(llvm-prefer-static-over-anonymous-namespace, fuchsia-default-arguments-calls,
+// NOLINTEND(llvm-prefer-static-over-anonymous-namespace,fuchsia-default-arguments-calls,fuchsia-default-arguments-declarations,altera-unroll-loops,altera-struct-pack-align,readability-redundant-member-init,abseil-string-find-str-contains)
 
 } // namespace
 

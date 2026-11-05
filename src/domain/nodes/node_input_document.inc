@@ -78,7 +78,7 @@ auto append_document_node(subscription_result& result, const document_location& 
             result.nodes.push_back(std::move(*parsed.node));
         }
     } catch (const input_failure& failure) {
-        record_node_error(result, location, failure.error);
+        record_node_error(result, location, failure.code());
     } catch (const json::exception&) {
         record_node_error(result, location, parse_error::invalid_parameter);
     } catch (const std::bad_alloc&) {
@@ -115,7 +115,7 @@ auto append_document_node(subscription_result& result, const document_location& 
         host = host.substr(1, host.size() - 2);
     }
     const auto port = option_text(source, "port");
-    return endpoint(
+    return parse_endpoint(
         host.find(':') == std::string::npos ? host + ':' + port : '[' + host + "]:" + port, 0);
 }
 

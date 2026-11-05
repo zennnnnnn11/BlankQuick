@@ -323,11 +323,11 @@ auto singbox_hysteria(singbox_mapping& mapping) -> void {
         }
     }
     if (const auto* interval = find_option(mapping.source, "hop_interval")) {
-        set_option(mapping.target, "hop-interval", duration_count(*interval, 1));
+        set_option(mapping.target, "hop-interval", parse_duration_count(*interval, 1));
         if (const auto* maximum = find_option(mapping.source, "hop_interval_max")) {
             set_option(mapping.target, "hop-interval",
-                       std::to_string(duration_count(*interval, 1)) + '-' +
-                           std::to_string(duration_count(*maximum, 1)));
+                       std::to_string(parse_duration_count(*interval, 1)) + '-' +
+                           std::to_string(parse_duration_count(*maximum, 1)));
         }
     }
 }
@@ -471,14 +471,13 @@ auto extract_singbox_array(const json& array, node_collection collection,
 
 auto parse_json_document(std::string_view input, const parse_limits& limits,
                          subscription_result& result) -> void {
-    auto root = json{};
-    auto malformed_json = false;
-    try {
-        root = bounded_json(input, limits);
-    } catch (const json::parse_error&) {
-        malformed_json = true;
+    auto parsed = read_bounded_json(input, limits);
+    if (parsed.error == json_detail::read_error::invalid_number) {
+        fail(parse_error::invalid_document);
     }
-    if (malformed_json) {
+    if (parsed.error != json_detail::read_error::none) {
+        // Flow-style YAML can start with '{'. Only syntax mismatch takes this
+        // compatibility path; resource/number failures must retain their meaning.
         if (!input.starts_with('{')) {
             fail(parse_error::invalid_document);
         }
@@ -486,6 +485,7 @@ auto parse_json_document(std::string_view input, const parse_limits& limits,
         parse_clash_yaml(input, limits, result);
         return;
     }
+    const auto root = std::move(parsed.value);
     if (root.is_object() && root.contains("proxies")) {
         result.format = subscription_format::clash_yaml;
         extract_clash_json(root.at("proxies"), limits, result);
