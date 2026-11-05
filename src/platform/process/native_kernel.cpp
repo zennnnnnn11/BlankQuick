@@ -35,6 +35,8 @@
 #include <utility>
 #include <vector>
 
+#include "kernel_workspace.hpp"
+
 namespace {
 template <typename Row, typename Predicate>
     requires(std::same_as<Row, MIB_TCPROW_OWNER_PID> || std::same_as<Row, MIB_TCP6ROW_OWNER_PID>) &&
@@ -192,28 +194,31 @@ bool jobEmpty(HANDLE job) {
                                              sizeof(accounting), nullptr) != FALSE);
     return accounting.ActiveProcesses == 0;
 }
+
+blank::windows::Handle createKernelJob() {
+    blank::windows::Handle job(CreateJobObjectW(nullptr, nullptr));
+    requireWindows(job != nullptr);
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};
+    limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
+    requireWindows(SetInformationJobObject(job.get(), JobObjectExtendedLimitInformation, &limits,
+                                           sizeof(limits)) != FALSE);
+    return job;
+}
 } // namespace
 
 class NativeKernel::Impl {
   public:
-    explicit Impl(const QString& root)
-        : directory((root.isEmpty() ? QDir::tempPath() : root) +
-                    QStringLiteral("/blank-quick-XXXXXX")) {}
+    explicit Impl(const QString& root) : workspace(root, createKernelJob()) {}
 
-    QTemporaryDir directory;
+    blank::process_detail::KernelWorkspace workspace;
     QString token = QUuid::createUuid().toString(QUuid::WithoutBraces);
     QString initialConfiguration;
     quint16 controllerPort = 0;
     blank::windows::Handle process;
-
-    blank::windows::Handle job;
 };
 
 NativeKernel::NativeKernel(const KernelOptions& options)
     : impl_(std::make_unique<Impl>(options.workRoot)) {
-    if (!impl_->directory.isValid()) {
-        throw std::runtime_error("Cannot create the kernel runtime directory.");
-    }
     QTcpServer reservation;
     if (!reservation.listen(QHostAddress::LocalHost, options.port)) {
         throw std::runtime_error("The controller port is already occupied.");
@@ -246,39 +251,43 @@ NativeKernel::NativeKernel(const KernelOptions& options)
     };
     const auto data = QJsonDocument(configuration).toJson(QJsonDocument::Compact);
     impl_->initialConfiguration = QString::fromUtf8(data);
-    const auto configPath = impl_->directory.filePath(QStringLiteral("config.json"));
+    const auto configPath = impl_->workspace.directory().filePath(QStringLiteral("config.json"));
     QFile config(configPath);
     if (!config.open(QIODevice::WriteOnly) || config.write(data) != data.size()) {
         throw std::runtime_error("Cannot write the kernel configuration.");
     }
     config.close();
-    impl_->job.reset(CreateJobObjectW(nullptr, nullptr));
-    requireWindows(impl_->job != nullptr);
-    JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits{};
-    limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE;
-    requireWindows(SetInformationJobObject(impl_->job.get(), JobObjectExtendedLimitInformation,
-                                           &limits, sizeof(limits)) != FALSE);
     reservation.close();
     mixedReservation.close();
-    impl_->process = createInJob(
-        impl_->job.get(), options.executable,
-        {QStringLiteral("-d"), impl_->directory.path(), QStringLiteral("-f"), configPath},
-        impl_->directory.path(), true);
+    impl_->process = createInJob(impl_->workspace.job(), options.executable,
+                                 {
+                                     QStringLiteral("-d"),
+                                     impl_->workspace.directory().path(),
+                                     QStringLiteral("-f"),
+                                     configPath,
+                                 },
+                                 impl_->workspace.directory().path(), true);
 }
 
 NativeKernel::~NativeKernel() {
-    if (impl_->process && WaitForSingleObject(impl_->process.get(), 0) == WAIT_TIMEOUT) {
-
-        static_cast<void>(stop({}));
+    // 保留主进程的退出等待；主进程已退出时，workspace 析构仍会检查整个 Job，
+    // 回收残留后代。构造未完成和 stop 失败也由同一个资源守卫兜底。
+    try {
+        if (WaitForSingleObject(impl_->process.get(), 0) == WAIT_TIMEOUT) {
+            static_cast<void>(stop({}));
+        }
+    } catch (const std::exception&) {
+        // 连错误字符串都无法分配时，仍由 workspace 析构执行无异常的资源兜底。
+        impl_.reset();
     }
 }
 
 QString NativeKernel::workingDirectory() const {
-    return impl_->directory.path();
+    return impl_->workspace.directory().path();
 }
 
 QString NativeKernel::providerCacheError() const {
-    const auto root = impl_->directory.filePath(QStringLiteral("providers"));
+    const auto root = impl_->workspace.directory().filePath(QStringLiteral("providers"));
     const auto safe = [](const QString& path) {
         const auto wide = QDir::toNativeSeparators(path).toStdWString();
         const auto attributes = GetFileAttributesW(wide.c_str());
@@ -336,31 +345,23 @@ QString NativeKernel::stop(const QString& signalHelper) {
                 (quint64{creation.dwHighDateTime} << 32U) | creation.dwLowDateTime;
             try {
                 const auto helper =
-                    createInJob(impl_->job.get(), signalHelper,
+                    createInJob(impl_->workspace.job(), signalHelper,
                                 {QString::number(processId()), QString::number(created)},
-                                impl_->directory.path(), false);
+                                impl_->workspace.directory().path(), false);
                 WaitForSingleObject(helper.get(), 500);
                 WaitForSingleObject(impl_->process.get(), 1500);
             } catch (const std::exception&) {
 
-                requireWindows(TerminateJobObject(impl_->job.get(), 1) != FALSE);
+                requireWindows(TerminateJobObject(impl_->workspace.job(), 1) != FALSE);
             }
         }
-        if (!jobEmpty(impl_->job.get())) {
-            requireWindows(TerminateJobObject(impl_->job.get(), 1) != FALSE);
+        if (!jobEmpty(impl_->workspace.job())) {
+            requireWindows(TerminateJobObject(impl_->workspace.job(), 1) != FALSE);
         }
         requireWindows(WaitForSingleObject(impl_->process.get(), 2000) == WAIT_OBJECT_0);
 
-        for (int attempt = 0; attempt < 200; ++attempt) {
-            if (jobEmpty(impl_->job.get())) {
-                if (impl_->directory.remove()) {
-                    impl_->directory.setAutoRemove(false);
-                }
-                return {};
-            }
-            Sleep(10);
-        }
-        return QStringLiteral("Timed out waiting for the owned kernel job to exit.");
+        impl_->workspace.removeAfterJobExit();
+        return {};
     } catch (const std::exception& error) {
         return QString::fromUtf8(error.what());
     }

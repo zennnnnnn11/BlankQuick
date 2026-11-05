@@ -17,7 +17,8 @@ target_include_directories(backend_config PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/co
 target_link_libraries(backend_config PUBLIC service_config_model PRIVATE Qt6::Core)
 blank_native_quality(backend_config)
 
-add_library(backend_process STATIC process/native_kernel.cpp process/include/blank/process/native_kernel.hpp)
+add_library(backend_process STATIC process/native_kernel.cpp process/kernel_workspace.cpp
+    process/kernel_workspace.hpp process/include/blank/process/native_kernel.hpp)
 target_include_directories(backend_process PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/process/include")
 target_link_libraries(backend_process PUBLIC Qt6::Core PRIVATE backend_windows Qt6::Network iphlpapi ws2_32)
 blank_native_quality(backend_process)

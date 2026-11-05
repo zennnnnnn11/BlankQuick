@@ -148,6 +148,7 @@
     "profile_activation_test": "test",
     "domain_configuration_test": "test",
     "application_pipeline_test": "test",
+    "native_kernel_lifecycle_test": "test",
     "profile_codec": "domain",
     "subscription_input": "domain"
   },
@@ -386,6 +387,11 @@
     "application_pipeline_test": [
       "runtime_backend",
       "blank_shared"
+    ],
+    "native_kernel_lifecycle_test": [
+      "backend_process",
+      "backend_windows",
+      "Qt6::Network"
     ],
     "profile_codec": [
       "blank_shared",

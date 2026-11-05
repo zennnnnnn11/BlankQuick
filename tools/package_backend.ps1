@@ -43,7 +43,7 @@ Copy-Item -LiteralPath (Join-Path $QtRoot 'bin/Qt6Qml.dll') -Destination $destin
 Copy-Item -LiteralPath (Join-Path $build 'system_proxy_guard.exe') -Destination $destination
 Copy-Item -LiteralPath (Join-Path $build 'blank_quick_service.exe') -Destination $service
 if ($IncludeTests) {
-    foreach ($test in @('profile_activation_test', 'domain_configuration_test', 'application_pipeline_test')) {
+    foreach ($test in @('profile_activation_test', 'domain_configuration_test', 'application_pipeline_test', 'native_kernel_lifecycle_test')) {
         Copy-Item -LiteralPath (Join-Path $buildRoot ($test + '.exe')) -Destination $destination
     }
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'backend_vm_guest.ps1') -Destination $destination
