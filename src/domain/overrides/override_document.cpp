@@ -6,11 +6,14 @@
 #include <blank/shared/bounded_json.hpp>
 #include <blank/shared/ordered_object.hpp>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <iterator>
 #include <limits>
 #include <map>
+#include <memory>
+#include <nlohmann/json.hpp>
 #include <rapidyaml/ryml.hpp>
 #include <string>
 #include <string_view>
@@ -57,11 +60,34 @@ struct yaml_state {
 };
 // NOLINTEND(misc-non-private-member-variables-in-classes)
 
-[[nodiscard]] constexpr auto tag_is(std::string_view tag, std::string_view type) -> bool {
-    return tag == std::string{"!!"} + std::string{type} ||
-           tag == std::string{"tag:yaml.org,2002:"} + std::string{type} ||
-           tag == std::string{"!<tag:yaml.org,2002:"} + std::string{type} + ">";
+// 标准 YAML 标签只在外壳上不同，rapidyaml 还会去掉完整标签前的 '!'
+// 并保留尖括号。收窄观察窗口即可比较，无标签标量也不分配临时字符串。
+[[nodiscard]] constexpr auto tag_is(std::string_view tag, std::string_view type) noexcept -> bool {
+    if (type.empty()) {
+        return false;
+    }
+    if (tag.starts_with("!!")) {
+        return tag.substr(2) == type;
+    }
+    if (tag.starts_with("!<") && tag.ends_with('>')) {
+        tag.remove_prefix(2);
+        tag.remove_suffix(1);
+    } else if (tag.starts_with('<') && tag.ends_with('>')) {
+        tag.remove_prefix(1);
+        tag.remove_suffix(1);
+    }
+    constexpr std::string_view prefix{"tag:yaml.org,2002:"};
+    return tag.starts_with(prefix) && tag.substr(prefix.size()) == type;
 }
+
+static_assert(tag_is("!!str", "str"));
+static_assert(tag_is("tag:yaml.org,2002:int", "int"));
+static_assert(tag_is("!<tag:yaml.org,2002:float>", "float"));
+static_assert(tag_is("<tag:yaml.org,2002:str>", "str"));
+static_assert(!tag_is("", "str") && !tag_is("!!", ""));
+static_assert(!tag_is("!<tag:yaml.org,2002:str", "str"));
+static_assert(!tag_is("tag:yaml.org,2002:str>", "str"));
+static_assert(!tag_is("!<tag:yaml.org,2002:str>>", "str"));
 
 [[nodiscard]] auto implicit_scalar(ryml::ConstNodeRef node) -> document {
     const auto text = view(node.val());
@@ -190,6 +216,46 @@ auto inherit_mapping(json_detail::ordered_object& target, const document& inheri
     return result;
 }
 
+// 只统计正式序列化器交来的字节，不保存输出。剩余额度在每次写入前扣除，
+// 避免先构造完整的超大字符串、最后才发现越界。
+class document_size_output final : public nlohmann::detail::output_adapter_protocol<char> {
+  public:
+    explicit document_size_output(std::int64_t limit) noexcept : remaining{limit} {}
+    document_size_output(const document_size_output&) = delete;
+    document_size_output(document_size_output&&) = delete;
+    auto operator=(const document_size_output&) -> document_size_output& = delete;
+    auto operator=(document_size_output&&) -> document_size_output& = delete;
+    ~document_size_output() override = default;
+
+    auto write_character([[maybe_unused]] char character) -> void override {
+        consume(1);
+    }
+    auto write_characters([[maybe_unused]] const char* data, std::size_t count) -> void override {
+        consume(count);
+    }
+
+  private:
+    std::int64_t remaining{};
+
+    auto consume(std::size_t count) -> void {
+        if (std::cmp_greater(count, remaining)) {
+            fail(override_error::resource_limit);
+        }
+        // options 已保证限额小于 INT_MAX；上面的检查也覆盖有符号转换范围。
+        remaining -= static_cast<std::int64_t>(count);
+    }
+};
+
+auto validate_serialized_size(const document& value, std::int64_t limit) -> void {
+    // 这里是对仓库自带 nlohmann 内部接口的唯一适配点。与 dump() 使用同一
+    // serializer 及参数，保留紧凑编码、转义、数字格式和严格 UTF-8 校验。
+    // 公共 ostream 接口对每个小字段引入 sentry 开销；计数适配器直接接收
+    // 字节，并让超限异常原样传出。回归以 dump().size() 校验库升级兼容性。
+    auto writer = nlohmann::detail::serializer<document>{
+        std::make_shared<document_size_output>(limit), ' ', document::error_handler_t::strict};
+    writer.dump(value, false, false, 0);
+}
+
 // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
 struct value_location {
     value_location(const document& input_value, std::int64_t input_depth) noexcept
@@ -303,7 +369,10 @@ auto validate_document(const document& value, const engine_options& options) -> 
             fail(override_error::invalid_document);
         }
         if (item.is_structured()) {
-            if (std::cmp_greater(item.size(), options.max_values - visited)) {
+            // 已入队但尚未访问的兄弟节点同样占用预算。入队前维持
+            // visited + pending.size() <= max_values，防止宽树撑大 DFS 栈。
+            const auto available = options.max_values - visited - std::ssize(pending);
+            if (std::cmp_greater(item.size(), available)) {
                 fail(override_error::resource_limit);
             }
             std::ranges::transform(
@@ -313,9 +382,7 @@ auto validate_document(const document& value, const engine_options& options) -> 
                 });
         }
     }
-    if (std::ssize(value.dump()) > options.max_document_bytes) {
-        fail(override_error::resource_limit);
-    }
+    validate_serialized_size(value, options.max_document_bytes);
 }
 
 auto parse_json(std::string_view text, const engine_options& options) -> document {
