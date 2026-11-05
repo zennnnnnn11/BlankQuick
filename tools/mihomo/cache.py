@@ -9,15 +9,15 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def inventory():
-    model = (ROOT / 'src/features/nodes/include/blank/nodes/unified_node.hpp').read_text(encoding='utf-8')
+    model = (ROOT / 'src/domain/nodes/include/blank/nodes/unified_node.hpp').read_text(encoding='utf-8')
     records = {}
     enums = {}
     for filename, namespace, selected in [
         ('unified_node.hpp', 'node_model', None),
         ('subscription_account.hpp', 'subscription_data', {'account_metadata'}),
-        ('profile_storage.hpp', 'profile_storage', {'profile_settings', 'profile_record'}),
+        ('profile_types.hpp', 'profile_storage', {'profile_settings', 'profile_record'}),
     ]:
-        text = (ROOT / {'unified_node.hpp': 'src/features/nodes/include/blank/nodes/unified_node.hpp', 'subscription_account.hpp': 'src/features/subscriptions/include/blank/subscriptions/subscription_account.hpp', 'profile_storage.hpp': 'src/features/profiles/include/blank/profiles/profile_storage.hpp'}[filename]).read_text(encoding='utf-8')
+        text = (ROOT / {'unified_node.hpp': 'src/domain/nodes/include/blank/nodes/unified_node.hpp', 'subscription_account.hpp': 'src/domain/subscriptions/include/blank/subscriptions/subscription_account.hpp', 'profile_types.hpp': 'src/domain/profiles/include/blank/profiles/profile_types.hpp'}[filename]).read_text(encoding='utf-8')
         for name, body in re.findall(r'^struct (\w+) \{(.*?)^\};', text, re.S | re.M):
             if selected is not None and name not in selected:
                 continue
@@ -70,7 +70,7 @@ def generate():
         tag = name.replace('std::', '').replace('chrono::', '')
         lines += [f'template <> struct variant_tag<{qualified}> {{',
                   f'    static constexpr std::string_view name{{"{tag}"}};', '};', '']
-    output = subprocess.run(['clang-format', '--assume-filename=' + str(ROOT / 'src/features/profiles/profile_codec_fields.inc')],
+    output = subprocess.run(['clang-format', '--assume-filename=' + str(ROOT / 'src/domain/profiles/profile_codec_fields.inc')],
                             input='\n'.join(lines), text=True, encoding='utf-8', capture_output=True, check=True).stdout
     manifest = {'model_schema': digest, 'model_record_count': len(model_records),
                 'model_field_count': sum(len(fields) for fields in model_records.values()),
@@ -80,5 +80,5 @@ def generate():
 
 def outputs(_facts):
     source, manifest = generate()
-    return {ROOT / 'src/features/profiles/profile_codec_fields.inc': source,
+    return {ROOT / 'src/domain/profiles/profile_codec_fields.inc': source,
             ROOT / 'generated/mihomo/profile_cache_fields.json': manifest}

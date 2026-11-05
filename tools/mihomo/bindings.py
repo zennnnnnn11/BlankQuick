@@ -14,7 +14,7 @@ PLUGINS = ("obfs", "v2ray-plugin", "gost-plugin", "shadow-tls", "restls", "jls",
 
 
 def generate(manifest):
-    header = (ROOT / "src/features/nodes/include/blank/nodes/unified_node.hpp").read_text(encoding="utf-8")
+    header = (ROOT / "src/domain/nodes/include/blank/nodes/unified_node.hpp").read_text(encoding="utf-8")
     structs = {}
     for name, body in re.findall(r"struct (\w+) \{(.*?)\n\};", header, re.S):
         fields = {}
@@ -121,7 +121,7 @@ def generate(manifest):
                 "note": "URI aliases and specialized credential/transport validation live in node_input.cpp. "
                         "Container and discriminant rows are handled by URI assembly; this lists generated leaf bindings."}
     formatted = subprocess.run(
-        ["clang-format", "--assume-filename=" + str(ROOT / "src/features/nodes/node_input_bindings.inc")],
+        ["clang-format", "--assume-filename=" + str(ROOT / "src/domain/nodes/node_input_bindings.inc")],
         input="\n".join(lines), text=True, encoding="utf-8", capture_output=True, check=True,
     ).stdout
     return formatted, json.dumps(coverage, ensure_ascii=False, indent=2) + "\n"
@@ -129,5 +129,5 @@ def generate(manifest):
 
 def outputs(facts):
     source, coverage = generate(facts['unified_node_fields.json'])
-    return {ROOT / 'src/features/nodes/node_input_bindings.inc': source,
+    return {ROOT / 'src/domain/nodes/node_input_bindings.inc': source,
             ROOT / 'generated/mihomo/node_input_fields.json': coverage}

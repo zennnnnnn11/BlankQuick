@@ -47,6 +47,7 @@ def build_state(build):
             inputs[path.resolve().as_posix()] = digest(path)
     return {"graph": digest(build / "architecture-targets.dot"),
             "cache": digest(build / "CMakeCache.txt"), "model": digest(model_path),
+            "policy": digest(ROOT / "tools/architecture.json"),
             "inputs": inputs}, model
 
 
@@ -83,7 +84,32 @@ def reject_cycles(graph, label):
 
 def feature_owner(path):
     parts = Path(path).parts
-    return parts[2] if len(parts) > 2 and parts[:2] == ("src", "features") else None
+    return parts[2] if len(parts) > 2 and parts[0] == "src" and parts[1] in ("domain", "application") else None
+
+
+def layer_owner(path):
+    parts = Path(path).parts
+    if len(parts) < 2 or parts[0] != "src":
+        return None
+    return {"domain": "domain", "application": "application", "platform": "platform",
+            "services": "service", "app": "ui", "shared": "shared"}.get(parts[1])
+
+
+def check_data_source(name, content):
+    # Qt Core is used for value types (UTF-8, URLs, JSON). It also contains I/O
+    # classes, so the link fence is supplemented by a source include fence.
+    forbidden = r"(?:[Ww]indows\.h|winsock2\.h|ws2tcpip\.h|bcrypt\.h|wininet\.h|iphlpapi\.h|" \
+                r"QtNetwork/[^>\"]+|QtQml/[^>\"]+|QtConcurrent[^>\"]*|" \
+                r"(?:QtCore/)?Q(?:File\w*|Dir\w*|LockFile|SaveFile|Process(?:Environment)?|" \
+                r"RandomGenerator|Uuid|Timer|Thread|CoreApplication|StandardPaths|Temporary(?:Dir|File))|" \
+                r"Q(?:Network\w*|HostAddress|Tcp\w*|Udp\w*|WebSocket)|thread|fstream)"
+    if re.search(r'#include\s*[<"]' + forbidden + r'[>"]', content):
+        raise ValueError(f"Data code includes an effect API: {name}")
+    if re.search(r'\b(?:QUuid::createUuid\w*|QRandomGenerator::(?:system|global))\s*\(', content):
+        raise ValueError(f"Data code obtains system entropy: {name}")
+    if re.search(r'\b(?:std::filesystem|fs)::(?:exists|status|is_regular_file|is_directory|'
+                 r'create_directories|remove|remove_all|directory_iterator|recursive_directory_iterator)\s*[({]', content):
+        raise ValueError(f"Data code accesses the filesystem: {name}")
 
 
 def check_sources():
@@ -107,7 +133,12 @@ def check_sources():
         if owner is not None and owner not in features:
             raise ValueError(f"Undeclared feature: {owner}")
         content = path.read_text(encoding="utf-8")
-        if name.startswith("src/features/system_proxy/") and re.search(r'\b(?:RuntimeSession|KernelController)\b', content):
+        layer = layer_owner(name)
+        if name.startswith("src/") and layer is None:
+            raise ValueError(f"Unregistered source layer: {name}")
+        if layer in ("domain", "shared"):
+            check_data_source(name, content)
+        if name.startswith("src/platform/system_proxy/") and re.search(r'\b(?:RuntimeSession|KernelController)\b', content):
             raise ValueError(f"System proxy depends on runtime orchestration: {name}")
         if not name.startswith("src/app/") and re.search(r'#include\s*[<"](?:QtGui|QtQuick|QQuick|QGui|QWindow)', content):
             raise ValueError(f"Non-UI code includes GUI headers: {name}")
@@ -123,6 +154,9 @@ def check_sources():
                     raise ValueError(f"Unresolved local include: {name}: {header}")
                 continue
             includes[name].add(target)
+            other_layer = layer_owner(target)
+            if layer and other_layer and other_layer not in policy["layers"][layer]:
+                raise ValueError(f"Forbidden layer include: {layer} -> {other_layer}: {name}: {target}")
             other = feature_owner(target)
             if "/include/" in name and "/include/" not in target:
                 raise ValueError(f"Public header exposes a private implementation: {name}: {target}")
@@ -133,8 +167,6 @@ def check_sources():
                     if other not in features[owner]:
                         raise ValueError(f"Undeclared feature dependency: {owner} -> {other}: {name}")
                     feature_graph[owner].add(other)
-                elif name.startswith(("src/platform/", "src/shared/")):
-                    raise ValueError(f"Platform/shared code depends on a feature: {name}: {target}")
             if name.startswith("src/shared/") and not target.startswith("src/shared/"):
                 raise ValueError(f"Shared code depends on higher-level code: {name}: {target}")
     reject_cycles(includes, "Include")
@@ -165,10 +197,19 @@ def check_build(build, files, policy):
             other = owners.get(dependency)
             if owner and other and other != owner and other not in policy["features"][owner]:
                 raise ValueError(f"Undeclared feature link: {name} -> {dependency}")
-            if name in policy["platform_targets"] and other:
-                raise ValueError(f"Platform links feature code: {name} -> {dependency}")
+            layer = policy["target_layers"].get(name)
+            other_layer = policy["target_layers"].get(dependency)
+            if layer and other_layer and other_layer not in policy["layers"][layer]:
+                raise ValueError(f"Forbidden layer link: {name} -> {dependency}")
         if owner and reachable(links, name) & {"Qt6::Gui", "Qt6::Quick", "blank_quick"}:
             raise ValueError(f"Feature links UI code: {name}")
+    for name, layer in policy["target_layers"].items():
+        if layer in ("domain", "shared"):
+            forbidden = {target for target in reachable(links, name)
+                         if policy["target_layers"].get(target) in ("platform", "application", "service", "ui")}
+            forbidden |= reachable(links, name) & {"Qt6::Network", "Qt6::Qml", "Qt6::Concurrent", "Qt6::WebSockets"}
+            if forbidden:
+                raise ValueError(f"Data target reaches effect code: {name}: {sorted(forbidden)}")
     if reachable(links, "profile_storage") & {"subscription_fetcher", "Qt6::Network"}:
         raise ValueError("Profile storage links HTTP transport")
     required = set()
@@ -183,6 +224,9 @@ def check_build(build, files, policy):
                     if not path.is_absolute():
                         path = ROOT / path
                     if path.resolve().is_relative_to(ROOT / "src"):
+                        source_layer = layer_owner(path.resolve().relative_to(ROOT).as_posix())
+                        if source_layer != policy["target_layers"].get(target["name"]):
+                            raise ValueError(f"Source compiled in another layer: {path}: {target['name']}")
                         actual = feature_owner(path.resolve().relative_to(ROOT).as_posix())
                         if actual and owners.get(target["name"]) != actual:
                             raise ValueError(f"Feature source belongs to another build target: {path}: {target['name']}")

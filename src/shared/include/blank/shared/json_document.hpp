@@ -6,6 +6,6 @@
 namespace json_detail {
 
 using document = nlohmann::ordered_json;
-}
+} // namespace json_detail
 
 #endif

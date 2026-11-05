@@ -28,7 +28,7 @@ if(NOT Qt6_VERSION VERSION_LESS "6.13")
 endif()
 qt_standard_project_setup(REQUIRES 6.12)
 
-include(cmake/NativeAdapters.cmake)
+include(cmake/TargetOptions.cmake)
 
 add_library(blank_shared INTERFACE)
 target_include_directories(blank_shared INTERFACE "${PROJECT_SOURCE_DIR}/src/shared/include")
@@ -40,7 +40,7 @@ target_include_directories(rapidyaml SYSTEM PUBLIC "${PROJECT_SOURCE_DIR}/third_
 target_compile_definitions(rapidyaml PUBLIC RYML_DEFAULT_CALLBACK_USES_EXCEPTIONS=1)
 target_compile_options(rapidyaml PRIVATE /W0 /utf-8 /EHsc /GS /guard:cf /guard:ehcont)
 
-function(feature_library target)
+function(blank_library target)
     add_library(${target} STATIC ${ARGN})
     target_include_directories(${target} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
     target_link_libraries(${target} PRIVATE blank_shared)
@@ -49,10 +49,12 @@ function(feature_library target)
         QT_NO_CONTEXTLESS_CONNECT)
 endfunction()
 
-add_subdirectory(src/platform)
-foreach(feature IN ITEMS nodes subscriptions profiles overrides runtime_config system_proxy telemetry runtime)
-    add_subdirectory(src/features/${feature})
+foreach(feature IN ITEMS nodes subscriptions profiles overrides runtime_config service_config)
+    add_subdirectory(src/domain/${feature})
 endforeach()
+add_subdirectory(src/platform)
+add_subdirectory(src/application/profiles)
+add_subdirectory(src/application/runtime)
 add_subdirectory(src/services/kernel)
 include(CTest)
 if(BUILD_TESTING)
@@ -68,7 +70,9 @@ target_compile_definitions(blank_quick PRIVATE QT_NO_KEYWORDS QT_NO_CAST_FROM_AS
     QT_NO_NARROWING_CONVERSIONS_IN_CONNECT QT_NO_CONTEXTLESS_CONNECT QT_STRICT_ITERATORS
     QT_USE_QSTRINGBUILDER QT_DISABLE_DEPRECATED_UP_TO=0x060C00 QT_WARN_DEPRECATED_UP_TO=0x060C00)
 
-include(cmake/FeatureQuality.cmake)
+include(cmake/SourceOptions.cmake)
+include(cmake/Architecture.cmake)
+blank_enforce_architecture()
 
 target_link_options(blank_quick PRIVATE /WX /DYNAMICBASE /HIGHENTROPYVA /NXCOMPAT /guard:cf /guard:ehcont /CETCOMPAT /IGNORE:4291)
 set_target_properties(blank_quick PROPERTIES WIN32_EXECUTABLE TRUE)
@@ -77,7 +81,7 @@ find_program(POWERSHELL_EXECUTABLE NAMES pwsh REQUIRED)
 foreach(action IN ITEMS check format-check format clang-tidy clazy cppcheck qmllint)
     add_custom_target(${action}
         COMMAND "${POWERSHELL_EXECUTABLE}" -NoProfile -File "${PROJECT_SOURCE_DIR}/tools/project.ps1"
-            ${action} -Configuration "$<CONFIG>"
+            ${action} -Configuration "$<CONFIG>" -BuildDirectory "${PROJECT_BINARY_DIR}"
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         USES_TERMINAL
         VERBATIM
@@ -86,7 +90,7 @@ endforeach()
 add_dependencies(check blank_quick)
 add_dependencies(check runtime_backend blank_quick_service system_proxy_guard kernel_signal subscription_fetcher)
 if(BUILD_TESTING)
-    add_dependencies(check profile_activation_test)
+    add_dependencies(check test_binaries)
 endif()
 
 add_custom_target(quality ALL)

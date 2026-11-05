@@ -1,12 +1,13 @@
 #include <Windows.h>
 
+#include <QThread>
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
 #include <QSaveFile>
-#include <QThread>
 #include <array>
 #include <blank/ipc/service_security.hpp>
 #include <blank/ipc/service_setup.hpp>
@@ -225,6 +226,8 @@ QString installService() try {
 }
 
 QString uninstallService() try {
+    // 先等待服务停止，再确认没有未解决的 TUN 恢复日志，最后删除服务注册和
+    // 受信任的已知文件。恢复未完成时保留服务与日志，不能留下失去回收者的资源。
     if (!elevatedProcess()) {
         throw std::runtime_error("Service removal requires an elevated installer.");
     }

@@ -1,6 +1,0 @@
-add_library(subscription_contracts INTERFACE)
-target_include_directories(subscription_contracts INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_link_libraries(subscription_contracts INTERFACE node_model node_input)
-feature_library(subscription_fetcher subscription_fetcher.cpp subscription_metadata.cpp)
-target_link_libraries(subscription_fetcher PUBLIC node_input PRIVATE Qt6::Network)
-add_library(BlankQuick::Subscriptions ALIAS subscription_fetcher)

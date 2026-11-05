@@ -1,0 +1,3 @@
+blank_library(profile_runtime profile_runtime.cpp)
+target_link_libraries(profile_runtime PUBLIC profile_storage profile_payload)
+add_library(BlankQuick::Profiles ALIAS profile_runtime)

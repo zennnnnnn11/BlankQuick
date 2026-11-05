@@ -19,5 +19,5 @@ $files = @(if (Test-Path -LiteralPath $serviceRoot) {
     Routes = @(Get-NetRoute | Sort-Object InterfaceIndex,DestinationPrefix,NextHop | ForEach-Object { [ordered]@{ Interface = $_.InterfaceIndex; Prefix = $_.DestinationPrefix; NextHop = $_.NextHop; Metric = $_.RouteMetric; Protocol = [string]$_.Protocol } })
     TunJournal = Test-Path -LiteralPath 'C:\ProgramData\BlankQuickService\tun.json'
     Tasks = @(Get-ScheduledTask | Where-Object TaskName -Like 'CodexBackend*' | Sort-Object TaskName | ForEach-Object { $_.TaskName })
-    Processes = @(Get-CimInstance Win32_Process | Where-Object { $_.Name -in @('mihomo.exe','backend_lab.exe','system_proxy_guard.exe','kernel_fixture.exe','proxy_guard_fixture.exe') } | Sort-Object ExecutablePath,SessionId | ForEach-Object { [ordered]@{ Path = $_.ExecutablePath; Session = $_.SessionId } })
+    Processes = @(Get-CimInstance Win32_Process | Where-Object { $_.Name -in @('mihomo.exe','blank_quick_service.exe','system_proxy_guard.exe','kernel_signal.exe','profile_activation_test.exe','domain_configuration_test.exe','application_pipeline_test.exe') } | Sort-Object ExecutablePath,SessionId | ForEach-Object { [ordered]@{ Path = $_.ExecutablePath; Session = $_.SessionId } })
 } | ConvertTo-Json -Depth 8

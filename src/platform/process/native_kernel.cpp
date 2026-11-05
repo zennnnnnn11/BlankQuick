@@ -5,26 +5,27 @@
 
 #include <iphlpapi.h>
 
+#include <QTcpServer>
+#include <QTcpSocket>
+#include <QTemporaryDir>
+
 #include <QDir>
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 #include <QHostAddress>
-#include <QJsonDocument>
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkProxy>
 #include <QProcessEnvironment>
-#include <QTcpServer>
-#include <QTcpSocket>
-#include <QTemporaryDir>
 #include <QUuid>
-#include <blank/process/native_kernel.hpp>
-#include <blank/windows/handle.hpp>
 #include <algorithm>
 #include <array>
-#include <cstddef>
+#include <blank/process/native_kernel.hpp>
+#include <blank/windows/handle.hpp>
 #include <concepts>
+#include <cstddef>
 #include <cstring>
 #include <exception>
 #include <span>
@@ -82,6 +83,8 @@ void requireWindows(bool success) {
 }
 
 QString quote(const QString& argument) {
+    // Windows 命令行不是 argv 数组：引号前和结尾的反斜杠必须成倍转义。
+    // 所有参数走同一规则，避免路径中的空格/引号改变子进程看到的参数边界。
     QString result = QStringLiteral("\"");
     qsizetype slashes = 0;
     for (const auto character : argument) {
@@ -318,6 +321,9 @@ const QString& NativeKernel::initialConfiguration() const noexcept {
 }
 
 QString NativeKernel::stop(const QString& signalHelper) {
+    // 优先请求正常退出，超时或辅助程序失败后终止本对象拥有的 Job。
+    // 辅助程序同时收到 PID 和创建时间，防止 PID 被复用后向无关进程发送信号。
+    // 只有确认整个 Job 已空才清理临时目录；单个主进程退出不代表子进程都结束。
     try {
         if (WaitForSingleObject(impl_->process.get(), 0) == WAIT_TIMEOUT) {
             FILETIME creation{};
@@ -379,6 +385,8 @@ ListenerCheck checkKernelListener(quint16 port, quint32 processId) {
 }
 
 ListenerCheck checkProxyListener(quint16 port, quint32 processId) {
+    // “端口能连通”不能证明属于本内核。建立一条无代理的本地连接，再按其
+    // 两端端口和目标 PID 查系统 TCP 表，兼容 IPv4 映射到 IPv6 的监听情况。
     if (port == 0 || processId == 0) {
         return {};
     }
@@ -412,6 +420,8 @@ ListenerCheck checkProxyListener(quint16 port, quint32 processId) {
 
 QString runOwnedTool(const QString& executable, const QStringList& arguments,
                      const QString& directory, int timeoutMs) try {
+    // 维护工具也放进独立 Job 并设硬期限。即使工具创建了子进程，超时回收
+    // 仍限制在本次拥有的进程树内，不按进程名全局终止其他实例。
     if (timeoutMs <= 0 || timeoutMs > 30000) {
         return QStringLiteral("Invalid maintenance deadline.");
     }

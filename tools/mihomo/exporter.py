@@ -11,7 +11,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 
 def generate(manifest):
-    model = (ROOT / 'src/features/nodes/include/blank/nodes/unified_node.hpp').read_text(encoding='utf-8')
+    model = (ROOT / 'src/domain/nodes/include/blank/nodes/unified_node.hpp').read_text(encoding='utf-8')
     records = {}
     for name, body in re.findall(r'struct (\w+) \{(.*?)\n\};', model, re.S):
         records[name] = {}
@@ -199,7 +199,7 @@ def generate(manifest):
                   '    return result;', '}',
                   '// NOLINTEND(llvm-prefer-static-over-anonymous-namespace,fuchsia-default-arguments-calls,cppcoreguidelines-pro-bounds-avoid-unchecked-container-access)', ''])
     # model paths were qualified only to generate expressions, not to change the manifest.
-    output = subprocess.run(['clang-format', '--assume-filename=' + str(ROOT / 'src/features/runtime_config/mihomo_export_fields.inc')],
+    output = subprocess.run(['clang-format', '--assume-filename=' + str(ROOT / 'src/domain/runtime_config/mihomo_export_fields.inc')],
                             input='\n'.join(lines), text=True, encoding='utf-8',
                             capture_output=True, check=True).stdout
     assert len(covered) + len(manual) == sum(row['disposition'] == 'mapped' for row in manifest['rows'])
@@ -219,9 +219,9 @@ def outputs(facts):
                     'constexpr auto input_schema = std::to_array<schema_field>({']
     schema_lines += ['    {.path = "' + f['path'] + '", .type = "' + f['go_type'] + '"},' for f in schema['fields']]
     schema_lines += ['});', '']
-    schema_source = subprocess.run(['clang-format', '--assume-filename=' + str(ROOT / 'src/features/runtime_config/runtime_schema.inc')],
+    schema_source = subprocess.run(['clang-format', '--assume-filename=' + str(ROOT / 'src/domain/runtime_config/runtime_schema.inc')],
                                    input='\n'.join(schema_lines), text=True, encoding='utf-8',
                                    capture_output=True, check=True).stdout
-    return {ROOT / 'src/features/runtime_config/mihomo_export_fields.inc': source,
+    return {ROOT / 'src/domain/runtime_config/mihomo_export_fields.inc': source,
             ROOT / 'generated/mihomo/mihomo_export_fields.json': coverage,
-            ROOT / 'src/features/runtime_config/runtime_schema.inc': schema_source}
+            ROOT / 'src/domain/runtime_config/runtime_schema.inc': schema_source}

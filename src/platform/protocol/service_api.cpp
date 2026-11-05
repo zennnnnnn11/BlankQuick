@@ -27,6 +27,8 @@ int coreRequestTimeout(const QByteArray& path, const QByteArray& method,
 
 QByteArray serviceResourceEndpoint(const QByteArray& path, const QByteArray& method,
                                    const QByteArray& body) {
+    // 返回规范化后的可用端点，空值表示不准入。路径、方法、查询参数和正文
+    // 一起判断，不能仅靠 startsWith 放行带有额外路径或重复参数的提权请求。
     if (path.size() > 8192) {
         return {};
     }

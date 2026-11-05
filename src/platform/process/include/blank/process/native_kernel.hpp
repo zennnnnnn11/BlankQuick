@@ -1,9 +1,10 @@
 #ifndef BLANK_QUICK_NATIVE_KERNEL_HPP
 #define BLANK_QUICK_NATIVE_KERNEL_HPP
 
+#include <QtTypes>
+
 #include <QString>
 #include <QStringList>
-#include <QtTypes>
 #include <memory>
 
 struct KernelOptions {
@@ -15,6 +16,9 @@ struct KernelOptions {
     bool serviceManaged = false;
 };
 
+// 独占一组原生资源：临时工作目录、配置、Job Object 和内核进程。
+// processHandle() 只提供观察句柄，调用者不能关闭；实际释放由 Impl 的 RAII 负责。
+// 该类型不决定用户配置和重试策略，只执行启动、归属核验与停止。
 class NativeKernel final {
   public:
     explicit NativeKernel(const KernelOptions& options);

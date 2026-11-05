@@ -1,10 +1,11 @@
 #ifndef BLANK_QUICK_SERVICE_PIPE_HPP
 #define BLANK_QUICK_SERVICE_PIPE_HPP
 
+#include <QTimer>
+
 #include <QJsonObject>
 #include <QLocalSocket>
 #include <QObject>
-#include <QTimer>
 #include <QWinEventNotifier>
 #include <blank/ipc/service_security.hpp>
 #include <blank/protocol/json_frame.hpp>

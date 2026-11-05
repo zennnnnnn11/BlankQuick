@@ -18,10 +18,12 @@ DerivePointerAlignment: false
 SortIncludes: CaseSensitive
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex: '^<[Ww]insock2\.h>'
+  - Regex: '^<(winsock2|ws2tcpip)\.h>'
     Priority: -2
   - Regex: '^<[Ww]indows\.h>'
     Priority: -1
+  - Regex: '^<iphlpapi\.h>'
+    Priority: 0
   - Regex: '^<Qt'
     Priority: 1
   - Regex: '^<'

@@ -1,18 +1,11 @@
 #ifndef BLANK_QUICK_SERVICE_CONFIG_HPP
 #define BLANK_QUICK_SERVICE_CONFIG_HPP
 
-#include <QJsonObject>
-#include <QString>
+#include <blank/config/service_config_model.hpp>
 
-struct ServiceConfig {
-    QJsonObject value;
-    QString error;
-};
-
+// Physical admission adds reparse-point checks to the pure composition result.
+// The service repeats admission in its own privilege boundary before execution.
 [[nodiscard]] ServiceConfig compileServiceConfig(const QString& json, quint16 mixedPort,
                                                  const QString& device, bool tunEnabled = false,
                                                  const QString& providerRoot = {});
-[[nodiscard]] ServiceConfig parseProfileConfig(const QString& json);
-[[nodiscard]] QJsonObject serviceTunConfig(const QString& device, bool enabled);
-
 #endif

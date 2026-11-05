@@ -77,6 +77,9 @@ template <std::default_initializable T> class FrameResult final {
     std::optional<FrameError> error_;
 };
 
+// 管道是字节流，一次读取可能只有半帧，也可能包含多帧。next 的三态分别是：
+// 失败、成功但尚无完整帧、成功且取出对象；“暂时没帧”不是连接错误。
+// 一旦发现坏帧或超限就保持失败，必须 clear 后才可用于新的连接，避免失去帧边界。
 class JsonFrames final {
   public:
     [[nodiscard]] FrameResult<std::monostate> append(QByteArrayView bytes);

@@ -1,15 +1,31 @@
 {
   "features": {
     "nodes": [],
-    "subscriptions": ["nodes"],
-    "profiles": ["nodes", "subscriptions"],
+    "subscriptions": [
+      "nodes"
+    ],
+    "profiles": [
+      "nodes",
+      "subscriptions"
+    ],
     "overrides": [],
-    "runtime_config": ["nodes", "profiles", "overrides"],
+    "runtime_config": [
+      "nodes",
+      "profiles",
+      "overrides"
+    ],
     "system_proxy": [],
     "telemetry": [],
-    "runtime": ["profiles", "overrides", "runtime_config", "system_proxy", "telemetry"]
+    "runtime": [
+      "profiles",
+      "overrides",
+      "runtime_config",
+      "system_proxy",
+      "telemetry",
+      "service_config"
+    ],
+    "service_config": []
   },
-  "platform_targets": ["backend_windows", "backend_storage", "backend_config", "backend_process", "backend_environment", "backend_protocol", "backend_ipc", "backend_tun", "backend_runtime", "backend_qt", "kernel_signal"],
   "targets": {
     "node_model": "nodes",
     "node_input": "nodes",
@@ -26,6 +42,359 @@
     "system_proxy_guard": "system_proxy",
     "backend_streams": "telemetry",
     "telemetry": "telemetry",
-    "runtime_backend": "runtime"
+    "runtime_backend": "runtime",
+    "profile_types": "profiles",
+    "override_storage": "overrides",
+    "override_script": "overrides",
+    "runtime_settings_storage": "runtime_config",
+    "runtime_context": "runtime_config",
+    "runtime_kernel_check": "runtime_config",
+    "service_config_model": "service_config",
+    "profile_codec": "profiles",
+    "subscription_input": "subscriptions"
+  },
+  "layers": {
+    "shared": [
+      "shared",
+      "vendor"
+    ],
+    "vendor": [
+      "vendor"
+    ],
+    "domain": [
+      "domain",
+      "shared",
+      "vendor"
+    ],
+    "platform": [
+      "platform",
+      "domain",
+      "shared",
+      "vendor"
+    ],
+    "application": [
+      "application",
+      "platform",
+      "domain",
+      "shared",
+      "vendor"
+    ],
+    "service": [
+      "service",
+      "platform",
+      "domain",
+      "shared",
+      "vendor"
+    ],
+    "ui": [
+      "ui",
+      "application",
+      "platform",
+      "domain",
+      "shared",
+      "vendor"
+    ],
+    "test": [
+      "test",
+      "ui",
+      "service",
+      "application",
+      "platform",
+      "domain",
+      "shared",
+      "vendor"
+    ]
+  },
+  "target_layers": {
+    "blank_shared": "shared",
+    "rapidyaml": "vendor",
+    "node_model": "domain",
+    "node_input": "domain",
+    "subscription_contracts": "domain",
+    "node_filter": "domain",
+    "profile_payload": "domain",
+    "profile_types": "domain",
+    "overrides": "domain",
+    "runtime_config": "domain",
+    "service_config_model": "domain",
+    "backend_qt": "platform",
+    "backend_windows": "platform",
+    "backend_storage": "platform",
+    "backend_config": "platform",
+    "backend_process": "platform",
+    "backend_environment": "platform",
+    "backend_protocol": "platform",
+    "backend_ipc": "platform",
+    "backend_tun": "platform",
+    "kernel_signal": "platform",
+    "backend_runtime": "platform",
+    "subscription_fetcher": "platform",
+    "profile_storage": "platform",
+    "override_storage": "platform",
+    "override_script": "platform",
+    "runtime_settings_storage": "platform",
+    "runtime_context": "platform",
+    "runtime_kernel_check": "platform",
+    "backend_user_proxy": "platform",
+    "system_proxy": "platform",
+    "system_proxy_guard": "platform",
+    "backend_streams": "platform",
+    "telemetry": "platform",
+    "profile_runtime": "application",
+    "runtime_backend": "application",
+    "backend_service": "service",
+    "blank_quick_service": "service",
+    "blank_quick": "ui",
+    "profile_activation_test": "test",
+    "domain_configuration_test": "test",
+    "application_pipeline_test": "test",
+    "profile_codec": "domain",
+    "subscription_input": "domain"
+  },
+  "target_dependencies": {
+    "blank_shared": [],
+    "rapidyaml": [],
+    "node_model": [
+      "blank_shared"
+    ],
+    "node_input": [
+      "blank_shared",
+      "node_model",
+      "rapidyaml"
+    ],
+    "subscription_contracts": [
+      "node_model",
+      "node_input"
+    ],
+    "node_filter": [
+      "blank_shared",
+      "node_model"
+    ],
+    "profile_payload": [
+      "blank_shared",
+      "node_model",
+      "node_input",
+      "node_filter"
+    ],
+    "profile_types": [
+      "node_model",
+      "subscription_contracts",
+      "blank_shared"
+    ],
+    "overrides": [
+      "blank_shared",
+      "rapidyaml",
+      "Qt6::Core"
+    ],
+    "runtime_config": [
+      "blank_shared",
+      "profile_payload",
+      "overrides",
+      "Qt6::Core"
+    ],
+    "service_config_model": [
+      "Qt6::Core",
+      "blank_shared"
+    ],
+    "backend_qt": [
+      "Qt6::Core"
+    ],
+    "backend_windows": [],
+    "backend_storage": [
+      "Qt6::Core",
+      "backend_windows"
+    ],
+    "backend_config": [
+      "service_config_model",
+      "Qt6::Core"
+    ],
+    "backend_process": [
+      "Qt6::Core",
+      "backend_windows",
+      "Qt6::Network",
+      "iphlpapi",
+      "ws2_32"
+    ],
+    "backend_environment": [
+      "Qt6::Core",
+      "backend_qt",
+      "Qt6::Concurrent",
+      "Qt6::Network",
+      "iphlpapi",
+      "ws2_32",
+      "user32"
+    ],
+    "backend_protocol": [
+      "Qt6::Core",
+      "blank_shared"
+    ],
+    "backend_ipc": [
+      "Qt6::Network",
+      "backend_windows",
+      "backend_protocol",
+      "backend_qt",
+      "advapi32",
+      "wtsapi32",
+      "shell32",
+      "ole32"
+    ],
+    "backend_tun": [
+      "Qt6::Core",
+      "backend_windows",
+      "backend_storage",
+      "Qt6::Network",
+      "setupapi",
+      "iphlpapi",
+      "ws2_32",
+      "ole32"
+    ],
+    "kernel_signal": [
+      "backend_windows"
+    ],
+    "backend_runtime": [
+      "Qt6::Network",
+      "backend_process",
+      "backend_ipc",
+      "backend_protocol",
+      "backend_qt",
+      "Qt6::Concurrent"
+    ],
+    "subscription_fetcher": [
+      "blank_shared",
+      "subscription_input",
+      "Qt6::Network"
+    ],
+    "profile_storage": [
+      "blank_shared",
+      "profile_types",
+      "node_input",
+      "Qt6::Core",
+      "bcrypt",
+      "profile_codec"
+    ],
+    "override_storage": [
+      "blank_shared",
+      "overrides",
+      "Qt6::Core"
+    ],
+    "override_script": [
+      "blank_shared",
+      "overrides",
+      "Qt6::Qml"
+    ],
+    "runtime_settings_storage": [
+      "blank_shared",
+      "runtime_config",
+      "Qt6::Core"
+    ],
+    "runtime_context": [
+      "blank_shared",
+      "runtime_config",
+      "Qt6::Core"
+    ],
+    "runtime_kernel_check": [
+      "blank_shared",
+      "Qt6::Core"
+    ],
+    "backend_user_proxy": [
+      "Qt6::Core",
+      "backend_windows",
+      "wininet"
+    ],
+    "system_proxy": [
+      "Qt6::Core",
+      "backend_user_proxy",
+      "backend_process",
+      "backend_qt"
+    ],
+    "system_proxy_guard": [
+      "backend_user_proxy",
+      "backend_process",
+      "backend_windows"
+    ],
+    "backend_streams": [
+      "Qt6::Network",
+      "Qt6::WebSockets",
+      "backend_qt"
+    ],
+    "telemetry": [
+      "Qt6::Network",
+      "Qt6::WebSockets",
+      "backend_qt"
+    ],
+    "profile_runtime": [
+      "blank_shared",
+      "profile_storage",
+      "profile_payload"
+    ],
+    "runtime_backend": [
+      "runtime_config",
+      "profile_runtime",
+      "overrides",
+      "backend_runtime",
+      "backend_environment",
+      "system_proxy",
+      "telemetry",
+      "override_storage",
+      "runtime_settings_storage",
+      "runtime_kernel_check",
+      "runtime_context",
+      "override_script",
+      "backend_streams",
+      "backend_config",
+      "backend_ipc",
+      "backend_protocol",
+      "backend_qt",
+      "Qt6::Concurrent"
+    ],
+    "backend_service": [
+      "backend_ipc",
+      "backend_process",
+      "backend_config",
+      "backend_environment",
+      "backend_tun",
+      "backend_streams",
+      "Qt6::Concurrent",
+      "backend_qt",
+      "advapi32"
+    ],
+    "blank_quick_service": [
+      "backend_service",
+      "backend_qt"
+    ],
+    "blank_quick": [
+      "Qt6::Quick",
+      "Qt6::Qml",
+      "Qt6::QmlIntegration",
+      "runtime_backend",
+      "dwmapi",
+      "Qt6::Core"
+    ],
+    "profile_activation_test": [
+      "profile_runtime",
+      "runtime_config",
+      "runtime_context",
+      "blank_shared",
+      "Qt6::Core"
+    ],
+    "domain_configuration_test": [
+      "runtime_config",
+      "service_config_model",
+      "blank_shared",
+      "subscription_input"
+    ],
+    "application_pipeline_test": [
+      "runtime_backend",
+      "blank_shared"
+    ],
+    "profile_codec": [
+      "blank_shared",
+      "profile_types"
+    ],
+    "subscription_input": [
+      "blank_shared",
+      "subscription_contracts",
+      "Qt6::Core"
+    ]
   }
 }

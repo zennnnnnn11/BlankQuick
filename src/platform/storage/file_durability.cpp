@@ -50,6 +50,8 @@ QString flushDirectory(const QString& directoryPath) {
 
 DurableWrite writeDurableFile(const QString& path, const QByteArray& bytes,
                               const std::stop_token& stop) {
+    // 持久发布分三步：临时文件数据刷盘 -> 原子替换 -> 父目录刷盘。
+    // 取消只在替换前生效；替换以后必须准确报告 published=true，即便最后一步失败。
     if (path.isEmpty() || path.contains(QChar::Null) || stop.stop_requested()) {
         return {
             .published = false,

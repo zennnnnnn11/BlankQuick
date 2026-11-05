@@ -6,7 +6,8 @@ param(
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Debug',
     [string] $QtRoot = $env:QT_ROOT,
-    [string] $ClazyExecutable = $env:CLAZY_EXECUTABLE
+    [string] $ClazyExecutable = $env:CLAZY_EXECUTABLE,
+    [string] $BuildDirectory
 )
 
 Set-StrictMode -Version Latest
@@ -14,7 +15,11 @@ $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $preset = $Configuration.ToLowerInvariant()
-$buildRoot = Join-Path $projectRoot "out/build/$preset"
+$buildRoot = if ($BuildDirectory) {
+    [IO.Path]::GetFullPath($BuildDirectory, $projectRoot)
+} else {
+    Join-Path $projectRoot "out/build/$preset"
+}
 $env:QT_COMMAND_LINE_PARSER_NO_GUI_MESSAGE_BOXES = '1'
 $env:VSLANG = '1033'
 
@@ -100,7 +105,7 @@ function Get-SourceFiles {
 }
 
 function Invoke-Configure {
-    Invoke-Tool 'cmake' @('--preset', $preset, '--warn-uninitialized', '-Werror=dev', '-Werror=deprecated',
+    Invoke-Tool 'cmake' @('--preset', $preset, '-B', $buildRoot, '--warn-uninitialized', '-Werror=dev', '-Werror=deprecated',
         "--graphviz=$buildRoot/architecture-targets.dot")
     Invoke-Tool 'python' @((Join-Path $PSScriptRoot 'check_architecture.py'), '--record-build', $buildRoot)
 }
@@ -240,10 +245,10 @@ function Invoke-Analysis {
     $sourceFiles = @($entries | ForEach-Object file)
     switch ($Tool) {
         'clang-tidy' {
-            $nativePattern = '/src/(platform|services|features/(runtime|system_proxy|telemetry))/'
+            $nativePattern = '/src/(services|application/runtime|domain/service_config|platform/(windows|storage|config|process|environment|protocol|ipc|tun|kernel|system_proxy|telemetry))/';
             foreach ($group in @(
-                @{ Config = "$projectRoot/.clang-tidy"; Files = @($sourceFiles | Where-Object { $_ -notmatch $nativePattern }) },
-                @{ Config = "$projectRoot/cmake/Native.clang-tidy"; Files = @($sourceFiles | Where-Object { $_ -match $nativePattern }) }
+                @{ Config = "$projectRoot/.clang-tidy"; Files = @($sourceFiles | Where-Object { $_ -notmatch $nativePattern -and $_ -notmatch '/application_pipeline_test\.cpp$' }) },
+                @{ Config = "$projectRoot/cmake/Native.clang-tidy"; Files = @($sourceFiles | Where-Object { $_ -match $nativePattern -or $_ -match '/application_pipeline_test\.cpp$' }) }
             )) {
                 if ($group.Files.Count -eq 0) { continue }
                 Invoke-Tool 'clang-tidy' (@('--verify-config', "--config-file=$($group.Config)") + $group.Files + @("-p=$nativeDatabase"))
@@ -320,7 +325,7 @@ try {
         'configure' { Invoke-Configure }
         'build' {
             Invoke-Configure
-            Invoke-Tool 'cmake' @('--build', '--preset', $preset)
+            Invoke-Tool 'cmake' @('--build', $buildRoot)
         }
         'check' {
             Invoke-Tool 'python' @((Join-Path $PSScriptRoot 'sync_mihomo.py'), 'check', '--offline')

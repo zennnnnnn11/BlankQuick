@@ -1,5 +1,6 @@
 import io
 import json
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -175,10 +176,10 @@ class PipelineTests(unittest.TestCase):
             check_architecture.reject_cycles({"profiles": {"runtime"}, "runtime": {"profiles"}}, "Feature")
 
     def test_storage_does_not_link_http_transport(self):
-        graph = check_architecture.load_links(ROOT / "out/build/debug/architecture-targets.dot") if (
-            ROOT / "out/build/debug/architecture-targets.dot").exists() else None
-        if graph is None:
-            self.skipTest("No evaluated debug build graph")
+        build = os.environ.get("BLANK_ARCHITECTURE_BUILD")
+        if not build:
+            self.skipTest("Run under CTest for the current evaluated build graph")
+        graph = check_architecture.load_links(Path(build) / "architecture-targets.dot")
         self.assertFalse(check_architecture.reachable(graph, "profile_storage") & {"subscription_fetcher", "Qt6::Network"})
 
 

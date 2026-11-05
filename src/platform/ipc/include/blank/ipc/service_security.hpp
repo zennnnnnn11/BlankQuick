@@ -7,6 +7,8 @@
 #include <QStringList>
 #include <blank/windows/handle.hpp>
 
+// 由系统查询与管道模拟令牌共同确认的对端身份，不取自客户端 JSON。
+// lifetime 拥有进程观察句柄，用来检测原客户端退出，避免只靠可复用的 PID 判断存活。
 struct PipeIdentity {
     quint32 process = 0;
     quint32 session = 0;

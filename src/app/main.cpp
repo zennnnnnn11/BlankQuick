@@ -30,6 +30,8 @@ namespace {
 
 // NOLINTBEGIN(llvm-prefer-static-over-anonymous-namespace)
 class blank_window_events final : public QAbstractNativeEventFilter {
+    // 当前整窗都用于拖动，且禁止缩放/最大化。接入交互控件时必须缩小命中区域，
+    // 否则按钮上的鼠标输入也会被作为标题栏操作交给 Windows。
   public:
     explicit blank_window_events(QQuickWindow& window)
         : native_window{std::bit_cast<HWND>(window.winId())} {}
@@ -124,6 +126,8 @@ auto update_backdrop(QQuickWindow& window) -> void {
 } // namespace
 
 auto main(int argc, char* argv[]) -> int {
+    // 此入口目前只建立窗口外壳，不构造 RuntimeSession，也不启动代理副作用。
+    // 后续接入后端时应在此建立应用会话及关闭等待，QML 只提交意图和读取状态。
     const QGuiApplication application{argc, argv, QGuiApplication::ApplicationFlags};
     QQuickWindow::setDefaultAlphaBuffer(true);
     QQuickWindow::setGraphicsApi(QSGRendererInterface::Direct3D11);

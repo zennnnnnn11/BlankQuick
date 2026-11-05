@@ -1,5 +1,7 @@
 #include "service_host.hpp"
 
+#include <QtConcurrentRun>
+
 #include <AclAPI.h>
 #include <QCoreApplication>
 #include <QJsonArray>
@@ -8,7 +10,6 @@
 #include <QNetworkProxy>
 #include <QUrlQuery>
 #include <QUuid>
-#include <QtConcurrentRun>
 #include <blank/protocol/service_api.hpp>
 #include <blank/shared/timeouts.hpp>
 #include <chrono>
@@ -310,6 +311,9 @@ void ServiceHost::initialize() {
 }
 
 void ServiceHost::received(const QJsonObject& frame) try {
+    // 安全管道确认的是对端身份，命令本身仍须检查结构和能力。
+    // 生命周期命令不接受客户端指定 PID/路径；普通操作串行接纳，停止与观察类
+    // 命令按各自规则处理，不能把提权服务变成任意进程控制或 HTTP 转发工具。
     const auto id = frame.value(QStringLiteral("id")).toString();
     const auto command = frame.value(QStringLiteral("op")).toString();
     const auto arguments = frame.value(QStringLiteral("args")).toObject();
@@ -631,6 +635,8 @@ void ServiceHost::readConnections(const QString& id) {
 }
 
 void ServiceHost::forwardApi(const QJsonObject& arguments) {
+    // 每个可转发端点同时约束路径、方法和正文。完整配置走独立准入任务，
+    // 模式变更只允许一个字段；客户端拿到管道连接也不能自行改控制器或 TUN 所有权。
     if (arguments.size() != 3 || !arguments.value(QStringLiteral("path")).isString() ||
         !arguments.value(QStringLiteral("method")).isString() ||
         !arguments.value(QStringLiteral("body")).isString()) {
@@ -743,6 +749,8 @@ ServiceHost::WorkToken ServiceHost::workToken() const noexcept {
 }
 
 void ServiceHost::enableTun() {
+    // 开启分成计划、内核 PATCH、现场观察三步。任何阶段的旧结果都不能直接
+    // 使 tunActive_ 变真；它必须对应本次 kernelEpoch/tunEpoch 和当前资源身份。
     operation_ = Operation::Prepare;
     ++tunGeneration_;
     healthFailure_.invalidate();
@@ -806,7 +814,8 @@ void ServiceHost::stop(const QString& id, const QString& error) {
 }
 
 void ServiceHost::stopProcess() {
-
+    // 原生任务不能靠取消事件瞬间消失。等待编译、计划、观察、停止和清理任务
+    // 都退出后，再继续销毁它们可能仍在使用的资源；完成回调会再次进入这里。
     if (launchWork_ || compilerWork_ || plannerWork_ || observerWork_ || stopWork_ ||
         cleanupWork_) {
         return;
@@ -822,6 +831,8 @@ void ServiceHost::stopProcess() {
 }
 
 void ServiceHost::cleanup(Cleanup purpose) {
+    // TUN 回收放进有期限的独立维护进程。服务事件循环仍可报告状态，清理卡住
+    // 时保留日志和阻塞状态，不继续接纳一组可能与残留资源冲突的新任务。
     cleanup_ = purpose;
     operation_ = Operation::Cleanup;
     startWork(cleaner_, cleanupWork_, [] {
@@ -1032,6 +1043,8 @@ void ServiceHost::environmentObserved(const NetworkSnapshot& snapshot, Environme
 }
 
 void ServiceHost::checkEnvironment() {
+    // 环境通知只积累待办，真正修复等服务空闲后串行执行，不与用户配置操作竞争。
+    // 离线时保留现有 TUN/配置，避免把暂时断网误判成应该重新接管系统路由。
     if (!core_ || stopping_ || serviceStopping_ || suspended_) {
         return;
     }
@@ -1064,6 +1077,8 @@ void ServiceHost::checkEnvironment() {
 }
 
 void ServiceHost::environmentHealthFinished() {
+    // 查询异常与已确认的资源缺失采用不同策略：前者有限重查，后者等待网络
+    // 稳定并确认持续异常后才允许一次重建；修复后仍坏则停止并清理，避免循环接管。
     const auto token = std::exchange(healthWork_, std::nullopt);
     const auto result = health_.future().takeResult();
     if (!token || !core_ || stopping_ || serviceStopping_ || token->kernelEpoch != generation_ ||

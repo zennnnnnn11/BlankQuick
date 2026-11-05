@@ -32,6 +32,9 @@ template <json_document Json> struct read_result {
     read_error error{};
 };
 
+// 在 SAX 事件到来时限制深度/值数量，不等整棵树分配完才检查。
+// 对象栈各自记录键索引，因此可拒绝重复键；ordered_json 同时保留输入顺序。
+// 此工具只负责结构边界，字段类型、版本和业务引用仍由调用模块验证。
 template <json_document Json> class document_reader final : public nlohmann::json_sax<Json> {
   public:
     explicit document_reader(const read_options& selected) noexcept : options{selected} {}
@@ -47,19 +50,20 @@ template <json_document Json> class document_reader final : public nlohmann::jso
     auto number_unsigned(Json::number_unsigned_t value) -> bool override {
         return scalar(value);
     }
-    auto number_float(Json::number_float_t value, const Json::string_t&) -> bool override {
+    auto number_float(Json::number_float_t value, [[maybe_unused]] const Json::string_t& token)
+        -> bool override {
         return scalar(value);
     }
     auto string(Json::string_t& value) -> bool override {
         return scalar(std::move(value));
     }
-    auto binary(Json::binary_t&) noexcept -> bool override {
+    auto binary([[maybe_unused]] Json::binary_t& value) noexcept -> bool override {
         return reject(read_error::invalid_document);
     }
-    auto start_object(std::size_t) -> bool override {
+    auto start_object([[maybe_unused]] std::size_t elements) -> bool override {
         return start(Json::object());
     }
-    auto start_array(std::size_t) -> bool override {
+    auto start_array([[maybe_unused]] std::size_t elements) -> bool override {
         return start(Json::array());
     }
     auto end_object() -> bool override {
@@ -84,8 +88,9 @@ template <json_document Json> class document_reader final : public nlohmann::jso
         current.key = std::move(value);
         return true;
     }
-    auto parse_error(std::size_t, const std::string&, const Json::exception&) noexcept
-        -> bool override {
+    auto parse_error([[maybe_unused]] std::size_t position,
+                     [[maybe_unused]] const std::string& token,
+                     [[maybe_unused]] const Json::exception& failure) noexcept -> bool override {
         return reject(read_error::invalid_document);
     }
     [[nodiscard]] auto take(bool accepted) noexcept -> read_result<Json> {

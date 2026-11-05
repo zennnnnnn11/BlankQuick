@@ -1,9 +1,10 @@
 #ifndef BLANK_QUICK_ENVIRONMENT_MONITOR_HPP
 #define BLANK_QUICK_ENVIRONMENT_MONITOR_HPP
 
+#include <QTimer>
+
 #include <QFutureWatcher>
 #include <QObject>
-#include <QTimer>
 #include <atomic>
 #include <blank/environment/network_inventory.hpp>
 #include <functional>
@@ -57,7 +58,8 @@ class EnvironmentMonitor final : public QObject {
     EnvironmentMonitor(EnvironmentMonitor&&) = delete;
     EnvironmentMonitor& operator=(EnvironmentMonitor&&) = delete;
     void start();
-    [[nodiscard]] std::shared_ptr<EnvironmentBuffer> buffer() const;
+    [[nodiscard]] [[maybe_unused]] auto buffer() const noexcept
+        -> std::shared_ptr<EnvironmentBuffer>;
   Q_SIGNALS:
     void observed(const NetworkSnapshot& snapshot, EnvironmentBatch batch, bool changed);
     void failed(const QString& error);

@@ -1,4 +1,3 @@
-#include "service_host.hpp"
 #include <QCoreApplication>
 #include <QFile>
 #include <QSaveFile>
@@ -8,6 +7,8 @@
 #include <chrono>
 #include <exception>
 #include <thread>
+
+#include "service_host.hpp"
 
 namespace {
 void serviceMessage(QtMsgType type, const QMessageLogContext& context, const QString& message) {
@@ -61,7 +62,9 @@ void finishService(const std::shared_ptr<ServiceContext>& context, const QString
     QCoreApplication::exit(error.isEmpty() ? 0 : 1);
 }
 
-DWORD WINAPI serviceControl(DWORD control, DWORD, void*, void* data) {
+DWORD WINAPI serviceControl(DWORD control, DWORD /*eventType*/, void* /*eventData*/, void* data) {
+    // SCM 控制回调不在 Qt 会话线程，只置位停止事件。状态更新和异步清理由
+    // QWinEventNotifier 转回事件循环执行，避免从系统回调直接操作 ServiceHost。
     if (control == SERVICE_CONTROL_STOP || control == SERVICE_CONTROL_SHUTDOWN ||
         control == SERVICE_CONTROL_PRESHUTDOWN) {
         const auto* context = static_cast<ServiceContext*>(data);
@@ -71,6 +74,9 @@ DWORD WINAPI serviceControl(DWORD control, DWORD, void*, void* data) {
 }
 
 void startRuntime(const std::shared_ptr<ServiceContext>& context) try {
+    // SERVICE_RUNNING 只在启动恢复完成、服务管道就绪后发布；STOPPED 只在
+    // drained 或明确致命失败后发布。等待期间持续更新 SCM checkpoint，
+    // 不能在收到停止命令时立即退出，绕过内核和 TUN 的清理屏障。
     auto* application = QCoreApplication::instance();
 
     auto* host = &blank::qt::makeChild<ServiceHost>(*application);
@@ -115,7 +121,7 @@ void startRuntime(const std::shared_ptr<ServiceContext>& context) try {
     finishService(context, QStringLiteral("Unexpected service initialization failure."));
 }
 
-void WINAPI serviceEntry(DWORD, wchar_t**) try {
+void WINAPI serviceEntry(DWORD /*argc*/, wchar_t** /*argv*/) try {
     const auto context = std::make_shared<ServiceContext>();
     blank::windows::check(context->stop != nullptr && context->done != nullptr);
     context->handle = RegisterServiceCtrlHandlerExW(serviceName, serviceControl, context.get());

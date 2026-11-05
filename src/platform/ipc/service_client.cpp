@@ -22,6 +22,8 @@ void PipeReply::setTimeout(int milliseconds) {
 }
 
 void PipeReply::abort() {
+    // 这里只取消客户端等待，不代表服务端指令已停止执行。上层必须按事务阶段
+    // 判断结果是否不确定，不能把 OperationCanceledError 等同于“现场没有变化”。
     if (!isFinished()) {
         setError(OperationCanceledError, tr("服务请求已取消"));
         complete(499, {});
@@ -56,6 +58,8 @@ void PipeReply::complete(int status, QByteArray body, const QString& failure) {
     setFinished(true);
     const QPointer<PipeReply> lifetime{this};
     Q_EMIT readyRead();
+    // A readyRead slot may destroy this reply; QPointer observes that deletion.
+    // cppcheck-suppress knownConditionTrueFalse
     if (lifetime) {
         Q_EMIT finished();
     }
@@ -77,7 +81,8 @@ ServiceClient::~ServiceClient() {
 }
 
 PipeReply* ServiceClient::request(const QString& operation, const QJsonObject& arguments) {
-
+    // 先创建回复对象并排队，连接通过服务端身份核验后才发送积压帧。
+    // 本地拒绝也延后一轮完成，让调用者有机会先连接 finished 信号。
     auto* reply = &blank::qt::makeChild<PipeReply>(*this, nullptr);
     if (pending_.size() >= 16) {
         QTimer::singleShot(std::chrono::milliseconds{0}, reply,
@@ -210,6 +215,8 @@ void ServiceClient::received() {
 }
 
 void ServiceClient::fail(const QString& message) {
+    // 先移出所有 pending，再逐个发布失败。complete 会同步触发 finished 槽，
+    // 这些槽可能删除回复或修改请求表，不能在遍历原容器时允许它们改动容器。
     const bool wasConnected = std::exchange(verified_, false);
     input_.clear();
     unsent_.clear();

@@ -5,6 +5,8 @@
 
 namespace blank::protocol {
 FrameResult<std::monostate> JsonFrames::append(QByteArrayView bytes) {
+    // 上限针对尚未消费的字节。offset_ 前的内容已经处理，追加前再压缩缓冲区，
+    // 避免每读一帧都搬移剩余数据，也避免已消费内容占用下一次接收预算。
     if (failure_) {
         return FrameResult<std::monostate>{*failure_};
     }

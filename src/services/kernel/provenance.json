@@ -3,6 +3,7 @@
   "source_head": "3c2481bd7bf7276191c5ac61d91d24b494329a86",
   "source_has_uncommitted_changes": true,
   "source_license": "No project LICENSE found; local user-provided source, no public redistribution performed.",
+  "record_scope": "Original source-import snapshot. Target paths and integrated hashes describe that import, not the current tree. See docs/architecture.md for the current layout.",
   "files": [
     {
       "source": "src/foundation/windows/handle.cpp",

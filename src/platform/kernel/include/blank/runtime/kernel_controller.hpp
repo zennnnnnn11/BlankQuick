@@ -1,6 +1,8 @@
 #ifndef BLANK_QUICK_KERNEL_CONTROLLER_HPP
 #define BLANK_QUICK_KERNEL_CONTROLLER_HPP
 
+#include <QTimer>
+
 #include <QFutureWatcher>
 #include <QJsonObject>
 #include <QNetworkAccessManager>
@@ -8,7 +10,6 @@
 #include <QObject>
 #include <QPointer>
 #include <QString>
-#include <QTimer>
 #include <blank/process/native_kernel.hpp>
 #include <memory>
 
@@ -16,6 +17,8 @@ class QNetworkReply;
 class QWinEventNotifier;
 class ServiceClient;
 
+// 将本机进程模式和服务模式封装成同一内核连接接口。只维护连接/资源事实，
+// 不选择订阅、不安排业务配置切换，也不直接开启系统代理。
 class KernelController final : public QObject {
     Q_OBJECT
     Q_PROPERTY(State state READ state NOTIFY stateChanged FINAL)
@@ -33,6 +36,8 @@ class KernelController final : public QObject {
         Failed,
     };
     Q_ENUM(State)
+    // 运行状态与资源归属分开：Failed 可能仍有进程或服务资源未确认释放。
+    // 只有 Released 才允许重新启动，避免错误重试叠加第二组内核资源。
     enum class Resources : quint8 {
         Released,
         Pending,
@@ -64,7 +69,7 @@ class KernelController final : public QObject {
     [[nodiscard]] bool serviceManaged() const noexcept;
     [[nodiscard]] bool maintenance() const noexcept;
     [[nodiscard]] Resources resources() const noexcept;
-    void useService(bool enabled);
+    [[maybe_unused]] void useService(bool enabled);
     void start();
     void stop();
     void shutdown();

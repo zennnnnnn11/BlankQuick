@@ -21,7 +21,7 @@ Checks: >-
   -readability-function-cognitive-complexity,
   -readability-function-size
 WarningsAsErrors: '*'
-HeaderFilterRegex: '[/\\]src[/\\](platform|services|features[/\\](runtime|system_proxy|telemetry))[/\\]'
+HeaderFilterRegex: '[/\\]src[/\\](platform[/\\](windows|storage|config|process|environment|protocol|ipc|tun|kernel|system_proxy|telemetry|qt)|services|application[/\\]runtime|domain[/\\]service_config)[/\\]'
 SystemHeaders: false
 FormatStyle: file
 CheckOptions:

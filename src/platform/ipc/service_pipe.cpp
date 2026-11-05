@@ -49,6 +49,8 @@ SecurePipe::~SecurePipe() {
 }
 
 void SecurePipe::listen() {
+    // 首实例标志避免接入已存在的同名管道，拒绝远程客户端；ACL 为当前登录
+    // 会话授予受限访问，真正读到请求后还要用 identifyPipeClient 复核对端身份。
     allowed_ = loggedOnSids();
     const auto descriptor = pipeDescriptor(allowed_);
     SECURITY_ATTRIBUTES security{
@@ -110,6 +112,8 @@ void SecurePipe::accepted() try {
 }
 
 void SecurePipe::read() try {
+    // 每轮最多分发 32 帧，再把剩余工作排回事件循环，防止一位客户端用连续
+    // 请求饿死超时、断连和清理事件。信号处理后要重查连接，槽函数可能已拒绝对端。
     if (peer_.state() != QLocalSocket::ConnectedState) {
         return;
     }

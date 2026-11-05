@@ -13,6 +13,9 @@ namespace json_detail {
 
 // NOLINTBEGIN(altera-unroll-loops,fuchsia-default-arguments-calls,readability-redundant-member-init)
 
+// 借用一个 ordered_json 对象，并记录名称到数组下标的对应关系。
+// 使用期间只能通过本接口追加/更新成员，不能从外部删除、重排或替换底层对象，
+// 否则 names 保存的下标会失效；它不拥有被借用对象的生命期。
 class ordered_object final {
   public:
     explicit ordered_object(nlohmann::ordered_json& value) : object{value.get_ref<object_type&>()} {

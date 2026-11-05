@@ -1,0 +1,3 @@
+blank_library(subscription_fetcher subscription_fetcher.cpp)
+target_link_libraries(subscription_fetcher PUBLIC subscription_input PRIVATE Qt6::Network)
+add_library(BlankQuick::Subscriptions ALIAS subscription_fetcher)

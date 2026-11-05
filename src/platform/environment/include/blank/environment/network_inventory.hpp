@@ -13,6 +13,6 @@ struct NetworkSnapshot {
 };
 
 [[nodiscard]] NetworkSnapshot readNetworkSnapshot();
-[[nodiscard]] NetworkSnapshot readNetworkDiagnostics();
+[[nodiscard]] [[maybe_unused]] NetworkSnapshot readNetworkDiagnostics();
 
 #endif

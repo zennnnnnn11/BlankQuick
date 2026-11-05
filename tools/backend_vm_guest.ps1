@@ -1,30 +1,50 @@
-param([Parameter(Mandatory)][string] $PackageRoot, [Parameter(Mandatory)][string] $Mode)
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory)][string] $PackageRoot,
+    [ValidateSet('all', 'profile-activation', 'domain-configuration', 'application-pipeline')]
+    [string] $Mode = 'all'
+)
+Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-$env:BLANK_VM_LAB = '1'
 $env:QT_FATAL_WARNINGS = '1'
-$status = Join-Path $PackageRoot "$Mode.status.json"
-$identity = [pscustomobject]@{
-    User = [Security.Principal.WindowsIdentity]::GetCurrent().Name
-    Elevated = ([Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-    SessionId = (Get-Process -Id $PID).SessionId
+$packageDirectory = [IO.Path]::GetFullPath($PackageRoot)
+$programs = [ordered]@{
+    'profile-activation' = 'profile_activation_test.exe'
+    'domain-configuration' = 'domain_configuration_test.exe'
+    'application-pipeline' = 'application_pipeline_test.exe'
 }
-[IO.File]::WriteAllText((Join-Path $PackageRoot "$Mode.identity.json"), ($identity | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
-
-$process = Start-Process -FilePath (Join-Path $PackageRoot 'backend_lab.exe') -WorkingDirectory $PackageRoot -WindowStyle Hidden -PassThru -ArgumentList @(
-    $Mode, ('"' + (Join-Path $PackageRoot 'core/mihomo.exe') + '"'), ('"' + $status + '"')
-) -RedirectStandardOutput (Join-Path $PackageRoot "$Mode.stdout.txt") -RedirectStandardError (Join-Path $PackageRoot "$Mode.stderr.txt")
-$process.Id | Set-Content -LiteralPath (Join-Path $PackageRoot "$Mode.host.pid")
-# Windows PowerShell can otherwise release its process handle before ExitCode is queried.
-$nativeHandle = $process.Handle
-if (-not $process.WaitForExit(210000)) {
-    # The exact child was started by this script; its owned Job and proxy guard
-    # perform abnormal-exit recovery. Never kill by a process name.
-    $process.Kill()
-    $process.WaitForExit()
-    $exitCode = 124
-} else {
-    $exitCode = $process.ExitCode
-    if ($null -eq $exitCode) { $exitCode = 125 }
+$selected = @($programs.Keys | Where-Object { $Mode -eq 'all' -or $_ -eq $Mode })
+foreach ($name in $selected) {
+    if (-not (Test-Path -LiteralPath (Join-Path $packageDirectory $programs[$name]) -PathType Leaf)) {
+        throw "Missing test executable: $($programs[$name]). Build test_binaries and package with -IncludeTests."
+    }
 }
-$exitCode | Set-Content -LiteralPath (Join-Path $PackageRoot "$Mode.exit.txt")
-$process.Dispose()
+$results = @(
+    foreach ($name in $selected) {
+        $timer = [Diagnostics.Stopwatch]::StartNew()
+        $process = Start-Process -FilePath (Join-Path $packageDirectory $programs[$name]) `
+            -WorkingDirectory $packageDirectory -WindowStyle Hidden -PassThru `
+            -RedirectStandardOutput (Join-Path $packageDirectory "$name.stdout.txt") `
+            -RedirectStandardError (Join-Path $packageDirectory "$name.stderr.txt")
+        try {
+            # Keep the native handle alive until ExitCode has been captured.
+            $processHandle = $process.Handle
+            if (-not $process.WaitForExit(15000)) {
+                $process.Kill()
+                $process.WaitForExit()
+                $code = 124
+            } else {
+                $code = $process.ExitCode
+                if ($null -eq $code) { $code = 125 }
+            }
+            [ordered]@{ Test = $name; ExitCode = $code; ElapsedMilliseconds = $timer.ElapsedMilliseconds }
+        } finally {
+            $process.Dispose()
+        }
+    }
+)
+$identity = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+$report = [ordered]@{ User = $identity; Tests = $results }
+$report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $packageDirectory "$Mode.results.json") -Encoding UTF8
+$report | ConvertTo-Json -Depth 5
+if (@($results | Where-Object { $_.ExitCode -ne 0 }).Count -gt 0) { exit 1 }

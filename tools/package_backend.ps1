@@ -6,12 +6,14 @@ param(
     [Parameter(Mandatory)][string] $MihomoLicense,
     [Parameter(Mandatory)][string] $Output,
     [string] $QtRoot = 'C:/Qt/6.12.0/msvc2022_64',
-    [switch] $IncludeTests
+    [switch] $IncludeTests,
+    [string] $BuildDirectory
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$build = Join-Path $projectRoot 'out/build/release/backend-bin'
+$buildRoot = if ($BuildDirectory) { [IO.Path]::GetFullPath($BuildDirectory, $projectRoot) } else { Join-Path $projectRoot 'out/build/release' }
+$build = Join-Path $buildRoot 'backend-bin'
 $lock = Get-Content -LiteralPath (Join-Path $projectRoot 'src/services/kernel/dependencies.lock.json') -Raw | ConvertFrom-Json
 foreach ($dependency in @(@{ Path = $Mihomo; Hash = $lock.mihomo.sha256 }, @{ Path = $Wintun; Hash = $lock.wintun.sha256 })) {
     if ((Get-FileHash -LiteralPath $dependency.Path -Algorithm SHA256).Hash -ine $dependency.Hash) {
@@ -41,7 +43,10 @@ Copy-Item -LiteralPath (Join-Path $QtRoot 'bin/Qt6Qml.dll') -Destination $destin
 Copy-Item -LiteralPath (Join-Path $build 'system_proxy_guard.exe') -Destination $destination
 Copy-Item -LiteralPath (Join-Path $build 'blank_quick_service.exe') -Destination $service
 if ($IncludeTests) {
-    Copy-Item -LiteralPath (Join-Path $projectRoot 'out/build/release/profile_activation_test.exe') -Destination $destination
+    foreach ($test in @('profile_activation_test', 'domain_configuration_test', 'application_pipeline_test')) {
+        Copy-Item -LiteralPath (Join-Path $buildRoot ($test + '.exe')) -Destination $destination
+    }
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'backend_vm_guest.ps1') -Destination $destination
 }
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
 $vs = & $vswhere -latest -products '*' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath

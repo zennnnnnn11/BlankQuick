@@ -1,0 +1,6 @@
+blank_library(runtime_settings_storage runtime_settings_storage.cpp)
+target_link_libraries(runtime_settings_storage PUBLIC runtime_config PRIVATE Qt6::Core)
+blank_library(runtime_context runtime_context.cpp)
+target_link_libraries(runtime_context PUBLIC runtime_config PRIVATE Qt6::Core)
+blank_library(runtime_kernel_check runtime_kernel_check.cpp)
+target_link_libraries(runtime_kernel_check PUBLIC blank_shared PRIVATE Qt6::Core)

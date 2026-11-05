@@ -109,6 +109,9 @@ QStringList loggedOnSids() {
 }
 
 PipeIdentity identifyPipeClient(HANDLE pipe, const QStringList& allowed) {
+    // 同时核对管道报告的 PID/Session、进程令牌的登录 SID 和模拟管道客户端的 SID。
+    // 模拟仅用于取证，必须在任何返回/异常路径恢复服务身份；恢复失败不能继续执行
+    // 后续提权命令，因此这里采用终止进程的失败处理。
     ULONG process = 0;
     ULONG session = 0;
     blank::windows::check(GetNamedPipeClientProcessId(pipe, &process) != FALSE);
@@ -154,6 +157,8 @@ PipeIdentity identifyPipeClient(HANDLE pipe, const QStringList& allowed) {
 }
 
 void verifyServicePipe(HANDLE pipe) {
+    // 客户端也要认证服务端：SYSTEM 所有者只是必要条件，还要与 SCM 中正在
+    // 运行的指定服务 PID、Session 0 一致，防止同名管道被其他进程抢占。
     PSID owner = nullptr;
     void* descriptor = nullptr;
     const auto status = GetSecurityInfo(pipe, SE_KERNEL_OBJECT, OWNER_SECURITY_INFORMATION, &owner,
@@ -207,6 +212,8 @@ bool elevatedProcess() {
 }
 
 void verifyTrustedPath(const QString& path) {
+    // 提权进程加载的文件不仅要求存在，还要求沿途无重解析点、所有者可信且
+    // DACL 不允许非可信主体改写。检查到受信任共享根为止，不能只验证最终文件名。
     auto current = QFileInfo(path).absoluteFilePath();
     const auto programFiles = knownDirectory(FOLDERID_ProgramFiles);
     const auto programData = knownDirectory(FOLDERID_ProgramData);

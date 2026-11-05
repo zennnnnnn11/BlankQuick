@@ -5,9 +5,10 @@
 
 #include <iphlpapi.h>
 
+#include <QtConcurrentRun>
+
 #include <Netioapi.h>
 #include <PowrProf.h>
-#include <QtConcurrentRun>
 #include <blank/environment/environment_monitor.hpp>
 #include <chrono>
 #include <exception>
@@ -29,15 +30,16 @@ void publishNetwork(void* context, MIB_NOTIFICATION_TYPE type) noexcept {
     }
 }
 
-void CALLBACK interfaceChanged(void* context, MIB_IPINTERFACE_ROW*, MIB_NOTIFICATION_TYPE type) {
+void CALLBACK interfaceChanged(void* context, MIB_IPINTERFACE_ROW* /*row*/,
+                               MIB_NOTIFICATION_TYPE type) {
     publishNetwork(context, type);
 }
 
-void CALLBACK routeChanged(void* context, MIB_IPFORWARD_ROW2*, MIB_NOTIFICATION_TYPE type) {
+void CALLBACK routeChanged(void* context, MIB_IPFORWARD_ROW2* /*row*/, MIB_NOTIFICATION_TYPE type) {
     publishNetwork(context, type);
 }
 
-ULONG CALLBACK powerChanged(void* context, ULONG type, void*) {
+ULONG CALLBACK powerChanged(void* context, ULONG type, void* /*setting*/) {
     auto* buffer = static_cast<EnvironmentBuffer*>(context);
     if (type == PBT_APMSUSPEND) {
         buffer->publish(EnvironmentChange::Suspending);
@@ -49,6 +51,8 @@ ULONG CALLBACK powerChanged(void* context, ULONG type, void*) {
 } // namespace
 
 class NativeEnvironmentNotifications final {
+    // Windows 回调可能来自任意系统线程，只向共享缓冲区发布原子标记，
+    // 不直接操作 QObject。注销必须先于缓冲区销毁，避免系统继续使用 context。
   public:
     explicit NativeEnvironmentNotifications(std::shared_ptr<EnvironmentBuffer> buffer)
         : buffer_(std::move(buffer)),
@@ -97,6 +101,8 @@ bool EnvironmentBatch::resumed() const noexcept {
 }
 
 void EnvironmentBuffer::publish(EnvironmentChange change) noexcept {
+    // 位集合只表达“发生过哪些变化”，不记录每次通知，避免网络风暴无限积压。
+    // 挂起状态单独保存，合并多个通知后仍能知道当前应暂停还是恢复读取。
     if (change == EnvironmentChange::Suspending) {
         suspended_.store(true);
     } else if (change == EnvironmentChange::Resumed) {
@@ -195,6 +201,8 @@ void EnvironmentMonitor::start() {
 }
 
 void EnvironmentMonitor::sample() {
+    // 同时只读一份系统快照。采样期间新来的事件留在 buffer，下一轮继续处理；
+    // 读取失败会保留本轮标记重试，不能把查询失败发布为一次真实的离线变化。
     if (!snapshot_.isRunning()) {
         sampling_ = buffer_->take();
         const auto read = options_.read;
@@ -212,6 +220,7 @@ void EnvironmentMonitor::sample() {
     }
 }
 
-std::shared_ptr<EnvironmentBuffer> EnvironmentMonitor::buffer() const {
+[[maybe_unused]] auto EnvironmentMonitor::buffer() const noexcept
+    -> std::shared_ptr<EnvironmentBuffer> {
     return buffer_;
 }

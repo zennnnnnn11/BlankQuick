@@ -20,6 +20,8 @@
 #include <type_traits>
 #include <utility>
 
+// 提权执行边界，只管理本服务拥有的进程、TUN 与清理状态。
+// 不读取客户端订阅或覆写存储，也不决定用户该启用哪份业务配置。
 class ServiceHost final : public QObject {
     Q_OBJECT
   public:
@@ -72,6 +74,8 @@ class ServiceHost final : public QObject {
     Q_ENUM(Repair)
 
     struct WorkToken {
+        // 原生任务可能比取消请求更晚结束。只有会话、操作和资源身份
+        // 全部一致，结果才能推进状态；过期资源仍须经过清理。
         quint64 kernelEpoch = 0;
         qint64 tunEpoch = 0;
         Operation operation = Operation::Idle;
@@ -83,6 +87,8 @@ class ServiceHost final : public QObject {
     template <std::movable Result, std::invocable Start>
         requires std::same_as<std::invoke_result_t<Start>, QFuture<Result>>
     void startWork(QFutureWatcher<Result>& watcher, std::optional<WorkToken>& work, Start&& start) {
+        // 先登记身份再启动任务。同步启动失败时作用域守卫撤销登记；成功后由
+        // 完成回调取走 token。它既是结果准入凭据，也是停止流程等待任务的屏障。
         work = workToken();
         auto reset = qScopeGuard([&work]() noexcept { work.reset(); });
         watcher.setFuture(std::invoke(std::forward<Start>(start)));

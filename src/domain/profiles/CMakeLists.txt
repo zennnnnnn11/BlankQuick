@@ -1,0 +1,8 @@
+blank_library(node_filter node_filter.cpp)
+target_link_libraries(node_filter PUBLIC node_model)
+blank_library(profile_payload minimal_profile.cpp)
+target_link_libraries(profile_payload PUBLIC node_model PRIVATE node_input node_filter)
+blank_library(profile_types profile_types.cpp)
+target_link_libraries(profile_types PUBLIC node_model subscription_contracts)
+blank_library(profile_codec profile_codec.cpp profile_codec_fields.inc profile_codec_nodes.inc)
+target_link_libraries(profile_codec PUBLIC profile_types)

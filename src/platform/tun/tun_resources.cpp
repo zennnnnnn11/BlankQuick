@@ -5,6 +5,8 @@
 
 #include <iphlpapi.h>
 
+#include <QThread>
+
 #include <Netioapi.h>
 #include <Objbase.h>
 #include <QCryptographicHash>
@@ -14,7 +16,6 @@
 #include <QHostAddress>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QThread>
 #include <QUuid>
 #include <SetupAPI.h>
 #include <algorithm>
@@ -239,6 +240,9 @@ QString tunGuid(const QString& device) {
 }
 
 TunPlan prepareTun(const QString& journal, TunRequirements requirements) try {
+    // 先确认没有未完成的旧恢复日志，再分配唯一身份并持久化计划。
+    // 内核随后才被允许创建该 TUN；即使进程在创建后立即退出，下次启动仍知道
+    // 哪组资源属于本服务，不能先创建设备再“尽量补写”恢复信息。
     if (!readPlan(journal).device.isEmpty()) {
         throw std::runtime_error("Previous TUN resources have not been released.");
     }
@@ -257,6 +261,8 @@ TunPlan prepareTun(const QString& journal, TunRequirements requirements) try {
 }
 
 TunPlan observeTun(const QString& journal, std::optional<TunRequirements> requirements) try {
+    // 内核报告启用成功不等于网卡就绪。必须观察到同一 GUID 的接口、Up 状态
+    // 和配置所需路由，才把实际 LUID 写回恢复日志并向服务报告成功。
     auto plan = readPlan(journal);
     if (requirements) {
         plan.requirements = *requirements;
@@ -335,6 +341,8 @@ TunHealth inspectTun(const QString& journal) try {
 }
 
 QString releaseTun(const QString& journal) try {
+    // 日志是尚待回收资源的依据。设备和所属路由都确认消失后才能删除日志；
+    // 超时或查询失败保留日志，让下次恢复继续处理，不能宣称已经释放。
     const auto plan = readPlan(journal);
     if (plan.device.isEmpty()) {
         return {};

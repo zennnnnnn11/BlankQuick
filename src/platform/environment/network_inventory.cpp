@@ -163,6 +163,8 @@ NetworkSnapshot readNetworkInventory(bool detailed) try {
 } // namespace
 
 NetworkSnapshot readNetworkSnapshot() {
+    // 常规观察只返回用于比较的指纹和在线事实；诊断入口另外附带完整明细。
+    // 指纹排除本客户端拥有的虚拟网卡，避免自己的 TUN 变化触发无休止自我修复。
     return readNetworkInventory(false);
 }
 

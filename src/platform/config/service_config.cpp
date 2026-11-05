@@ -1,202 +1,55 @@
 #include <Windows.h>
 
-#include <blank/shared/bounded_json.hpp>
-#include <QCryptographicHash>
 #include <QDir>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonValue>
-#include <QSet>
-#include <QStringList>
-#include <QUrl>
+#include <QJsonObject>
 #include <blank/config/service_config.hpp>
-#include <cmath>
-#include <deque>
-#include <limits>
-#include <stdexcept>
-#include <string_view>
-#include <utility>
-#include <vector>
+#include <exception>
 
 namespace {
-void require(bool valid, const char* message) {
-    if (!valid) {
-        throw std::runtime_error(message);
+QString checkProviderPaths(const QJsonObject& configuration, const QString& root) {
+    // 数据层已检查字符串路径；这里只观察磁盘并拒绝重解析点。
+    // 服务进程在自己的权限边界重复检查，不能信任客户端的检查结果。
+    if (root.isEmpty()) {
+        return {};
     }
-}
-
-void cachePath(const QString& path, const QString& root) {
-    const auto normalized = QDir::fromNativeSeparators(path);
-    require(!path.isEmpty() && path.size() <= 32768 && !path.contains(u':') &&
-                !normalized.startsWith(u'/') && !path.contains(QChar::Null),
-            "Provider files must stay in the core home.");
-    auto current = root;
-    const auto parts = normalized.split(u'/');
-    for (const auto& part : parts) {
-        if (part == QStringLiteral(".")) {
-            continue;
-        }
-        require(!part.isEmpty() && part != QStringLiteral("..") && !part.endsWith(u'.') &&
-                    !part.endsWith(u' '),
-                "Unsafe provider file path.");
-        if (!root.isEmpty()) {
-            current += u'/' + part;
-            const auto wide = QDir::toNativeSeparators(current).toStdWString();
-            const auto attributes = GetFileAttributesW(wide.c_str());
-            require(attributes == INVALID_FILE_ATTRIBUTES ||
-                        (attributes & FILE_ATTRIBUTE_REPARSE_POINT) == 0,
-                    "Provider path traverses a reparse point.");
-        }
-    }
-}
-
-QJsonObject providerPaths(QJsonObject entries, const QString& kind, const QString& root) {
-    for (auto item = entries.begin(); item != entries.end(); ++item) {
-        if (!item.value().isObject()) {
-            continue;
-        }
-        auto provider = item.value().toObject();
-        auto path = provider.value(QStringLiteral("path")).toString();
-        if (path.isEmpty() && provider.value(QStringLiteral("type")) == QStringLiteral("http")) {
-            const auto hash =
-                QCryptographicHash::hash(
-                    (item.key() + u'\n' + provider.value(QStringLiteral("url")).toString())
-                        .toUtf8(),
-                    QCryptographicHash::Sha256)
-                    .toHex();
-            path = QStringLiteral("providers/%1/%2").arg(kind, QString::fromLatin1(hash));
-            provider.insert(QStringLiteral("path"), path);
-        }
-        if (!path.isEmpty()) {
-            cachePath(path, root);
-        }
-        item.value() = provider;
-    }
-    return entries;
-}
-
-void defaults(QJsonObject& object, const QJsonObject& fallback) {
-    for (auto item = fallback.begin(); item != fallback.end(); ++item) {
-        if (!object.contains(item.key())) {
-            object.insert(item.key(), item.value());
+    for (const auto* key : {"proxy-providers", "rule-providers"}) {
+        const auto providers = configuration.value(QString::fromLatin1(key)).toObject();
+        for (const auto& entry : providers) {
+            const auto path = entry.toObject().value(QStringLiteral("path")).toString();
+            if (path.isEmpty()) {
+                continue;
+            }
+            auto current = root;
+            const auto parts = QDir::fromNativeSeparators(path).split(u'/');
+            for (const auto& part : parts) {
+                if (part == QStringLiteral(".")) {
+                    continue;
+                }
+                current += u'/' + part;
+                const auto wide = QDir::toNativeSeparators(current).toStdWString();
+                const auto attributes = GetFileAttributesW(wide.c_str());
+                if (attributes != INVALID_FILE_ATTRIBUTES &&
+                    (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
+                    return QStringLiteral("Provider path traverses a reparse point.");
+                }
+            }
         }
     }
-}
-
-QJsonObject defaultDns(bool ipv6) {
-    return {
-        {QStringLiteral("enable"), true},
-        {QStringLiteral("listen"), QStringLiteral("127.0.0.1:0")},
-        {QStringLiteral("enhanced-mode"), QStringLiteral("fake-ip")},
-        {QStringLiteral("ipv6"), ipv6},
-        {
-            QStringLiteral("default-nameserver"),
-            QJsonArray{QStringLiteral("223.5.5.5"), QStringLiteral("1.1.1.1")},
-        },
-        {
-            QStringLiteral("nameserver"),
-            QJsonArray{
-                QStringLiteral("https://dns.alidns.com/dns-query"),
-                QStringLiteral("https://1.1.1.1/dns-query"),
-            },
-        },
-    };
+    return {};
 }
 } // namespace
 
-QJsonObject serviceTunConfig(const QString& device, bool enabled) {
-    return {
-        {QStringLiteral("enable"), enabled},
-        {QStringLiteral("device"), device},
-        {QStringLiteral("stack"), QStringLiteral("gvisor")},
-        {QStringLiteral("auto-route"), true},
-        {QStringLiteral("auto-detect-interface"), true},
-        {QStringLiteral("strict-route"), true},
-        {QStringLiteral("mtu"), 1500},
-        {QStringLiteral("dns-hijack"), QJsonArray{QStringLiteral("any:53")}},
-    };
-}
-
-ServiceConfig parseProfileConfig(const QString& json) try {
-    require(json.size() <= qint64{4} * 1024 * 1024 && !json.contains(QChar::Null),
-            "Invalid JSON size or encoding.");
-    const auto bytes = json.toUtf8();
-    require(bytes.size() <= qint64{4} * 1024 * 1024, "JSON configuration exceeds the byte limit.");
-    const auto checked = json_detail::read<nlohmann::json>(
-        std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())),
-        {.max_event_depth = 24, .max_values = 100000, .reject_duplicates = true});
-    require(checked.error == json_detail::read_error::none && checked.value.is_object(),
-            "Service configuration must be bounded JSON generated by the client.");
-    const auto document = QJsonDocument::fromJson(bytes);
-    require(document.isObject(), "Configuration must be a mapping.");
-    return {.value = document.object(), .error = {}};
-} catch (const std::exception& error) {
-    return {.value = {}, .error = QString::fromUtf8(error.what()).left(512)};
-}
-
 ServiceConfig compileServiceConfig(const QString& json, quint16 mixedPort, const QString& device,
                                    bool tunEnabled, const QString& providerRoot) try {
-    const auto parsed = parseProfileConfig(json);
-    require(parsed.error.isEmpty(), parsed.error.toStdString().c_str());
-    auto object = parsed.value;
-    defaults(object, {
-                         {QStringLiteral("mixed-port"), mixedPort},
-                         {QStringLiteral("mode"), QStringLiteral("rule")},
-                         {QStringLiteral("find-process-mode"), QStringLiteral("always")},
-                         {
-                             QStringLiteral("profile"),
-                             QJsonObject{
-                                 {QStringLiteral("store-selected"), false},
-                                 {QStringLiteral("store-fake-ip"), false},
-                             },
-                         },
-                     });
-    const auto port = object.value(QStringLiteral("mixed-port")).toInteger(-1);
-    require(port >= 1 && port <= 65535, "mixed-port must be between 1 and 65535.");
-
-    for (const auto* key : {
-             "external-controller",
-             "external-controller-tls",
-             "external-controller-unix",
-             "external-controller-pipe",
-             "secret",
-         }) {
-        object.remove(QString::fromLatin1(key));
+    auto result = composeServiceConfig(json, mixedPort, device, tunEnabled);
+    if (!result.error.isEmpty()) {
+        return result;
     }
-    for (const auto& kind : {QStringLiteral("proxies"), QStringLiteral("rules")}) {
-        const auto key = kind == QStringLiteral("proxies") ? QStringLiteral("proxy-providers")
-                                                           : QStringLiteral("rule-providers");
-        if (object.value(key).isObject()) {
-            object.insert(key, providerPaths(object.value(key).toObject(), kind, providerRoot));
-        }
+    const auto error = checkProviderPaths(result.value, providerRoot);
+    if (!error.isEmpty()) {
+        return {.value = {}, .error = error};
     }
-    require(!object.contains(QStringLiteral("tun")) ||
-                object.value(QStringLiteral("tun")).isObject(),
-            "tun must be a mapping.");
-    require(!object.contains(QStringLiteral("dns")) ||
-                object.value(QStringLiteral("dns")).isObject(),
-            "dns must be a mapping.");
-    auto tun = object.value(QStringLiteral("tun")).toObject();
-    defaults(tun, serviceTunConfig(device, tunEnabled));
-    tun.insert(QStringLiteral("enable"), tunEnabled);
-    tun.insert(QStringLiteral("device"), device);
-    if (object.value(QStringLiteral("ipv6")).toBool() &&
-        !tun.contains(QStringLiteral("inet6-address"))) {
-        tun.insert(QStringLiteral("inet6-address"),
-                   QJsonArray{QStringLiteral("fdfe:dcba:9876::1/126")});
-    }
-    object.insert(QStringLiteral("tun"), tun);
-    auto dns = object.value(QStringLiteral("dns")).toObject();
-    defaults(dns, defaultDns(object.value(QStringLiteral("ipv6")).toBool()));
-    const auto mode = dns.value(QStringLiteral("enhanced-mode")).toString();
-    require(dns.value(QStringLiteral("enable")) == QJsonValue{true} &&
-                (mode == QStringLiteral("fake-ip") || mode == QStringLiteral("redir-host")),
-            "DNS must stay enabled in fake-ip or redir-host mode.");
-    if (mode == QStringLiteral("fake-ip") && !dns.contains(QStringLiteral("fake-ip-range"))) {
-        dns.insert(QStringLiteral("fake-ip-range"), QStringLiteral("198.18.0.1/16"));
-    }
-    object.insert(QStringLiteral("dns"), dns);
-    return {.value = object, .error = {}};
+    return result;
 } catch (const std::exception& error) {
     return {.value = {}, .error = QString::fromUtf8(error.what()).left(512)};
 }

@@ -7,6 +7,7 @@
 #include <blank/profiles/profile_runtime.hpp>
 #include <blank/profiles/profile_storage.hpp>
 #include <blank/runtime_config/runtime_config.hpp>
+#include <blank/runtime_config/runtime_context.hpp>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>

@@ -1,13 +1,14 @@
 #ifndef BLANK_QUICK_SERVICE_CLIENT_HPP
 #define BLANK_QUICK_SERVICE_CLIENT_HPP
 
+#include <QTimer>
+
 #include <QHash>
 #include <QJsonObject>
 #include <QLocalSocket>
 #include <QMap>
 #include <QNetworkReply>
 #include <QPointer>
-#include <QTimer>
 #include <blank/protocol/json_frame.hpp>
 
 class PipeReply final : public QNetworkReply {

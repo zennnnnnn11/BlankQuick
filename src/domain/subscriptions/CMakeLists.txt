@@ -1,0 +1,5 @@
+add_library(subscription_contracts INTERFACE)
+target_include_directories(subscription_contracts INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_link_libraries(subscription_contracts INTERFACE node_model node_input)
+blank_library(subscription_input subscription_metadata.cpp subscription_response.cpp)
+target_link_libraries(subscription_input PUBLIC subscription_contracts PRIVATE Qt6::Core)

@@ -1,3 +1,5 @@
+#include <QtConcurrentRun>
+
 #include <QCoreApplication>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -6,7 +8,6 @@
 #include <QNetworkRequest>
 #include <QUrl>
 #include <QWinEventNotifier>
-#include <QtConcurrentRun>
 #include <blank/ipc/service_client.hpp>
 #include <blank/protocol/service_api.hpp>
 #include <blank/runtime/kernel_controller.hpp>
@@ -121,6 +122,8 @@ KernelController::PublishedStatus KernelController::currentStatus() const {
 }
 
 void KernelController::publishStatus() {
+    // 先发布完整快照，再发细分信号；同步订阅者读取任何属性时都看到同一版事实。
+    // 状态值相同但 PID/资源/维护信息变化时，仍需要 statusChanged 通知。
     const auto current = currentStatus();
     if (published_ == current) {
         return;
@@ -148,6 +151,8 @@ void KernelController::setState(State nextState) {
 }
 
 void KernelController::start() {
+    // 接纳启动以资源已经释放为前提，而不是仅检查显示状态。尤其服务连接丢失
+    // 后，客户端不知道远端进程是否仍在运行，不能把 Failed 当成 Stopped。
     if (quitting_ || resources() != Resources::Released ||
         (state_ != State::Stopped && state_ != State::Failed)) {
         return;
@@ -440,6 +445,8 @@ QNetworkReply* KernelController::serviceRequest(const QString& operation,
 QNetworkReply* KernelController::sendRequest(QNetworkAccessManager& network,
                                              const QByteArray& target, const QByteArray& body,
                                              const QByteArray& method) {
+    // 调用者消费统一的 QNetworkReply，但服务模式实际走受保护管道。
+    // 外层管道期限要覆盖内核执行和服务开销，不能先于内层期限超时并误判未执行。
     if (options_.serviceManaged) {
         auto* reply =
             serviceRequest(QStringLiteral("api"),
