@@ -373,12 +373,12 @@ template <cache_value Value> [[nodiscard]] auto decode(const json& value) -> Val
                        });
 }
 
-[[nodiscard]] auto document_array(const json& document, std::string_view key, std::int64_t limit)
-    -> const json& {
+[[nodiscard]] auto document_array(json& document, std::string_view key, std::int64_t limit)
+    -> json& {
     if (integer(document.at("version")) != 1) {
         throw storage_failure{storage_error::unsupported_version};
     }
-    const auto& array = document.at(key);
+    auto& array = document.at(key);
     if (!array.is_array()) {
         invalid();
     }
@@ -410,9 +410,10 @@ auto decode_index(std::string_view text, std::int64_t max_profiles) -> std::vect
     try {
         auto document = parse_document(text);
         object_size(document, 2);
-        static_cast<void>(document_array(document, "profiles", max_profiles));
+        // 校验后复用同一数组；字段迁移只改记录内容，不改变信封或数组长度。
+        auto& profiles = document_array(document, "profiles", max_profiles);
 
-        for (auto& profile : document.at("profiles")) {
+        for (auto& profile : profiles) {
             auto& settings = profile.at("settings");
             if (!settings.is_object()) {
                 invalid();
@@ -426,8 +427,7 @@ auto decode_index(std::string_view text, std::int64_t max_profiles) -> std::vect
                 settings.erase(legacy);
             }
         }
-        return decode<std::vector<profile_record>>(
-            document_array(document, "profiles", max_profiles));
+        return decode<std::vector<profile_record>>(profiles);
     } catch (const codec_failure&) {
         throw storage_failure{storage_error::corrupt_index};
     } catch (const json::exception&) {
