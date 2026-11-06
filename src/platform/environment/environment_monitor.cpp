@@ -151,10 +151,10 @@ EnvironmentMonitor::EnvironmentMonitor(EnvironmentOptions options, QObject* pare
     connect(&snapshot_, &QFutureWatcher<NetworkSnapshot>::finished, this, [this] {
         const auto result = snapshot_.future().takeResult();
         if (!result.error.isEmpty()) {
-            Q_EMIT failed(result.error);
             buffer_->retain(sampling_);
             buffer_->publish(EnvironmentChange::Network);
             coalescing_.start(std::chrono::milliseconds{1000});
+            Q_EMIT failed(result.error);
             return;
         }
         const bool changed = !fingerprint_.isEmpty() && fingerprint_ != result.fingerprint;
