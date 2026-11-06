@@ -3,6 +3,7 @@
 
 #include <QTimer>
 
+#include <QJsonArray>
 #include <QJsonObject>
 #include <QNetworkAccessManager>
 #include <QPointer>
@@ -67,7 +68,7 @@ class ConfigSwitcher final : public QObject {
     void complete(TransactionOutcome outcome, const QString& message);
     [[nodiscard]] bool verifyGeneral(const QJsonObject& object) const;
     [[nodiscard]] bool verifyProxies(const QJsonObject& object) const;
-    [[nodiscard]] static bool verifyRules(const QJsonObject& object);
+    [[nodiscard]] bool verifyProviders(const QJsonObject& object, bool rules) const;
 
     KernelController& kernel_;
     SwitchTimeouts timeouts_;
@@ -85,6 +86,8 @@ class ConfigSwitcher final : public QObject {
     QJsonObject candidate_;
     QJsonObject previousConfig_;
     QJsonObject baseline_;
+    QJsonArray expectedRules_;
+    QJsonArray previousRules_;
     QJsonObject general_;
     QJsonObject selected_;
     QJsonObject previousSelected_;

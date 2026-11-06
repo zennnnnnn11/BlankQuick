@@ -16,7 +16,7 @@ TrafficController::TrafficController(QObject* parent) : QObject(parent) {
 }
 
 TrafficController::~TrafficController() {
-    discardSocket();
+    static_cast<void>(discardSocket());
 }
 
 const QString& TrafficController::status() const noexcept {
@@ -35,17 +35,22 @@ quint64 TrafficController::download() const noexcept {
     return download_;
 }
 
-void TrafficController::discardSocket() {
+quint64 TrafficController::discardSocket() {
     // 先换代再断开。abort/disconnected 可能产生同步或已排队回调，旧代次
     // 不能触发新流的重连；deleteLater 只负责对象回收，不承担状态隔离。
-    ++generation_;
+    const auto generation = ++generation_;
     if (socket_) {
-        auto* previous = socket_.data();
+        const QPointer<QWebSocket> previous{socket_.data()};
         socket_.clear();
+        // cppcheck-suppress nullPointerRedundantCheck
         QObject::disconnect(previous, nullptr, this, nullptr);
+        // cppcheck-suppress nullPointerRedundantCheck
         previous->abort();
-        previous->deleteLater();
+        if (previous) {
+            previous->deleteLater();
+        }
     }
+    return generation;
 }
 
 void TrafficController::setEnabled(bool enabled) {
@@ -54,7 +59,14 @@ void TrafficController::setEnabled(bool enabled) {
     }
     enabled_ = enabled;
     if (!enabled_ && context_.serviceManaged && context_.ready) {
+        const QPointer<TrafficController> lifetime{this};
+        const auto generation = generation_;
         Q_EMIT serviceSubscriptionRequested(false, generation_);
+        // Cppcheck does not model slots destroying this object or replacing its operation.
+        // cppcheck-suppress knownConditionTrueFalse
+        if (!lifetime || generation != generation_) {
+            return;
+        }
     }
     reset();
 }
@@ -81,9 +93,14 @@ void TrafficController::serviceRequestFinished(quint64 generation, bool success)
 }
 
 void TrafficController::reset() {
+    const QPointer<TrafficController> lifetime{this};
     reconnect_.stop();
     watchdog_.stop();
-    discardSocket();
+    const auto generation = discardSocket();
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!lifetime || generation != generation_) {
+        return;
+    }
     upload_ = 0;
     download_ = 0;
     connected_ = false;
@@ -91,6 +108,10 @@ void TrafficController::reset() {
     status_ = tr("内核未就绪");
     if (enabled_ && context_.ready) {
         open();
+        // cppcheck-suppress knownConditionTrueFalse
+        if (!lifetime || generation != generation_) {
+            return;
+        }
     }
     Q_EMIT changed();
 }
@@ -102,9 +123,15 @@ void TrafficController::open() {
         return;
     }
     if (context_.serviceManaged) {
+        const QPointer<TrafficController> lifetime{this};
+        const auto generation = generation_;
         status_ = tr("等待服务转发实时流量数据");
         watchdog_.start(std::chrono::milliseconds{5000});
         Q_EMIT serviceSubscriptionRequested(true, generation_);
+        // cppcheck-suppress knownConditionTrueFalse
+        if (!lifetime || generation != generation_) {
+            return;
+        }
         Q_EMIT changed();
         return;
     }
@@ -145,15 +172,25 @@ void TrafficController::open() {
     request.setUrl(url);
     status_ = tr("等待实时流量数据");
     watchdog_.start(std::chrono::milliseconds{5000});
+    const QPointer<TrafficController> lifetime{this};
     socket->open(request);
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!lifetime || generation != generation_) {
+        return;
+    }
     Q_EMIT changed();
 }
 
 void TrafficController::environmentChanged(bool suspended) {
+    const QPointer<TrafficController> lifetime{this};
     suspended_ = suspended;
     reconnect_.stop();
     watchdog_.stop();
-    discardSocket();
+    const auto generation = discardSocket();
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!lifetime || generation != generation_) {
+        return;
+    }
     connected_ = false;
     upload_ = 0;
     download_ = 0;
@@ -161,17 +198,26 @@ void TrafficController::environmentChanged(bool suspended) {
     status_ = suspended ? tr("系统即将挂起") : tr("网络环境变化，正在恢复流量流");
     if (!suspended) {
         open();
+        // cppcheck-suppress knownConditionTrueFalse
+        if (!lifetime || generation != generation_) {
+            return;
+        }
     }
     Q_EMIT changed();
 }
 
-void TrafficController::retry(const QString& message) {
+void TrafficController::retry(QString message) {
+    const QPointer<TrafficController> lifetime{this};
     watchdog_.stop();
-    discardSocket();
+    const auto generation = discardSocket();
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!lifetime || generation != generation_) {
+        return;
+    }
     upload_ = 0;
     download_ = 0;
     connected_ = false;
-    status_ = message;
+    status_ = std::move(message);
     if (context_.ready) {
         reconnect_.start(retryMs_);
         retryMs_ = std::min(retryMs_ * 2, 10000);

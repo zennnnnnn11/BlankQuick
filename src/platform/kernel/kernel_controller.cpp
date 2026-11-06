@@ -122,23 +122,29 @@ KernelController::PublishedStatus KernelController::currentStatus() const {
 }
 
 void KernelController::publishStatus() {
-    // 先发布完整快照，再发细分信号；同步订阅者读取任何属性时都看到同一版事实。
-    // 状态值相同但 PID/资源/维护信息变化时，仍需要 statusChanged 通知。
-    const auto current = currentStatus();
-    if (published_ == current) {
+    if (publishing_) {
         return;
     }
-
-    published_ = current;
-    Q_EMIT statusChanged();
-
-    if (notifiedState_ != state_) {
-        notifiedState_ = state_;
-        Q_EMIT stateChanged();
-    }
-    if (notifiedMaintenance_ != maintenance_) {
-        notifiedMaintenance_ = maintenance_;
-        Q_EMIT maintenanceChanged();
+    publishing_ = true;
+    const QPointer<KernelController> lifetime{this};
+    while (true) {
+        const auto current = currentStatus();
+        if (published_ != current) {
+            published_ = current;
+            Q_EMIT statusChanged();
+        } else if (notifiedState_ != state_) {
+            notifiedState_ = state_;
+            Q_EMIT stateChanged();
+        } else if (notifiedMaintenance_ != maintenance_) {
+            notifiedMaintenance_ = maintenance_;
+            Q_EMIT maintenanceChanged();
+        } else {
+            publishing_ = false;
+            return;
+        }
+        if (!lifetime) {
+            return;
+        }
     }
 }
 
@@ -168,8 +174,11 @@ void KernelController::start() {
         serviceResources_ = Resources::Pending;
         connectService();
         const auto generation = generation_;
+        const QPointer<KernelController> lifetime{this};
         setState(State::Starting);
-        if (generation != generation_ || state_ != State::Starting) {
+        // Cppcheck does not model synchronous notifications destroying the controller.
+        // cppcheck-suppress knownConditionTrueFalse
+        if (!lifetime || generation != generation_ || state_ != State::Starting) {
             return;
         }
         auto* reply = service_->request(QStringLiteral("start"));
@@ -195,8 +204,10 @@ void KernelController::start() {
             version_ = version;
             maintenance_ = object.value(QStringLiteral("maintenance")).toBool();
             deadline_.stop();
+            const QPointer<KernelController> lifetime{this};
             setState(State::Ready);
-            if (generation == generation_ && state_ == State::Ready) {
+            // cppcheck-suppress knownConditionTrueFalse
+            if (lifetime && generation == generation_ && state_ == State::Ready) {
                 Q_EMIT serviceEnvironment(object.value(QStringLiteral("environment")).toString());
             }
         });
@@ -211,8 +222,13 @@ void KernelController::launchFinished() {
     const auto result = launch_.future().takeResult();
     kernel_ = result.kernel;
     if (state_ == State::Stopping) {
+        const QPointer<KernelController> lifetime{this};
+        const auto generation = generation_;
         publishStatus();
-        beginCleanup();
+        // cppcheck-suppress knownConditionTrueFalse
+        if (lifetime && generation == generation_ && state_ == State::Stopping) {
+            beginCleanup();
+        }
         return;
     }
     if (!kernel_) {
@@ -224,8 +240,11 @@ void KernelController::launchFinished() {
         processNotifier_->setEnabled(false);
         fail(tr("内核意外退出"));
     });
+    const QPointer<KernelController> lifetime{this};
+    const auto generation = generation_;
     setState(State::WaitingForApi);
-    if (state_ == State::WaitingForApi) {
+    // cppcheck-suppress knownConditionTrueFalse
+    if (lifetime && generation == generation_ && state_ == State::WaitingForApi) {
         probe();
     }
 }
@@ -333,16 +352,24 @@ void KernelController::stop() {
         return;
     }
     ++generation_;
+    const auto generation = generation_;
+    const QPointer<KernelController> lifetime{this};
     poll_.stop();
     deadline_.stop();
-    if (reply_) {
-        reply_->abort();
-        reply_.clear();
+    if (const auto reply = std::exchange(reply_, {})) {
+        reply->abort();
+        // cppcheck-suppress knownConditionTrueFalse
+        if (!lifetime || generation != generation_) {
+            return;
+        }
     }
     processNotifier_.reset();
     setState(State::Stopping);
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!lifetime || generation != generation_ || state_ != State::Stopping) {
+        return;
+    }
     if (options_.serviceManaged) {
-        const auto generation = generation_;
         auto* reply = service_->request(QStringLiteral("stop"));
         connect(reply, &QNetworkReply::finished, this, [this, reply, generation] {
             reply->deleteLater();
@@ -404,8 +431,16 @@ void KernelController::connectService() {
     connect(service_.get(), &ServiceClient::logState, this, &KernelController::serviceLogState);
     connect(service_.get(), &ServiceClient::environment, this,
             [this](const QString& message, bool repairing) {
+                // Maintenance subscribers may destroy the service that owns the argument.
+                // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
+                const auto environment = message;
+                const auto generation = generation_;
+                const QPointer<KernelController> lifetime{this};
                 setMaintenance(repairing);
-                Q_EMIT serviceEnvironment(message);
+                // cppcheck-suppress knownConditionTrueFalse
+                if (lifetime && generation == generation_ && maintenance_ == repairing) {
+                    Q_EMIT serviceEnvironment(environment);
+                }
             });
     connect(service_.get(), &ServiceClient::coreStopped, this, [this](const QString& message) {
         servicePid_ = 0;
@@ -498,8 +533,11 @@ void KernelController::cleanupFinished() {
 }
 
 void KernelController::finishStopped() {
+    const QPointer<KernelController> lifetime{this};
+    const auto generation = generation_;
     setState(error_.isEmpty() ? State::Stopped : State::Failed);
-    if (quitting_) {
+    // cppcheck-suppress knownConditionTrueFalse
+    if (lifetime && generation == generation_ && quitting_) {
         Q_EMIT shutdownFinished();
     }
 }

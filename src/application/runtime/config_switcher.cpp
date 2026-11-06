@@ -4,14 +4,46 @@
 #include <QNetworkReply>
 #include <QUrl>
 #include <algorithm>
+#include <array>
 #include <blank/config/service_config.hpp>
 #include <blank/runtime/config_switcher.hpp>
 #include <chrono>
+#include <string_view>
 #include <utility>
+
+#include "rule_readback.hpp"
 
 namespace {
 constexpr qint64 responseLimit = qint64{8} * 1024 * 1024;
+
+[[nodiscard]] QString proxyType(QString type) {
+    type = type.toLower().remove(u'-');
+    if (type == QStringLiteral("ss")) {
+        return QStringLiteral("Shadowsocks");
+    }
+    if (type == QStringLiteral("ssr")) {
+        return QStringLiteral("ShadowsocksR");
+    }
+    if (type == QStringLiteral("select")) {
+        return QStringLiteral("Selector");
+    }
+    constexpr auto types = std::to_array<std::string_view>({
+        "Direct",      "Reject",    "RejectDrop", "Compatible", "Pass",        "PassRule",
+        "Rematch",     "Dns",       "Relay",      "Selector",   "Fallback",    "URLTest",
+        "LoadBalance", "Snell",     "Socks5",     "Http",       "Vmess",       "Vless",
+        "Trojan",      "Hysteria",  "Hysteria2",  "WireGuard",  "Tuic",        "Ssh",
+        "Mieru",       "AnyTLS",    "Sudoku",     "Masque",     "TrustTunnel", "ShadowQuic",
+        "OpenVPN",     "Tailscale", "ZeroTier",   "EasyTier",   "GostRelay",
+    });
+    for (const auto name : types) {
+        const auto runtime = QString::fromUtf8(name);
+        if (runtime.toLower() == type) {
+            return runtime;
+        }
+    }
+    return {};
 }
+} // namespace
 
 ConfigSwitcher::ConfigSwitcher(KernelController& kernel, const SwitchTimeouts& timeouts,
                                QObject* parent)
@@ -189,20 +221,41 @@ bool ConfigSwitcher::verifyProxies(const QJsonObject& object) const {
         const auto definition = entry.toObject();
         const auto actual = object.value(definition.value(QStringLiteral("name")).toString());
 
-        return actual.isObject() &&
-               !actual.toObject().value(QStringLiteral("type")).toString().isEmpty();
+        const auto type = proxyType(definition.value(QStringLiteral("type")).toString());
+        return !type.isEmpty() && actual.isObject() &&
+               actual.toObject().value(QStringLiteral("type")) == type;
     };
     return std::ranges::all_of(expected.value(QStringLiteral("proxies")).toArray(), exists) &&
            std::ranges::all_of(expected.value(QStringLiteral("proxy-groups")).toArray(), exists);
 }
 
-bool ConfigSwitcher::verifyRules(const QJsonObject& object) {
-    const auto rules = object.value(QStringLiteral("rules"));
-    return rules.isArray() && std::ranges::all_of(rules.toArray(), [](const QJsonValue& entry) {
-               const auto rule = entry.toObject();
-               return entry.isObject() && rule.value(QStringLiteral("type")).isString() &&
-                      rule.value(QStringLiteral("proxy")).isString();
-           });
+bool ConfigSwitcher::verifyProviders(const QJsonObject& object, bool rules) const {
+    const auto value = object.value(QStringLiteral("providers"));
+    if (!value.isObject()) {
+        return false;
+    }
+    const auto providers = value.toObject();
+    const auto configuration = rollingBack_ ? previousConfig_ : candidate_;
+    const auto expected =
+        configuration
+            .value(rules ? QStringLiteral("rule-providers") : QStringLiteral("proxy-providers"))
+            .toObject();
+    for (auto entry = expected.begin(); entry != expected.end(); ++entry) {
+        const auto provider = providers.value(entry.key()).toObject();
+        const auto definition = entry.value().toObject();
+        if (!entry.value().isObject() || provider.value(QStringLiteral("name")) != entry.key() ||
+            provider.value(QStringLiteral("type")) !=
+                (rules ? QStringLiteral("Rule") : QStringLiteral("Proxy")) ||
+            provider.value(QStringLiteral("vehicleType")).toString().toLower() !=
+                definition.value(QStringLiteral("type")).toString() ||
+            (rules ? provider.value(QStringLiteral("ruleCount")).toInteger(-1) < 0 ||
+                         provider.value(QStringLiteral("behavior")).toString().toLower() !=
+                             definition.value(QStringLiteral("behavior")).toString()
+                   : !provider.value(QStringLiteral("proxies")).isArray())) {
+            return false;
+        }
+    }
+    return true;
 }
 
 void ConfigSwitcher::received(QNetworkReply* reply, quint64 generation) {
@@ -257,6 +310,12 @@ void ConfigSwitcher::received(QNetworkReply* reply, quint64 generation) {
             fail(tr("切换前内核配置状态无效"));
             return;
         }
+        const auto candidateRules = blank::runtime_detail::expectedRules(candidate_);
+        if (!candidateRules) {
+            fail(tr("候选规则包含当前内核 API 无法核验的规则形式，尚未提交配置"));
+            return;
+        }
+        expectedRules_ = *candidateRules;
         if (previous_.isEmpty()) {
             auto base = compileServiceConfig(QStringLiteral("{}"), static_cast<quint16>(port), {});
             base.value.insert(QStringLiteral("mode"), mode);
@@ -268,6 +327,12 @@ void ConfigSwitcher::received(QNetworkReply* reply, quint64 generation) {
             return;
         }
         previousConfig_ = parsed.value;
+        const auto rules = blank::runtime_detail::expectedRules(previousConfig_);
+        if (!rules) {
+            fail(tr("上一份规则无法通过当前内核 API 核验，无法保证回滚；尚未提交配置"));
+            return;
+        }
+        previousRules_ = *rules;
         previousConfig_.insert(QStringLiteral("mode"), mode);
         previous_ =
             QString::fromUtf8(QJsonDocument(previousConfig_).toJson(QJsonDocument::Compact));
@@ -300,8 +365,9 @@ void ConfigSwitcher::received(QNetworkReply* reply, quint64 generation) {
         request("/rules");
         return;
     case Step::Rules:
-        if (!verifyRules(object)) {
-            fail(tr("内核规则响应格式无效"));
+        if (!blank::runtime_detail::verifyRules(rollingBack_ ? previousRules_ : expectedRules_,
+                                                object)) {
+            fail(tr("内核规则回读不一致（数量、顺序、类型、内容、目标或禁用状态）"));
             return;
         }
         step_ = Step::ProxyProviders;
@@ -309,8 +375,8 @@ void ConfigSwitcher::received(QNetworkReply* reply, quint64 generation) {
         return;
     case Step::ProxyProviders:
     case Step::RuleProviders: {
-        if (!object.value(QStringLiteral("providers")).isObject()) {
-            fail(tr("内核 Provider 响应格式无效"));
+        if (!verifyProviders(object, step_ == Step::RuleProviders)) {
+            fail(tr("内核 Provider 回读不一致或响应无效"));
             return;
         }
         const auto providers = object.value(QStringLiteral("providers")).toObject();

@@ -45,8 +45,8 @@ class TrafficController final : public QObject {
   private:
     void reset();
     void open();
-    void discardSocket();
-    void retry(const QString& message);
+    [[nodiscard]] quint64 discardSocket();
+    void retry(QString message);
     void received(const QString& message);
     TrafficContext context_;
     QPointer<QWebSocket> socket_;

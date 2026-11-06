@@ -1,4 +1,4 @@
-add_library(runtime_backend STATIC runtime_session.cpp runtime_contract.cpp config_switcher.cpp
+add_library(runtime_backend STATIC runtime_session.cpp runtime_contract.cpp config_switcher.cpp rule_readback.cpp rule_readback.hpp
     configuration_preparation.cpp
     include/blank/runtime/runtime_session.hpp include/blank/runtime/runtime_contract.hpp
     include/blank/runtime/config_switcher.hpp)

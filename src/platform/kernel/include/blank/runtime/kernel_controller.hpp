@@ -133,6 +133,7 @@ class KernelController final : public QObject {
     Resources serviceResources_ = Resources::Released;
     bool maintenance_ = false;
     PublishedStatus published_;
+    bool publishing_ = false;
     State notifiedState_ = State::Stopped;
     bool notifiedMaintenance_ = false;
 };
