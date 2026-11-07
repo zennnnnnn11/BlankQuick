@@ -67,22 +67,37 @@ struct registry {
         .toStdString();
 }
 
+[[nodiscard]] auto path_name(const fs::path& path) -> std::string {
+    return qt_path(path.filename()).toStdString();
+}
+
+[[nodiscard]] auto path_stem(const fs::path& path) -> std::string {
+    return qt_path(path.stem()).toStdString();
+}
+
+[[nodiscard]] auto reparse_point(const fs::path& path) -> bool {
+    const auto info = QFileInfo{qt_path(path)};
+    return info.isSymLink() || info.isJunction();
+}
+
 auto safe_path(const fs::path& root, const fs::path& path) -> void {
     const auto relative = path.lexically_relative(root);
     if (!path.is_absolute() || (relative.empty() && path != root)) {
         fail(override_error::unsafe_path);
     }
+    auto current = root;
+    if (reparse_point(current)) {
+        fail(override_error::unsafe_path);
+    }
     for (const auto& part : relative) {
+        if (part.empty() || part == fs::path{"."}) {
+            continue;
+        }
         if (part == fs::path{".."}) {
             fail(override_error::unsafe_path);
         }
-    }
-
-    auto current = path.root_path();
-    for (const auto& part : path.relative_path()) {
         current /= part;
-        const auto info = QFileInfo{qt_path(current)};
-        if (info.isSymLink() || info.isJunction()) {
+        if (reparse_point(current)) {
             fail(override_error::unsafe_path);
         }
     }
@@ -532,7 +547,7 @@ auto stage_content(const manager_options& options, const index_entry& entry, std
 }
 
 [[nodiscard]] auto content_filename(const fs::path& path) -> bool {
-    return dom::valid_identifier(path.stem().string()) &&
+    return dom::valid_identifier(path_stem(path)) &&
            (path.extension() == ".js" || path.extension() == ".yaml");
 }
 
@@ -547,6 +562,10 @@ auto stage_content(const manager_options& options, const index_entry& entry, std
     try {
         safe_path(options.directory, directory);
         if (!fs::exists(directory)) {
+            return result;
+        }
+        if (!fs::is_directory(directory)) {
+            result.cleanup_pending = true;
             return result;
         }
         for (const auto& file : fs::directory_iterator{directory}) {
@@ -609,15 +628,17 @@ auto stage_content(const manager_options& options, const index_entry& entry, std
         return result;
     }
     for (const auto& directory : fs::directory_iterator{parent}) {
-        const auto item_id = directory.path().filename().string();
+        const auto item_id = path_name(directory.path());
         if (!dom::valid_identifier(item_id)) {
             continue;
         }
-        safe_path(options.directory, directory.path());
         const auto found =
             std::ranges::find_if(index.items, [&item_id](const auto& entry) noexcept -> bool {
                 return entry.summary.id == item_id;
             });
+        if (found != index.items.end()) {
+            safe_path(options.directory, directory.path());
+        }
         const auto retained =
             found == index.items.end() ? fs::path{} : content_path(options, found->summary);
         const auto cleaned = clean_directory(options, directory.path(), retained);

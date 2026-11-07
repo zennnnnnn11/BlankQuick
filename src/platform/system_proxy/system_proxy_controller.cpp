@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QPointer>
 #include <blank/system_proxy/system_proxy_controller.hpp>
 #include <blank/user_proxy/user_proxy.hpp>
 #include <chrono>
@@ -24,6 +25,17 @@ SystemProxyController::SystemProxyController(SystemProxyOptions options, QObject
         }
     });
     connect(&deadline_, &QTimer::timeout, this, &SystemProxyController::timedOut);
+}
+
+SystemProxyController::~SystemProxyController() {
+    QObject::disconnect(&worker_, nullptr, this, nullptr);
+    QObject::disconnect(&deadline_, nullptr, this, nullptr);
+    QObject::disconnect(this, nullptr, nullptr, nullptr);
+    deadline_.stop();
+    if (worker_.state() != QProcess::NotRunning) {
+        worker_.kill();
+        worker_.waitForFinished(100);
+    }
 }
 
 SystemProxyController::LeaseState SystemProxyController::leaseState() const noexcept {
@@ -78,15 +90,20 @@ const QString& SystemProxyController::message() const noexcept {
 }
 
 void SystemProxyController::launch(const QStringList& arguments, State nextState) {
+    const auto generation = ++generation_;
     state_ = nextState;
     result_.clear();
     output_.clear();
     error_.clear();
     failure_ = Failure::None;
     environmentPending_ = false;
-    worker_.start(options_.helper, arguments);
     deadline_.start(options_.operationTimeout);
-    Q_EMIT changed();
+    const QPointer<SystemProxyController> lifetime{this};
+    worker_.start(options_.helper, arguments);
+    // cppcheck-suppress knownConditionTrueFalse
+    if (lifetime && generation == generation_ && state_ == nextState) {
+        Q_EMIT changed();
+    }
 }
 
 void SystemProxyController::recover() {
@@ -144,6 +161,7 @@ void SystemProxyController::restore() {
         if (state_ == State::Restoring || state_ == State::RecoveryRequired) {
             return;
         }
+        ++generation_;
         worker_.closeWriteChannel();
         state_ = State::Restoring;
         message_ = tr("正在还原系统代理");
@@ -157,14 +175,22 @@ void SystemProxyController::restore() {
 void SystemProxyController::timedOut() {
     failure_ = Failure::Timeout;
     if (state_ == State::Restoring) {
+        ++generation_;
         state_ = State::RecoveryRequired;
         message_ = tr("系统代理恢复超时，尚未确认释放；守护进程退出后可重试，内核保持运行");
         Q_EMIT changed();
         return;
     }
+    const QPointer<SystemProxyController> lifetime{this};
     restore();
-    message_ = tr("系统代理操作超时，正在等待还原；内核保持运行");
-    Q_EMIT changed();
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!lifetime) {
+        return;
+    }
+    if (state_ == State::Restoring) {
+        message_ = tr("系统代理操作超时，正在等待还原；内核保持运行");
+        Q_EMIT changed();
+    }
 }
 
 void SystemProxyController::protocolFailure() {
@@ -182,8 +208,11 @@ void SystemProxyController::readOutput() {
         protocolFailure();
         return;
     }
+    const QPointer<SystemProxyController> lifetime{this};
+    const auto generation = generation_;
     qsizetype end = 0;
-    while ((end = output_.indexOf('\n')) >= 0) {
+    // cppcheck-suppress knownConditionTrueFalse
+    while (lifetime && generation == generation_ && (end = output_.indexOf('\n')) >= 0) {
         const auto object = QJsonDocument::fromJson(output_.first(end)).object();
         output_.remove(0, end + 1);
         const auto reportedState = object.value(QStringLiteral("state")).toString();
@@ -224,7 +253,14 @@ void SystemProxyController::finished() {
     // 其余情况保留恢复要求，防止上层提前停止内核，留下指向失效端口的系统代理。
     environmentPending_ = false;
     deadline_.stop();
+    const QPointer<SystemProxyController> lifetime{this};
+    const auto generation = generation_;
     readOutput();
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!lifetime || generation != generation_) {
+        return;
+    }
+    ++generation_;
     if (result_ == QStringLiteral("restored")) {
         claim_ = Claim::Released;
         state_ = State::Off;
@@ -255,8 +291,12 @@ void SystemProxyController::updateContext(SystemProxyContext context) {
     }
     const bool lostKernel = context_.ready && !context.ready;
     context_ = context;
+    const QPointer<SystemProxyController> lifetime{this};
     if (lostKernel && claim_ != Claim::Released && state_ != State::Restoring) {
         restore();
     }
-    Q_EMIT changed();
+    // cppcheck-suppress knownConditionTrueFalse
+    if (lifetime) {
+        Q_EMIT changed();
+    }
 }

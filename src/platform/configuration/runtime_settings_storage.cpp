@@ -71,12 +71,29 @@ static_assert(codec_error(configuration_error::invalid_settings, settings_error:
     return QString::fromStdWString(path.native());
 }
 
-auto safe_path(const fs::path& path) -> void {
-    auto current = path.root_path();
-    for (const auto& part : path.relative_path()) {
+[[nodiscard]] auto reparse_point(const fs::path& path) -> bool {
+    const auto info = QFileInfo{qt_path(path)};
+    return info.isSymLink() || info.isJunction();
+}
+
+auto safe_path(const fs::path& root, const fs::path& path) -> void {
+    const auto relative = path.lexically_relative(root);
+    if (!path.is_absolute() || (relative.empty() && path != root)) {
+        storage_fail(settings_error::unsafe_path);
+    }
+    auto current = root;
+    if (reparse_point(current)) {
+        storage_fail(settings_error::unsafe_path);
+    }
+    for (const auto& part : relative) {
+        if (part.empty() || part == fs::path{"."}) {
+            continue;
+        }
+        if (part == fs::path{".."}) {
+            storage_fail(settings_error::unsafe_path);
+        }
         current /= part;
-        const auto info = QFileInfo{qt_path(current)};
-        if (info.isSymLink() || info.isJunction()) {
+        if (reparse_point(current)) {
             storage_fail(settings_error::unsafe_path);
         }
     }
@@ -125,7 +142,7 @@ auto safe_path(const fs::path& path) -> void {
 
 [[nodiscard]] auto read_snapshot(const settings_storage_options& options) -> settings_snapshot {
     const auto path = options.directory / "runtime-settings.json";
-    safe_path(path);
+    safe_path(options.directory, path);
     if (!fs::exists(path)) {
         return {};
     }
@@ -151,7 +168,7 @@ class settings_lock {
   public:
     explicit settings_lock(const settings_storage_options& options)
         : lock{qt_path(options.directory / "runtime-settings.lock")} {
-        safe_path(options.directory / "runtime-settings.lock");
+        safe_path(options.directory, options.directory / "runtime-settings.lock");
         lock.setStaleLockTime(0);
         if (!lock.tryLock(static_cast<int>(options.lock_timeout.count()))) {
             storage_fail(lock.error() == QLockFile::LockFailedError ? settings_error::busy
@@ -164,7 +181,7 @@ class settings_lock {
 };
 
 [[nodiscard]] auto load_impl(const settings_storage_options& options) -> settings_snapshot {
-    safe_path(options.directory);
+    safe_path(options.directory, options.directory);
     if (!fs::exists(options.directory)) {
         return {};
     }
@@ -195,7 +212,7 @@ class settings_lock {
     if (std::ssize(bytes) > options.max_bytes) {
         storage_fail(settings_error::invalid_input);
     }
-    safe_path(options.directory);
+    safe_path(options.directory, options.directory);
     static_cast<void>(fs::create_directories(options.directory));
     const auto lock = settings_lock{options};
     const auto previous = read_snapshot(options);
@@ -203,7 +220,7 @@ class settings_lock {
         storage_fail(settings_error::conflict);
     }
     const auto path = options.directory / "runtime-settings.json";
-    safe_path(path);
+    safe_path(options.directory, path);
     auto file = QSaveFile{qt_path(path)};
     // 禁止退回直接覆盖目标文件；原子替换不可用时宁可失败，也不留下半份设置。
     file.setDirectWriteFallback(false);

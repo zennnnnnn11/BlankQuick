@@ -1,6 +1,9 @@
 #include <QTemporaryDir>
+#include <QTimer>
 
 #include <QCoreApplication>
+#include <QEventLoop>
+#include <QPointer>
 #include <blank/nodes/node_input.hpp>
 #include <blank/overrides/override_manager.hpp>
 #include <blank/runtime/configuration_preparation.hpp>
@@ -10,7 +13,10 @@
 #include <chrono>
 #include <cstdlib>
 #include <exception>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -156,6 +162,17 @@ void checkOverrideStorage() {
             "Stored override selection lost its revision or content");
     require(manager.update(saved.value.item, {}).error == overrides::override_error::conflict,
             "A stale override revision overwrote committed content");
+    const std::filesystem::path root{temporary.path().toStdWString()};
+    {
+        auto stray_content = std::ofstream{root / "overrides" / saved.value.item.id /
+                                           std::filesystem::path{L"\U0001F680.yaml"}};
+        stray_content << "stray";
+        auto stray_dir = std::ofstream{root / "overrides" / std::filesystem::path{L"\U0001F680"}};
+        stray_dir << "stray";
+    }
+    const auto cleaned = manager.collect_garbage();
+    require(cleaned.error == overrides::override_error::none && cleaned.value.cleanup_pending,
+            "Unicode stray entry broke override garbage collection");
 }
 
 void checkSessionAdmission() {
@@ -171,6 +188,42 @@ void checkSessionAdmission() {
             "An idle session failed to finish shutdown");
     require(session.submitActivation(makeInput()).rejection == ActivationRejection::ShuttingDown,
             "A closed session accepted new work");
+
+    SystemProxyController proxy{{
+        .helper = QStringLiteral("missing-system-proxy-helper.exe"),
+        .journal = QStringLiteral("unused-journal"),
+        .operationTimeout = std::chrono::milliseconds{20},
+    }};
+    auto startFailures = 0;
+    QObject::connect(&proxy, &SystemProxyController::changed, &proxy, [&] {
+        if (proxy.failure() == SystemProxyController::Failure::Start) {
+            ++startFailures;
+        }
+    });
+    proxy.recover();
+    require(proxy.failure() == SystemProxyController::Failure::Start &&
+                proxy.state() == SystemProxyController::State::RecoveryRequired,
+            "Missing helper did not immediately report start failure");
+    QEventLoop loop;
+    QTimer::singleShot(80, &loop, &QEventLoop::quit);
+    loop.exec();
+    require(startFailures == 1 && proxy.failure() == SystemProxyController::Failure::Start,
+            "Start failure left deadline timer armed and triggered retry storm");
+
+    auto ownedProxy = std::make_unique<SystemProxyController>(SystemProxyOptions{
+        .helper = QStringLiteral("missing-system-proxy-helper.exe"),
+        .journal = QStringLiteral("unused-journal"),
+        .operationTimeout = std::chrono::milliseconds{20},
+    });
+    const QPointer<SystemProxyController> guard{ownedProxy.get()};
+    QObject::connect(ownedProxy.get(), &SystemProxyController::changed,
+                     QCoreApplication::instance(), [&] {
+                         if (guard && guard->failure() == SystemProxyController::Failure::Start) {
+                             ownedProxy.reset();
+                         }
+                     });
+    ownedProxy->recover();
+    require(!guard, "Controller was not safely destroyed inside changed signal");
 }
 } // namespace
 

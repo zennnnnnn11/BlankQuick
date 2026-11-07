@@ -175,6 +175,10 @@ auto require_id(std::string_view profile_id) -> void {
         .count();
 }
 
+[[nodiscard]] auto path_name(const fs::path& path) -> std::string {
+    return qt_path(path.filename()).toStdString();
+}
+
 [[nodiscard]] auto reparse_point(const fs::path& path) -> bool {
     const auto information = QFileInfo{qt_path(path)};
     return information.isSymLink() || information.isJunction();
@@ -182,7 +186,7 @@ auto require_id(std::string_view profile_id) -> void {
 
 auto safe_path(const fs::path& root, const fs::path& path) -> void {
     const auto relative = path.lexically_relative(root);
-    if (relative.empty() && path != root) {
+    if (!path.is_absolute() || (relative.empty() && path != root)) {
         fail(storage_error::unsafe_path);
     }
     auto current = root;
@@ -190,6 +194,9 @@ auto safe_path(const fs::path& root, const fs::path& path) -> void {
         fail(storage_error::unsafe_path);
     }
     for (const auto& part : relative) {
+        if (part.empty() || part == fs::path{"."}) {
+            continue;
+        }
         if (part == fs::path{".."}) {
             fail(storage_error::unsafe_path);
         }
@@ -628,10 +635,16 @@ auto record_cleanup(cleanup_result& result, bool removed) noexcept -> void {
                                      const profile_record& active, detail::validation_state* state)
     -> cleanup_result {
     const auto directory = session.generation_path(active).parent_path();
+    if (!fs::exists(directory)) {
+        return {};
+    }
+    if (!fs::is_directory(directory)) {
+        return {.cleanup_pending = true};
+    }
     auto obsolete = std::vector<fs::path>{};
     auto result = cleanup_result{};
     for (const auto& generation : fs::directory_iterator{directory}) {
-        const auto name = generation.path().filename().string();
+        const auto name = path_name(generation.path());
         if (is_hex(name, identifier_length) && name != active.generation) {
             obsolete.push_back(generation.path());
         }
@@ -886,16 +899,16 @@ auto record_cleanup(cleanup_result& result, bool removed) noexcept -> void {
     }
     auto result = cleanup_result{};
     for (const auto& directory : fs::directory_iterator{parent}) {
-        const auto profile_id = directory.path().filename().string();
+        const auto profile_id = path_name(directory.path());
         if (!is_hex(profile_id, identifier_length)) {
             continue;
         }
-        safe_path(options.directory, directory.path());
         const auto found = std::ranges::find(records, profile_id, &profile_record::id);
         if (found == records.end()) {
             record_cleanup(result, remove_tree(options.directory, directory.path()));
             continue;
         }
+        safe_path(options.directory, directory.path());
         const auto cleaned = clean_generations(session, options, *found, state);
         result.cleanup_pending = result.cleanup_pending || cleaned.cleanup_pending;
         result.removed_directories += cleaned.removed_directories;

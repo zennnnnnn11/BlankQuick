@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
@@ -134,6 +135,26 @@ auto check_activation(const std::filesystem::path& directory) -> void {
     require(again.error == runtime_config::configuration_error::none &&
                 !nlohmann::json::parse(again.config_json).at("ipv6").get<bool>(),
             "A failed/transient override mutated the saved profile");
+    {
+        auto stray_generation = std::ofstream{directory / "profiles" / "profiles" / saved.value.id /
+                                              std::filesystem::path{L"\U0001F680"}};
+        stray_generation << "stray";
+        auto stray_profile = std::ofstream{directory / "profiles" / "profiles" /
+                                           std::filesystem::path{L"\U0001F680"}};
+        stray_profile << "stray";
+    }
+    const auto collected = manager.collect_garbage();
+    require(collected.error == profile_storage::storage_error::none,
+            "Unicode stray entry broke profile garbage collection");
+    const auto replaced = manager.replace({
+        .id = saved.value.id,
+        .expected_revision = saved.value.revision,
+        .raw = fixture,
+        .nodes = parsed.nodes,
+    });
+    require(replaced.error == profile_storage::storage_error::none &&
+                manager.collect_garbage().error == profile_storage::storage_error::none,
+            "Profile replace and generation cleanup failed with Unicode stray entries");
 }
 } // namespace
 

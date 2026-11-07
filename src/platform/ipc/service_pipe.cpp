@@ -1,5 +1,6 @@
 #include <AclAPI.h>
 #include <QJsonDocument>
+#include <QPointer>
 #include <bit>
 #include <blank/ipc/service_pipe.hpp>
 #include <chrono>
@@ -107,48 +108,59 @@ void SecurePipe::accepted() try {
     std::ignore = duplicate.release();
     authentication_.start(std::chrono::milliseconds{5000});
 } catch (const std::exception& error) {
+    const QPointer<SecurePipe> lifetime{this};
     Q_EMIT failed(QString::fromUtf8(error.what()));
-    disconnectPeer();
+    // cppcheck-suppress knownConditionTrueFalse
+    if (lifetime) {
+        disconnectPeer();
+    }
 }
 
-void SecurePipe::read() try {
-    // 每轮最多分发 32 帧，再把剩余工作排回事件循环，防止一位客户端用连续
-    // 请求饿死超时、断连和清理事件。信号处理后要重查连接，槽函数可能已拒绝对端。
-    if (peer_.state() != QLocalSocket::ConnectedState) {
-        return;
-    }
-    if (!input_.append(peer_.readAll())) {
-        disconnectPeer();
-        return;
-    }
-    if (identity_.process == 0) {
-        identity_ = identifyPipeClient(anchor_.get(), allowed_);
-        ownerEvent_ = std::make_unique<QWinEventNotifier>(identity_.lifetime.get());
-        connect(ownerEvent_.get(), &QWinEventNotifier::activated, this, [this] {
-            ownerEvent_->setEnabled(false);
-            disconnectPeer();
-        });
-        authentication_.stop();
-    }
-    for (int count = 0; count < 32; ++count) {
-        const auto frame = input_.next();
-        if (!frame) {
-            disconnectPeer();
-            return;
-        }
-        if (!frame->has_value()) {
-            return;
-        }
-        Q_EMIT message(**frame);
+void SecurePipe::read() {
+    const QPointer<SecurePipe> lifetime{this};
+    try {
+        // 每轮最多分发 32 帧，再把剩余工作排回事件循环，防止一位客户端用连续
+        // 请求饿死超时、断连和清理事件。信号处理后要重查连接，槽函数可能已拒绝对端。
         if (peer_.state() != QLocalSocket::ConnectedState) {
             return;
         }
+        if (!input_.append(peer_.readAll())) {
+            disconnectPeer();
+            return;
+        }
+        if (identity_.process == 0) {
+            identity_ = identifyPipeClient(anchor_.get(), allowed_);
+            ownerEvent_ = std::make_unique<QWinEventNotifier>(identity_.lifetime.get());
+            connect(ownerEvent_.get(), &QWinEventNotifier::activated, this, [this] {
+                ownerEvent_->setEnabled(false);
+                disconnectPeer();
+            });
+            authentication_.stop();
+        }
+        for (int count = 0; count < 32; ++count) {
+            const auto frame = input_.next();
+            if (!frame) {
+                disconnectPeer();
+                return;
+            }
+            if (!frame->has_value()) {
+                return;
+            }
+            Q_EMIT message(**frame);
+            // cppcheck-suppress knownConditionTrueFalse
+            if (!lifetime || peer_.state() != QLocalSocket::ConnectedState) {
+                return;
+            }
+        }
+        if (input_.hasFrame()) {
+            QTimer::singleShot(std::chrono::milliseconds{0}, this, &SecurePipe::read);
+        }
+    } catch (const std::exception&) {
+        // cppcheck-suppress knownConditionTrueFalse
+        if (lifetime) {
+            disconnectPeer();
+        }
     }
-    if (input_.hasFrame()) {
-        QTimer::singleShot(std::chrono::milliseconds{0}, this, &SecurePipe::read);
-    }
-} catch (const std::exception&) {
-    disconnectPeer();
 }
 
 void SecurePipe::sendEvent(const QJsonObject& frame) {

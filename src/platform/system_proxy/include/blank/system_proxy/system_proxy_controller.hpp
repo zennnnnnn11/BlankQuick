@@ -58,7 +58,7 @@ class SystemProxyController final : public QObject {
         Conflict,
     };
     explicit SystemProxyController(SystemProxyOptions options, QObject* parent = nullptr);
-    ~SystemProxyController() override = default;
+    ~SystemProxyController() override;
     SystemProxyController(const SystemProxyController&) = delete;
     SystemProxyController& operator=(const SystemProxyController&) = delete;
     SystemProxyController(SystemProxyController&&) = delete;
@@ -94,16 +94,17 @@ class SystemProxyController final : public QObject {
     void protocolFailure();
     SystemProxyContext context_;
     SystemProxyOptions options_;
-    QProcess worker_;
-    QTimer deadline_;
     State state_ = State::Off;
     QByteArray output_;
     QString result_;
     QString message_;
     QString error_;
+    quint64 generation_ = 0;
     Claim claim_ = Claim::Released;
     Failure failure_ = Failure::None;
     bool environmentPending_ = false;
+    QProcess worker_;
+    QTimer deadline_;
 };
 
 #endif

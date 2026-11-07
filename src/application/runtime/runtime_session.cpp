@@ -5,6 +5,7 @@
 #include <QJsonObject>
 #include <QNetworkProxy>
 #include <QNetworkReply>
+#include <QPointer>
 #include <QStandardPaths>
 #include <QUrl>
 #include <array>
@@ -118,23 +119,46 @@ RuntimeSession::RuntimeSession(KernelOptions options, SystemProxyOptions proxyOp
                     Q_EMIT operationChanged();
                     return;
                 }
+                const QPointer<RuntimeSession> lifetime{this};
                 if (changed || resumed) {
                     traffic_.environmentChanged(false);
+                    // cppcheck-suppress knownConditionTrueFalse
+                    if (!lifetime) {
+                        return;
+                    }
                     refreshStreams();
+                    // cppcheck-suppress knownConditionTrueFalse
+                    if (!lifetime) {
+                        return;
+                    }
                     if (proxy_) {
                         proxy_->checkEnvironment();
+                        // cppcheck-suppress knownConditionTrueFalse
+                        if (!lifetime) {
+                            return;
+                        }
                     }
                     healAttempts_ = 0;
                     healPending_ = !kernel_.serviceManaged();
                 }
                 heal();
-                Q_EMIT operationChanged();
+                // cppcheck-suppress knownConditionTrueFalse
+                if (lifetime) {
+                    Q_EMIT operationChanged();
+                }
             });
     if (!proxyOptions.helper.isEmpty() && !proxyOptions.journal.isEmpty()) {
         proxy_ = std::make_unique<SystemProxyController>(std::move(proxyOptions));
         connect(proxy_.get(), &SystemProxyController::changed, this, [this] {
+            if (!proxy_) {
+                return;
+            }
+            const QPointer<RuntimeSession> lifetime{this};
             finishStop();
-            Q_EMIT operationChanged();
+            // cppcheck-suppress knownConditionTrueFalse
+            if (lifetime) {
+                Q_EMIT operationChanged();
+            }
         });
         connect(this, &RuntimeSession::operationChanged, this, &RuntimeSession::refreshProxy,
                 Qt::QueuedConnection);
@@ -401,8 +425,17 @@ void RuntimeSession::finishTransaction(TransactionOutcome outcome, TransactionSt
     // status 或提交下一个操作，必须看到已经结束的状态；result 独立持有发布内容。
     transaction_.reset();
     lastTransaction_ = result;
+    const QPointer<RuntimeSession> lifetime{this};
     Q_EMIT operationChanged();
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!lifetime) {
+        return;
+    }
     Q_EMIT transactionFinished(*result);
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!lifetime) {
+        return;
+    }
     if (result->kind != TransactionKind::Tun) {
         Q_EMIT activationFinished(outcome == TransactionOutcome::Applied,
                                   outcome == TransactionOutcome::Rejected ||
@@ -488,9 +521,18 @@ void RuntimeSession::start() {
     if (closing() || stopping()) {
         return;
     }
+    const QPointer<RuntimeSession> lifetime{this};
     environment_.start();
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!lifetime) {
+        return;
+    }
     if (proxy_) {
         proxy_->recover();
+        // cppcheck-suppress knownConditionTrueFalse
+        if (!lifetime) {
+            return;
+        }
     }
     if (!closing() && !stopping()) {
         kernel_.start();
@@ -501,18 +543,41 @@ void RuntimeSession::stop() {
     if (lifecycle_ == RuntimeLifecycle::Closed) {
         return;
     }
+    const QPointer<RuntimeSession> lifetime{this};
     // 先作废旧代次，再取消各执行步骤。abort/cancel 可能同步发出完成信号，
     // 此时旧回调已经失去推进新状态的资格。
     ++generation_;
     lifecycle_ = closing() ? RuntimeLifecycle::ShuttingDown : RuntimeLifecycle::Stopping;
+    healRetry_.stop();
+    healing_ = false;
+    healPending_ = false;
     static_cast<void>(cancellation_.request_stop());
-    if (reply_) {
-        reply_->abort();
+    if (auto* const reply = reply_.data()) {
+        reply->abort();
+        // cppcheck-suppress knownConditionTrueFalse
+        if (!lifetime) {
+            return;
+        }
+        if (reply_ == reply) {
+            reply_.clear();
+        }
     }
     switcher_.cancel();
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!lifetime) {
+        return;
+    }
     cancelTransaction();
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!lifetime) {
+        return;
+    }
     if (proxy_) {
         proxy_->setEnabled(false);
+        // cppcheck-suppress knownConditionTrueFalse
+        if (!lifetime) {
+            return;
+        }
     }
     finishStop();
 }
@@ -538,10 +603,12 @@ void RuntimeSession::finishStop() {
         kernel_.stop();
         return;
     }
+    const QPointer<RuntimeSession> lifetime{this};
     const bool closingRequested = closing();
     lifecycle_ = closingRequested ? RuntimeLifecycle::Closed : RuntimeLifecycle::Open;
     Q_EMIT operationChanged();
-    if (closingRequested) {
+    // cppcheck-suppress knownConditionTrueFalse
+    if (lifetime && closingRequested) {
         Q_EMIT shutdownFinished();
     }
 }
@@ -569,6 +636,7 @@ ActivationSubmission RuntimeSession::submitActivation(ActivationInput input) {
     }
     auto& transaction = beginTransaction(TransactionKind::Activation);
     const auto requestId = transaction.requestId;
+    const QPointer<RuntimeSession> lifetime{this};
     try {
         transaction.identity = std::make_shared<const ActivationIdentity>(
             ActivationIdentity{.requestId = requestId, .composition = std::move(input.identity)});
@@ -584,6 +652,10 @@ ActivationSubmission RuntimeSession::submitActivation(ActivationInput input) {
             TransactionOutcome::Rejected, TransactionStage::Generation,
             TransactionError::Unexpected,
             QStringLiteral("Invalid activation context or unavailable worker resources."));
+        // cppcheck-suppress knownConditionTrueFalse
+        if (!lifetime) {
+            return {.requestId = requestId};
+        }
     }
     Q_EMIT operationChanged();
     return {.requestId = requestId};
@@ -598,6 +670,7 @@ void RuntimeSession::checkFinished() {
     transaction_->result.diagnostics =
         std::make_shared<const ActivationDiagnostics>(std::move(result.diagnostics));
     transaction_->enableTun = result.enableTun;
+    const QPointer<RuntimeSession> lifetime{this};
     // 准备成功也不能直接提交：准备期间可能已经停止、换代或失去 Ready 状态。
     // 重新验证会话身份，把“算出了合法配置”和“仍然有权应用”分成两道门。
     if (checkGeneration_ != generation_ || stopping() ||
@@ -613,7 +686,15 @@ void RuntimeSession::checkFinished() {
         switcher_.start(QJsonDocument::fromJson(transaction_->payload.toUtf8()).object(), active_,
                         selected_, selected_);
     }
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!lifetime) {
+        return;
+    }
     Q_EMIT operationChanged();
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!lifetime) {
+        return;
+    }
     finishStop();
 }
 
@@ -652,10 +733,28 @@ void RuntimeSession::switched(const SwitchResult& result) {
 }
 
 void RuntimeSession::kernelChanged() {
+    const QPointer<RuntimeSession> lifetime{this};
     if (kernel_.state() != KernelController::State::Ready) {
         ++generation_;
+        healRetry_.stop();
+        healing_ = false;
+        healPending_ = false;
         static_cast<void>(cancellation_.request_stop());
+        if (auto* const reply = reply_.data()) {
+            reply->abort();
+            // cppcheck-suppress knownConditionTrueFalse
+            if (!lifetime) {
+                return;
+            }
+            if (reply_ == reply) {
+                reply_.clear();
+            }
+        }
         cancelTransaction();
+        // cppcheck-suppress knownConditionTrueFalse
+        if (!lifetime) {
+            return;
+        }
         mixedPort_ = 0;
         logs_.stop();
     }
@@ -669,6 +768,10 @@ void RuntimeSession::kernelChanged() {
         routing_.reset();
         selected_ = {};
         finishStop();
+        // cppcheck-suppress knownConditionTrueFalse
+        if (!lifetime) {
+            return;
+        }
     }
     Q_EMIT operationChanged();
 }
@@ -699,15 +802,28 @@ bool RuntimeSession::request(const QByteArray& path, const QByteArray& method,
     const auto generation = generation_;
     connect(reply, &QNetworkReply::finished, this, [this, reply, generation] {
         reply->deleteLater();
-        if (reply_ == reply) {
+        const bool cleared = reply_ == reply;
+        if (cleared) {
             reply_.clear();
         }
+        const QPointer<RuntimeSession> lifetime{this};
         if (generation != generation_) {
+            if (cleared) {
+                Q_EMIT operationChanged();
+            }
+            // cppcheck-suppress knownConditionTrueFalse
+            if (lifetime) {
+                Q_EMIT requestFinished(0, {});
+            }
             return;
         }
         const auto bytes = reply->readAll();
         const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         Q_EMIT operationChanged();
+        // cppcheck-suppress knownConditionTrueFalse
+        if (!lifetime) {
+            return;
+        }
         Q_EMIT requestFinished(
             reply->error() == QNetworkReply::NoError && bytes.size() <= responseLimit ? status : 0,
             bytes.size() <= responseLimit ? bytes : QByteArray{});
@@ -894,13 +1010,22 @@ void RuntimeSession::issueTun(bool enabled) {
                 .networkError = static_cast<int>(reply->error()),
             });
         }
+        const QPointer<RuntimeSession> lifetime{this};
         finishTransaction(
             tunOutcome(success, partial), TransactionStage::Tun,
             success ? TransactionError::None : TransactionError::Tun,
             success ? QStringLiteral("Configuration and service TUN verified.")
                     : QStringLiteral("TUN change failed; restoring system proxy before session "
                                      "cleanup."));
+        // cppcheck-suppress knownConditionTrueFalse
+        if (!lifetime) {
+            return;
+        }
         Q_EMIT requestFinished(success ? 200 : 0, {});
+        // cppcheck-suppress knownConditionTrueFalse
+        if (!lifetime) {
+            return;
+        }
         if (!success) {
             stop();
         }
@@ -962,16 +1087,25 @@ void RuntimeSession::heal() {
     const auto generation = generation_;
     connect(reply, &QNetworkReply::finished, this, [this, reply, generation] {
         reply->deleteLater();
-        if (reply_ == reply) {
+        const bool cleared = reply_ == reply;
+        if (cleared) {
             reply_.clear();
             healing_ = false;
         }
         if (generation != generation_) {
+            if (cleared) {
+                Q_EMIT operationChanged();
+            }
             return;
         }
+        const QPointer<RuntimeSession> lifetime{this};
         const bool success = reply->error() == QNetworkReply::NoError;
         Q_EMIT environmentStatus(success ? QStringLiteral("Core DNS cache refresh acknowledged.")
                                          : QStringLiteral("Core DNS cache refresh failed."));
+        // cppcheck-suppress knownConditionTrueFalse
+        if (!lifetime) {
+            return;
+        }
         if (!success && healAttempts_ < 3) {
             healPending_ = true;
             healRetry_.start(healAttempts_ * 1000);
