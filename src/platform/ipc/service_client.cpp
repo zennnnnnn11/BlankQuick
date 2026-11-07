@@ -169,7 +169,10 @@ void ServiceClient::received() {
         fail(tr("服务消息超过限制"));
         return;
     }
-    for (int count = 0; count < 32; ++count) {
+    // Synchronous slots can destroy this object and clear its QPointer.
+    const QPointer<ServiceClient> lifetime{this};
+    // cppcheck-suppress knownConditionTrueFalse
+    for (int count = 0; count < 32 && lifetime; ++count) {
         const auto frame = input_.next();
         if (!frame) {
             fail(tr("服务消息格式无效"));
@@ -209,7 +212,8 @@ void ServiceClient::received() {
                 object.value(QStringLiteral("error")).toString());
         }
     }
-    if (input_.hasFrame()) {
+    // cppcheck-suppress knownConditionTrueFalse
+    if (lifetime && input_.hasFrame()) {
         QTimer::singleShot(std::chrono::milliseconds{0}, this, &ServiceClient::received);
     }
 }
@@ -218,16 +222,22 @@ void ServiceClient::fail(const QString& message) {
     // 先移出所有 pending，再逐个发布失败。complete 会同步触发 finished 槽，
     // 这些槽可能删除回复或修改请求表，不能在遍历原容器时允许它们改动容器。
     const bool wasConnected = std::exchange(verified_, false);
+    const QPointer<ServiceClient> lifetime{this};
     input_.clear();
     unsent_.clear();
     const auto replies = std::exchange(pending_, {});
     socket_.abort();
     for (const auto& reply : replies) {
+        // cppcheck-suppress knownConditionTrueFalse
+        if (!lifetime) {
+            return;
+        }
         if (reply) {
             reply->complete(503, {}, message);
         }
     }
-    if (wasConnected) {
+    // cppcheck-suppress knownConditionTrueFalse
+    if (lifetime && wasConnected) {
         Q_EMIT lost(message);
     }
 }
