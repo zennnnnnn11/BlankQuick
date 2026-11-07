@@ -2,10 +2,10 @@
   "version": "0.16.0",
   "release": "https://github.com/biojppm/rapidyaml/releases/tag/v0.16.0",
   "original_cpp_sha256": "0ce37969e656a13871dc89295d6db7fda072d6674298da1edaf59ca036dbbc70",
-  "patch": "Replace generated absolute include with relative #include \"ryml.hpp\"; no other changes.",
+  "patch": "Replace generated absolute include with relative #include \"ryml.hpp\"; backport upstream PR #682 (0b4f4c19) runtime bounds check in ParseEngine::_add_annotation.",
   "sha256": {
     "LICENSE.txt": "d21acdde3276a3706f41c0a7e911a3953ac1ca6b33c5ae05f92d6651f77ce627",
-    "ryml.cpp": "7a8da6b598b3ee3b2d81771f4af4c3527b961c1e5c5af1fd742791315a9ab143",
-    "ryml.hpp": "0bca851b19b009df75da25b39b61064d38c6d9bc40572ba8b636f5c4b69e4c3d"
+    "ryml.cpp": "4d65c27e3fff000d5a340836320510af2da3360a369061958bd5e14d13fd4317",
+    "ryml.hpp": "1d28603869150e7595144e478c81975487f5f4d144a98f8e058460ddac6e9965"
   }
 }

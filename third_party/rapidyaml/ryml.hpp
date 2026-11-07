@@ -30972,6 +30972,7 @@ struct ScannedScalar
     substr scalar;
     bool needs_filter;
 };
+#define RYML_NUMANNOT_ 2
 /** store pending tag or anchor/ref annotations */
 struct Annotation
 {
@@ -30982,7 +30983,7 @@ struct Annotation
         size_t line;
         csubstr orig;
     };
-    Entry annotations[2];
+    Entry annotations[RYML_NUMANNOT_];
     uint8_t num_entries;
 };
 /** @endcond */
